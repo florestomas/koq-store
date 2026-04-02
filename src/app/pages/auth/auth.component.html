@@ -1,15 +1,29 @@
-<div class="flex flex-row h-full">
+<div class="flex flex-col md:flex-row h-screen w-screen bg-white">
   <div class="flex-1">
-    <img class="h-full w-full object-cover" alt="logo koq" src="https://placehold.co/600x400?text=koq" />
+    <img
+      class="h-full w-full object-cover hidden md:block"
+      alt="placeholder koq"
+      src="https://placehold.co/600/ad65af/FFF?text=KoqStore\n\n\nhello+world"
+    />
   </div>
 
-  <section class="flex-1 flex flex-col justify-center items-center">
-    <form class="m-8">
-      <label class="block">Usuario:</label>
-      <input class="border-2 w-full" type="email" />
+  <section class="flex flex-1 flex-col justify-center items-center">
+    <div class="flex flex-col border-gray-300/60 p-10 pb-10 rounded-4xl items-center">
+      <img
+      class="size-24 rounded-full"
+      src="koq-logo-sm.jpeg"
+      />
+      <h1 class="text-5xl font-medium text-black ">Bienvenido</h1>
+      <h2 class="text-sm font-light text-gray-500/60 mt-1">Manejo de logisticaçç</h2>
 
-      <label class="block">Contrasenia:</label>
-      <input class="border-2 w-full" type="password" />
-    </form>
+      <form class="flex flex-col gap-2 mt-5 w-full">
+
+        <input class="border border-gray-300/60 rounded-2xl py-2 px-3 w-full" placeholder="Usuario" type="" />
+
+        <input class="border border-gray-300/60 rounded-2xl py-2 px-3 w-full" placeholder="Contraseña" type="password" />
+
+        <button class="border border-gray-300/60 rounded-2xl p-1 bg-color-koq text-white" type="submit">Ingresar</button>
+      </form>
+    </div>
   </section>
 </div>

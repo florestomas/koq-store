@@ -1,4 +1,5 @@
 :host {
   display: block;
-  height: 100vh;
 }
+
+/* host afecta al componente creado por Angular en app.html */
