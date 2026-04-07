@@ -13,7 +13,7 @@
       <h1 class="text-5xl font-medium text-black">Bienvenido</h1>
       <h2 class="text-sm font-light text-gray-500/60 mt-1">Manejo de logistica</h2>
 
-      <form class="flex flex-col gap-2 mt-5 w-full">
+      <form [formGroup]="logInForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-2 mt-5 w-full">
         <div class="flex flex-row border border-gray-300/60 rounded-2xl py-2 px-3 gap-1">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -30,7 +30,7 @@
             <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
             <circle cx="12" cy="7" r="4" />
           </svg>
-          <input class="w-full focus:outline-0" placeholder="Usuario" type="user" />
+          <input formControlName="user" class="w-full focus:outline-0" placeholder="Usuario" type="user" />
         </div>
         <div class="flex flex-row border border-gray-300/60 rounded-2xl py-2 px-3 gap-1">
           <svg
@@ -48,14 +48,15 @@
             <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
             <path d="M7 11V7a5 5 0 0 1 10 0v4" />
           </svg>
-          <input class="w-full focus:outline-0" placeholder="Contraseña" type="password" />
+          <input formControlName="password" class="w-full focus:outline-0" placeholder="Contraseña" type="password" />
         </div>
+
 
         <button
           class="border border-gray-300/60 rounded-2xl p-1 bg-color-koq text-white"
-          type="submit"
+          [disabled]="isLoading()"
         >
-          Ingresar
+          {{isLoading() ? 'Cargando...' : 'Ingresar'}}
         </button>
       </form>
     </div>

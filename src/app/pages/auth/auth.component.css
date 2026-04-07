@@ -1,5 +1,5 @@
+/* host afecta al componente creado por Angular en app.html */
 :host {
   display: block;
 }
 
-/* host afecta al componente creado por Angular en app.html */
