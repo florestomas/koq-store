@@ -13,7 +13,7 @@
       <h1 class="text-5xl font-medium text-black">Bienvenido</h1>
       <h2 class="text-sm font-light text-gray-500/60 mt-1">Manejo de logistica</h2>
 
-      <form class="flex flex-col gap-2 mt-5 w-full">
+      <form  class="flex flex-col gap-2 mt-5 w-full">
         <div class="flex flex-row border border-gray-300/60 rounded-2xl py-2 px-3 gap-1">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -50,10 +50,12 @@
           </svg>
           <input class="w-full focus:outline-0" placeholder="Contraseña" type="password" />
         </div>
+        <input type="text" [(ngModel)]="mivariable">
 
         <button
+          type="button"
           class="border border-gray-300/60 rounded-2xl p-1 bg-color-koq text-white"
-          type="submit"
+          (click)="onLogin()"
         >
           Ingresar
         </button>
