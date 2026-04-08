@@ -1,26 +1,26 @@
-import { Component, inject } from '@angular/core';
-import { AuthService } from '../../core/services/auth.service';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-
-//import { USERS } from '../../mocks/users.mock'; No se importa Users porque la logica la hacemos en el service
+import { Component, signal } from '@angular/core';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
 @Component({
   selector: 'auth-component',
-  imports: [ReactiveFormsModule, FormsModule],
+  imports: [ReactiveFormsModule],
   templateUrl: './auth.component.html',
   styleUrl: './auth.component.css',
 })
 export class AuthComponent {
-  authService = inject(AuthService)
-  fb = inject(FormBuilder)
+  logInForm = new FormGroup({
+    user: new FormControl('', Validators.required),
+    password: new FormControl('', Validators.required),
+  });
 
-  miformgropu = this.fb.group({
-    'user': ["",Validators.required],
-    'password':["", Validators.required]
-  })
-  onLogin(){
-    this.authService.login('aaaa');
+  public isLoading = signal(false);
+
+  onSubmit() {
+    this.isLoading.set(true);
+    console.log(this.logInForm.value)
+    setTimeout(() => {
+      this.isLoading.set(false);
+      console.log('holaa');
+    }, 2000);
   }
-
-  mivariable = "hola"
 }
