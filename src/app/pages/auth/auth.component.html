@@ -13,7 +13,7 @@
       <h1 class="text-5xl font-medium text-black">Bienvenido</h1>
       <h2 class="text-sm font-light text-gray-500/60 mt-1">Manejo de logistica</h2>
 
-      <form [formGroup]="logInForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-2 mt-5 w-full">
+      <form [formGroup]="logInForm" (ngSubmit)="onSubmit()" class="flex flex-col items-center gap-2 mt-5 w-full">
         <div class="flex flex-row border border-gray-300/60 rounded-2xl py-2 px-3 gap-1">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -54,12 +54,18 @@
 
         <button
           type="button"
-          class="border border-gray-300/60 rounded-2xl p-1 bg-color-koq text-white"
+          (click)="onSubmit()"
+          class="border border-gray-300/60 rounded-2xl p-1 bg-color-koq text-white w-full"
           [disabled]="isLoading()"
         >
           {{isLoading() ? 'Cargando...' : 'Ingresar'}}
         </button>
+
+        @if(showLogInError()){
+          <h4 class="text-sm text-red-700"> Datos ingresados incorrectos.</h4>
+        }
       </form>
+
     </div>
   </section>
 </div>
