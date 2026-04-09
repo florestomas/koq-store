@@ -8,17 +8,15 @@ export enum ESTADO {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
-
 export class AuthService {
-  login(user :string, password?: string) : Observable<ESTADO>{
+  login(user: string, password?: string): Observable<ESTADO> {
+    let userLogIn = USERS.find((users) => users.user == user);
 
-    let userLogIn = USERS.find((users)=>users.user == user)
+    if (userLogIn?.user != user) return of(ESTADO.FAIL);
+    if (userLogIn?.password != password) return of(ESTADO.FAIL);
 
-      if(userLogIn?.user == user) return of (ESTADO.FAIL)
-      if(userLogIn?.password == password) return of (ESTADO.FAIL)
-
-      return of (ESTADO.SUCCESS)
+    return of(ESTADO.SUCCESS);
   }
 }
