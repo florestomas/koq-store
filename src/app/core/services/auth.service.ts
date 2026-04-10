@@ -11,7 +11,8 @@ export enum ESTADO {
   providedIn: 'root',
 })
 export class AuthService {
-   logged : WritableSignal<boolean> = signal(false)
+  /* true para no tener q ingresar siempre q lo queramos probar XD */
+   logged : WritableSignal<boolean> = signal(true)
 
   login(user: string, password?: string): Observable<ESTADO> {
     let userLogIn = USERS.find((users) => users.user == user);
