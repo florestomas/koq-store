@@ -64,6 +64,9 @@
         "serve": {
           "builder": "@angular/build:dev-server",
           "configurations": {
+            "options": {
+              "poll": 2000
+            },
             "production": {
               "buildTarget": "koq-store:build:production"
             },
