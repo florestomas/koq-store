@@ -10,7 +10,7 @@ import {MatIconModule} from '@angular/material/icon'
 })
 export class NavItemComponent {
 
-  @Input() nombre : string = '';
-
+  @Input() iconName : string = 'inventory_2';
+  @Input() navName : string = 'LOREMIMPSUM'
 
 }
