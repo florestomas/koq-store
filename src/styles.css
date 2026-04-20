@@ -2,10 +2,8 @@
 
 @import "tailwindcss";
 
-.bg-color-koq{
-  background: #ad65af;
+
+@theme{
+  --color-koq: #ad65af;
 }
 
-.text-koq{
-  color: #ad65af;
-}

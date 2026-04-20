@@ -1,17 +1,29 @@
-<div class="flex flex-1/12 flex-col h-full items-start justify-start p-6 bg-white">
-  <div class="flex flex-row w-full justify-between">
+<div class="flex flex-1/12 flex-col h-full items-start justify-start bg-white">
+  <div class="flex flex-row w-full justify-between p-6">
     <div class="flex flex-col">
       <h1 class="text-2xl text-koq">Koq Store</h1>
       <h2 class="text-sm text-gray-900/60">INVENTARIO</h2>
     </div>
     <img class="size-14" src="koq-logo-sm.jpeg" />
-
   </div>
 
-  <nav class="pt-12 flex flex-col gap-y-10">
-    <app-nav-item></app-nav-item>
-    <app-nav-item></app-nav-item>
-    <app-nav-item></app-nav-item>
-    <app-nav-item></app-nav-item>
+  <nav class="flex flex-col gap-0.5 w-full py-4 px-6">
+    <app-nav-item [iconName]="'inventory_2'" [navName]="'CATALOGO'"></app-nav-item>
+    <app-nav-item [iconName]="'add_box'" [navName]="'NUEVO ITEM'"></app-nav-item>
+    <app-nav-item [iconName]="'local_shipping'" [navName]="'TRANSFERENCIA'"></app-nav-item>
+    <app-nav-item [iconName]="'archive'" [navName]="'RECEPCION'"></app-nav-item>
+    <app-nav-item [iconName]="'warning'" [navName]="'ALERTAS'"></app-nav-item>
+    <app-nav-item [iconName]="'history'" [navName]="'HISTORIAL'"></app-nav-item>
   </nav>
+
+  <div
+    class="flex flex-col justify-start items-start p-6 gap-2 w-full mt-auto border-t-2 border-gray-300"
+  >
+    <div class="flex flex-row gap-x-1">
+      <mat-icon class="border rounded-full">person</mat-icon>
+      <p class="text-xl">{{ user() }}</p>
+    </div>
+
+    <app-nav-item [iconName]="'logout'" [navName]="'CERRAR SESION'"></app-nav-item>
+  </div>
 </div>
