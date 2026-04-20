@@ -3,11 +3,10 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { AuthService, ESTADO } from '../../core/services/auth.service';
 import { Router } from '@angular/router';
 import { delay } from 'rxjs';
-import { MatIcon } from "@angular/material/icon";
 
 @Component({
   selector: 'auth-component',
-  imports: [ReactiveFormsModule, MatIcon],
+  imports: [ReactiveFormsModule],
   templateUrl: './auth.component.html',
   styleUrl: './auth.component.css',
 })
