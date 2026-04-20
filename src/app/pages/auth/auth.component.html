@@ -18,7 +18,7 @@
         (ngSubmit)="onSubmit()"
         class="flex flex-col items-center gap-2 mt-5 w-full h-full"
       >
-        <div class="flex flex-row border border-gray-300/60 rounded-2xl py-2 px-3 gap-1">
+        <div class="flex flex-row w-full border border-gray-300/60 rounded-2xl py-2 px-3 gap-1">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="24"
@@ -41,7 +41,7 @@
             type="user"
           />
         </div>
-        <div class="flex flex-row border border-gray-300/60 rounded-2xl py-2 px-3 gap-1">
+        <div class="flex flex-row w-full border border-gray-300/60 rounded-2xl py-2 px-3 gap-1">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="24"
@@ -74,11 +74,10 @@
           {{ isLoading() ? 'Cargando...' : 'Ingresar' }}
         </button>
 
-        <div class="h-5">
-          <h4 class="text-sm text-red-700">
+
+          <h4 class="h-5 text-sm text-red-700">
             {{ showLogInError() ? 'Datos ingresados incorrectos.' : ' ' }}
           </h4>
-        </div>
       </form>
     </div>
   </section>
