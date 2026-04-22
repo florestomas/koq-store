@@ -28,7 +28,7 @@ export class AuthComponent {
     this.authService.login(this.logInForm.value.user!, this.logInForm.value.password!).pipe(delay(2000)).subscribe({
       next: (estado : ESTADO)=>{
         if(estado == ESTADO.SUCCESS){
-          this.router.navigate(['app'])
+          this.router.navigate([''])
           this.isLoading.set(false)
         }
         if(estado == ESTADO.FAIL){
