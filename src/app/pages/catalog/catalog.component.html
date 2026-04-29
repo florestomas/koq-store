@@ -1,21 +1,55 @@
-<!-- Top -->
-<div class="flex flex-row w-full justify-between px-7 py-4">
-  <div class="flex flex-col">
-    <h1 class="text-5xl text-black font-medium">{{'Catálogo' | uppercase}}</h1>
-    <div class="flex flex-row items-center text-gray-900/30! gap-2">
-      <mat-icon>warehouse</mat-icon>
-      <p class="text-base font-light">INVENTARIO: {{ '777' }} UNIDADES</p>
+<div class="flex flex-col w-full h-full p-8">
+  <!-- Top -->
+  <div class="flex flex-row w-full justify-between items-center">
+    <div class="flex flex-col">
+      <h1 class="text-5xl text-black font-medium">{{ 'Catálogo' | uppercase }}</h1>
+      <div class="flex flex-row items-center text-zinc-500 gap-2">
+        <mat-icon class="material-icons">warehouse</mat-icon>
+        <p class="text-base font-light">INVENTARIO: {{ '777' }} UNIDADES</p>
+      </div>
+    </div>
+
+    <div class="flex flex-row items-center gap-x-5 h-13">
+      <app-search-bar></app-search-bar>
+      <button
+        class="flex flex-row h-full text-black! items-center gap-2 bg-zinc-500/20 px-5 py-2 rounded-full"
+      >
+        <mat-icon>filter_list</mat-icon>FILTROS
+      </button>
+
+      <div
+        class="flex flex-row h-full text-koq! items-center gap-2 bg-koq/20 px-5 py-2 rounded-full"
+      >
+        ALERTAS
+        <input class="appearance-none border rounded-full checked:bg-koq size-5 transition duration-100" type="checkbox"/>
+
+
+
+
+      </div>
     </div>
   </div>
 
-  <div class="flex flex-row items-center gap-10">
-    <p>BUSCADOR BARRA</p>
-    <button> FILTROS </button>
-    <button> ALERTAS </button>
+  <nav class="flex flex-row border-b border-gray-300 pt-4">
+    <button
+      class="py-4 px-8 text-zinc-500 font-medium tracking-widest border-b-4 border-transparent hover:border-b-4 hover:text-koq hover:border-koq transition"
+    >
+      BASICAS
+    </button>
+    <button
+      class="py-4 px-8 text-zinc-500 font-medium tracking-widest border-b-4 border-transparent hover:border-b-4 hover:text-koq hover:border-koq transition"
+    >
+      POLERAS UNISEX
+    </button>
+    <button
+      class="py-4 px-8 text-zinc-500 font-medium tracking-widest border-b-4 border-transparent hover:border-b-4 hover:text-koq hover:border-koq transition"
+    >
+      CAMISAS
+    </button>
+  </nav>
+  <div class="grid grid-cols-1">
+    @for (item of [1, 2, 3, 4, 5, 6, 7]; track $index) {
+      <app-product-card></app-product-card>
+    }
   </div>
-</div>
-
-
-<div>
-
 </div>
