@@ -14,12 +14,12 @@ export const routes: Routes = [
     component: AppLayoutComponent,
     canActivate: [authGuard],
     children: [
-      {path: 'catalogo', component: CatalogComponent},
-      {path: '', redirectTo:'catalogo', pathMatch: 'full'},
-    ]
+      { path: 'catalogo', component: CatalogComponent },
+      { path: '', redirectTo: 'catalogo', pathMatch: 'full' },
+    ],
   },
   {
     path: '**',
     redirectTo: 'login',
-  }
+  },
 ];

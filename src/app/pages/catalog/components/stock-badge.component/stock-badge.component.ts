@@ -7,4 +7,4 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
   styleUrl: './stock-badge.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class StockBadgeComponent { }
+export class StockBadgeComponent {}

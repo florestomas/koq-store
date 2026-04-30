@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { SidebarComponent } from "../../shared/sidebar/sidebar.component";
+import { SidebarComponent } from '../../shared/sidebar/sidebar.component';
 import { RouterOutlet } from '@angular/router';
 
 @Component({
@@ -9,4 +9,4 @@ import { RouterOutlet } from '@angular/router';
   styleUrl: './app-layout.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AppLayoutComponent { }
+export class AppLayoutComponent {}

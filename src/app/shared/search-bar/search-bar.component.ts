@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { MatIcon } from "@angular/material/icon";
+import { MatIcon } from '@angular/material/icon';
 
 @Component({
   selector: 'app-search-bar',
@@ -8,4 +8,4 @@ import { MatIcon } from "@angular/material/icon";
   styleUrl: './search-bar.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SearchBarComponent { }
+export class SearchBarComponent {}

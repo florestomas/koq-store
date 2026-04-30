@@ -12,7 +12,7 @@ export enum ESTADO {
 })
 export class AuthService {
   /* true para no tener q ingresar siempre q lo queramos probar XD */
-   logged : WritableSignal<boolean> = signal(true)
+  logged: WritableSignal<boolean> = signal(true);
 
   login(user: string, password?: string): Observable<ESTADO> {
     let userLogIn = USERS.find((users) => users.user == user);
@@ -21,7 +21,7 @@ export class AuthService {
     if (userLogIn?.password != password) return of(ESTADO.FAIL);
 
     this.logged.set(true);
-    console.log('this.logged.set true')
+    console.log('this.logged.set true');
 
     return of(ESTADO.SUCCESS);
   }

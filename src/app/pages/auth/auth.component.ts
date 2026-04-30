@@ -10,36 +10,36 @@ import { delay } from 'rxjs';
   templateUrl: './auth.component.html',
   styleUrl: './auth.component.css',
 })
-
 export class AuthComponent {
-  logInForm = new FormGroup({ /* Se puede hacer sin new */
-    user: new FormControl<string>('', Validators.required),
+  logInForm = new FormGroup({
+    /* Se puede hacer sin new */ user: new FormControl<string>('', Validators.required),
     password: new FormControl<string>('', Validators.required),
-  })
-  private router = inject(Router)
-  private authService = inject(AuthService)
-  isLoading = signal(false);/*  */
+  });
+  private router = inject(Router);
+  private authService = inject(AuthService);
+  isLoading = signal(false); /*  */
   showLogInError = signal(false);
 
   onSubmit() {
     this.isLoading.set(true);
     this.showLogInError.set(false);
 
-    this.authService.login(this.logInForm.value.user!, this.logInForm.value.password!).pipe(delay(2000)).subscribe({
-      next: (estado : ESTADO)=>{
-        if(estado == ESTADO.SUCCESS){
-          this.router.navigate([''])
-          this.isLoading.set(false)
-        }
-        if(estado == ESTADO.FAIL){
-          console.log('fail')
-          this.showLogInError.set(true);
-          this.isLoading.set(false)
-          this.logInForm.reset()
-        }
-      },
-    })
-
+    this.authService
+      .login(this.logInForm.value.user!, this.logInForm.value.password!)
+      .pipe(delay(2000))
+      .subscribe({
+        next: (estado: ESTADO) => {
+          if (estado == ESTADO.SUCCESS) {
+            this.router.navigate(['']);
+            this.isLoading.set(false);
+          }
+          if (estado == ESTADO.FAIL) {
+            console.log('fail');
+            this.showLogInError.set(true);
+            this.isLoading.set(false);
+            this.logInForm.reset();
+          }
+        },
+      });
   }
-
 }

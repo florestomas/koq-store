@@ -1,6 +1,6 @@
 export interface TransferDetail {
-  id: string
-  idTransfer: string
-  idProduct: string
-  quantity: number
+  id: string;
+  idTransfer: string;
+  idProduct: string;
+  quantity: number;
 }

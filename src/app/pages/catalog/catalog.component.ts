@@ -7,8 +7,7 @@ import { MatSlideToggle } from '@angular/material/slide-toggle';
 
 @Component({
   selector: 'app-catalog.component',
-  imports: [MatIcon, UpperCasePipe, ProductCardComponent, SearchBarComponent,
-  ],
+  imports: [MatIcon, UpperCasePipe, ProductCardComponent, SearchBarComponent],
   templateUrl: './catalog.component.html',
   styleUrl: './catalog.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

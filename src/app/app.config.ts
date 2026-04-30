@@ -6,7 +6,7 @@ import { routes } from './app.routes';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideRouter(routes,withComponentInputBinding()),
+    provideRouter(routes, withComponentInputBinding()),
     { provide: MAT_ICON_DEFAULT_OPTIONS, useValue: { fontSet: 'material-icons-outlined' } },
-  ]
+  ],
 };

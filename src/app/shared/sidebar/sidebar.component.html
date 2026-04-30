@@ -4,16 +4,36 @@
       <h1 class="text-2xl text-koq">Koq Store</h1>
       <h2 class="text-sm text-gray-900/60">INVENTARIO</h2>
     </div>
-    <img class="size-14" src="koq-logo-sm.jpeg"/>
+    <img class="size-14" src="koq-logo-sm.jpeg" />
   </div>
 
   <nav class="flex flex-col gap-0.5 w-full py-4 px-6">
-    <app-nav-item [navLink]="'catalogo'" [iconName]="'inventory_2'" [navName]="'CATALOGO'"></app-nav-item>
-    <app-nav-item [navLink]="'nuevo_item'" [iconName]="'add_box'" [navName]="'NUEVO ITEM'"></app-nav-item>
-    <app-nav-item [navLink]="'transferencia'" [iconName]="'local_shipping'" [navName]="'TRANSFERENCIA'"></app-nav-item>
-    <app-nav-item [navLink]="'recepcion'" [iconName]="'archive'" [navName]="'RECEPCION'"></app-nav-item>
+    <app-nav-item
+      [navLink]="'catalogo'"
+      [iconName]="'inventory_2'"
+      [navName]="'CATALOGO'"
+    ></app-nav-item>
+    <app-nav-item
+      [navLink]="'nuevo_item'"
+      [iconName]="'add_box'"
+      [navName]="'NUEVO ITEM'"
+    ></app-nav-item>
+    <app-nav-item
+      [navLink]="'transferencia'"
+      [iconName]="'local_shipping'"
+      [navName]="'TRANSFERENCIA'"
+    ></app-nav-item>
+    <app-nav-item
+      [navLink]="'recepcion'"
+      [iconName]="'archive'"
+      [navName]="'RECEPCION'"
+    ></app-nav-item>
     <app-nav-item [navLink]="'alertas'" [iconName]="'warning'" [navName]="'ALERTAS'"></app-nav-item>
-    <app-nav-item [navLink]="'historial'" [iconName]="'history'" [navName]="'HISTORIAL'"></app-nav-item>
+    <app-nav-item
+      [navLink]="'historial'"
+      [iconName]="'history'"
+      [navName]="'HISTORIAL'"
+    ></app-nav-item>
   </nav>
 
   <div
@@ -24,6 +44,10 @@
       <p class="text-xl">{{ user() }}</p>
     </div>
 
-    <app-nav-item [navLink]="'auth'" [iconName]="'logout'" [navName]="'CERRAR SESION'"></app-nav-item>
+    <app-nav-item
+      [navLink]="'auth'"
+      [iconName]="'logout'"
+      [navName]="'CERRAR SESION'"
+    ></app-nav-item>
   </div>
 </div>

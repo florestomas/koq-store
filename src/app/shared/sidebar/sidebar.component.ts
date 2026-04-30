@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
-import { NavItemComponent } from "./nav-item/nav-item.component";
-import { MatIcon } from "@angular/material/icon";
-import { RouterLink } from "@angular/router";
+import { NavItemComponent } from './nav-item/nav-item.component';
+import { MatIcon } from '@angular/material/icon';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-sidebar',
@@ -11,5 +11,5 @@ import { RouterLink } from "@angular/router";
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SidebarComponent {
-  user = signal('TALLER')
+  user = signal('TALLER');
 }
