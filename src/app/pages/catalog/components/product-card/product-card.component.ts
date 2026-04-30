@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { MatIcon } from "@angular/material/icon";
 import { StockBadgeComponent } from '../stock-badge.component/stock-badge.component';
 
@@ -9,4 +9,9 @@ import { StockBadgeComponent } from '../stock-badge.component/stock-badge.compon
   styleUrl: './product-card.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ProductCardComponent { }
+export class ProductCardComponent {
+
+  public cardExpanded = signal(true);
+
+
+}

@@ -27,15 +27,18 @@
       </span>
     </div>
 
-    <div class="rounded-full border p-1.5 border-zinc-500 text-zinc-500!">
+    <button class="rounded-full border p-1.5 border-zinc-500 text-zinc-500!">
       <mat-icon>edit</mat-icon>
-    </div>
-    <div class="rounded-full border p-1.5 border-koq bg-koq text-white!">
+    </button>
+    <button
+      (click)="cardExpanded.set(!cardExpanded())"
+      class="rounded-full border p-1.5 border-koq bg-koq text-white!"
+    >
       <mat-icon>expand_less</mat-icon>
-    </div>
+    </button>
   </div>
 
-  <div class="flex flex-row p-4">
+  <div class="flex flex-row p-4" [hidden]="cardExpanded()">
     <div class="flex-1 flex-col mx-3">
       <span class="flex text-center items-center tracking-wider gap-2 text-xs font-medium"
         ><mat-icon>straighten</mat-icon>GRILLA DE STOCK POR TALLE / COLOR</span
@@ -84,14 +87,16 @@
       </div>
 
       <div class="flex flex-row gap-2">
-        <button class="flex flex-1 px-3 py-4 justify-center bg-koq rounded-full">
-          <span class="text-white text-center tracking-wider">SURTIR STOCK</span>
+        <button class="flex flex-1 px-3 py-4 justify-center items-center tracking-wider text-white bg-koq rounded-full
+          hover:bg-white border border-transparent hover:border-koq hover:text-koq transition">
+          SURTIR STOCK
         </button>
 
         <button
-          class="flex flex-1 p-3 justify-center bg-transparent border border-koq rounded-full"
+          class="flex flex-1 p-3 justify-center items-center bg-transparent border text-koq border-koq rounded-full
+          hover:bg-koq hover:text-white tracking-wider transition"
         >
-          <span class="text-koq text-center tracking-wider">HISTORIAL</span>
+          HISTORIAL
         </button>
       </div>
     </div>
