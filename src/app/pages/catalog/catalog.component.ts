@@ -1,7 +1,7 @@
 import { UpperCasePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
-import { ProductCardComponent } from './product-card/product-card.component';
+import { ProductCardComponent } from './components/product-card/product-card.component';
 import { SearchBarComponent } from '../../shared/search-bar/search-bar.component';
 import { MatSlideToggle } from '@angular/material/slide-toggle';
 
