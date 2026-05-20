@@ -72,9 +72,9 @@
         ><mat-icon>store</mat-icon>STOCK POR UBICACION</span
       >
 
-      <div class="flex flex-row h-full w-full items-center justify-center">
+      <div class="flex flex-row w-full items-center justify-center py-6">
         @for (ls of item().locationStocks; track ls.locationId) {
-          <div class="flex flex-col items-center justify-center mx-6">
+          <div class="flex flex-col items-center justify-center mx-8">
             <h1 class="text-4xl font-bold text-center">
               {{ ls.stock }}
             </h1>
@@ -85,7 +85,7 @@
         }
       </div>
 
-      <div class="flex flex-row gap-2">
+      <div class="flex flex-row gap-2 mt-4">
         <button
           class="flex flex-1 px-3 py-4 justify-center items-center tracking-wider text-white bg-koq rounded-full hover:bg-white border border-transparent hover:border-koq hover:text-koq transition"
         >
