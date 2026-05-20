@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
 @Component({
   selector: 'app-stock-badge',
@@ -7,4 +7,6 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
   styleUrl: './stock-badge.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class StockBadgeComponent {}
+export class StockBadgeComponent {
+  readonly stock = input<number>(0);
+}

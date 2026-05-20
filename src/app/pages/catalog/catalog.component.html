@@ -1,29 +1,32 @@
 <div class="flex flex-col w-full h-full p-8">
   <!-- Top -->
-  <div class="sticky top-0 z-10 bg-tran flex flex-row w-full justify-between items-center">
+  <div class="flex flex-row w-full justify-between items-center">
     <div class="flex flex-col">
       <h1 class="text-5xl text-black font-medium">{{ 'Catálogo' | uppercase }}</h1>
       <div class="flex flex-row items-center text-zinc-500 gap-2">
         <mat-icon class="material-icons">warehouse</mat-icon>
-        <p class="text-base font-light">INVENTARIO: {{ '777' }} UNIDADES</p>
+        <p class="text-base font-light">INVENTARIO: {{ catalogService.totalInventory() }} UNIDADES</p>
       </div>
     </div>
 
     <div class="flex flex-row items-center gap-x-5 h-13">
       <app-search-bar></app-search-bar>
       <button
+        (click)="openFilters()"
         class="flex flex-row h-full text-black! items-center gap-2 bg-zinc-500/20 px-5 py-2 rounded-full"
       >
         <mat-icon>filter_list</mat-icon>FILTROS
       </button>
 
       <label
-        class="flex flex-row h-full text-koq! items-center gap-2 bg-koq/20 px-5 py-2 rounded-full"
+        class="flex flex-row h-full text-koq! items-center gap-2 bg-koq/20 px-5 py-2 rounded-full cursor-pointer"
       >
         ALERTAS
         <input
-          class="appearance-none border rounded-full checked:bg-koq size-5 transition duration-100"
+          class="appearance-none border rounded-full checked:bg-koq size-5 transition duration-100 cursor-pointer"
           type="checkbox"
+          [checked]="catalogService.stockFilter() === 'low'"
+          (change)="toggleAlerts($event)"
         />
       </label>
     </div>
@@ -31,24 +34,29 @@
 
   <nav class="flex flex-row border-b border-gray-300 pt-4">
     <button
+      (click)="catalogService.setSelectedCategory(null)"
       class="py-4 px-8 text-zinc-500 font-medium tracking-widest border-b-4 border-transparent hover:border-b-4 hover:text-koq hover:border-koq transition"
+      [class.text-koq]="!catalogService.selectedCategoryId()"
+      [class.border-koq]="!catalogService.selectedCategoryId()"
+      [class.border-b-4]="!catalogService.selectedCategoryId()"
     >
-      BASICAS
+      TODOS
     </button>
-    <button
-      class="py-4 px-8 text-zinc-500 font-medium tracking-widest border-b-4 border-transparent hover:border-b-4 hover:text-koq hover:border-koq transition"
-    >
-      POLERAS UNISEX
-    </button>
-    <button
-      class="py-4 px-8 text-zinc-500 font-medium tracking-widest border-b-4 border-transparent hover:border-b-4 hover:text-koq hover:border-koq transition"
-    >
-      CAMISAS
-    </button>
+    @for (cat of catalogService.categories(); track cat.id) {
+      <button
+        (click)="catalogService.setSelectedCategory(cat.id)"
+        class="py-4 px-8 font-medium tracking-widest border-b-4 border-transparent hover:border-b-4 hover:text-koq hover:border-koq transition"
+        [class.text-koq]="catalogService.selectedCategoryId() === cat.id"
+        [class.border-koq]="catalogService.selectedCategoryId() === cat.id"
+        [class.text-zinc-500]="catalogService.selectedCategoryId() !== cat.id"
+      >
+        {{ cat.name | uppercase }}
+      </button>
+    }
   </nav>
   <div class="grid grid-cols-1">
-    @for (item of [1, 2, 3, 4, 5, 6, 7]; track $index) {
-      <app-product-card></app-product-card>
+    @for (item of catalogService.filteredItems(); track item.modelId) {
+      <app-product-card [item]="item"></app-product-card>
     }
   </div>
 </div>

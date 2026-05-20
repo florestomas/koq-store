@@ -1,5 +1,13 @@
-<div
-  class="flex justify-center size-10 text-center items-center rounded-full border border-koq bg-white"
->
-  <span>{{ '22' }}</span>
-</div>
+@if (stock() === 0) {
+  <div
+    class="flex justify-center size-10 text-center items-center rounded-full border-2 border-dashed border-red-300 bg-red-50 text-red-400 text-xs"
+  >
+    <span>0</span>
+  </div>
+} @else {
+  <div
+    class="flex justify-center size-10 text-center items-center rounded-full border border-koq bg-white"
+  >
+    <span>{{ stock() }}</span>
+  </div>
+}

@@ -40,4 +40,20 @@ export const CLOTHING_MODELS: ClothingModel[] = [
     createdAt: '2024-03-01T10:00:00.000Z',
     active: true,
   },
+  {
+    id: '6',
+    name: 'Remera oversized',
+    idCategory: '1',
+    description: 'Remera holgada de algodón premium',
+    createdAt: '2024-04-10T10:00:00.000Z',
+    active: true,
+  },
+  {
+    id: '7',
+    name: 'Top cropped',
+    idCategory: '3',
+    description: 'Top corto con elastano',
+    createdAt: '2024-04-15T10:00:00.000Z',
+    active: true,
+  },
 ];

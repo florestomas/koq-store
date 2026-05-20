@@ -1,7 +1,7 @@
 import { Category } from '../interfaces/category';
 
 export const CATEGORIES: Category[] = [
-  { id: '1', name: 'Remera' },
-  { id: '2', name: 'Pantalón' },
-  { id: '3', name: 'Vestido' },
+  { id: '1', name: 'Básicas' },
+  { id: '2', name: 'Poleras Unisex' },
+  { id: '3', name: 'Camisas' },
 ];

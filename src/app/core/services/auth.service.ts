@@ -1,5 +1,6 @@
-import { inject, Injectable, Signal, signal, WritableSignal } from '@angular/core';
+import { computed, inject, Injectable, Signal, signal, WritableSignal } from '@angular/core';
 import { USERS } from '../../mocks/users.mock';
+import { User } from '../../interfaces/user';
 import { Observable, of } from 'rxjs';
 
 export enum ESTADO {
@@ -13,6 +14,8 @@ export enum ESTADO {
 export class AuthService {
   /* true para no tener q ingresar siempre q lo queramos probar XD */
   logged: WritableSignal<boolean> = signal(true);
+  currentUser: WritableSignal<User | null> = signal(USERS[0]);
+  isAdmin: Signal<boolean> = computed(() => this.currentUser()?.role === 'admin');
 
   login(user: string, password?: string): Observable<ESTADO> {
     let userLogIn = USERS.find((users) => users.user == user);
@@ -21,6 +24,7 @@ export class AuthService {
     if (userLogIn?.password != password) return of(ESTADO.FAIL);
 
     this.logged.set(true);
+    this.currentUser.set(userLogIn);
     console.log('this.logged.set true');
 
     return of(ESTADO.SUCCESS);

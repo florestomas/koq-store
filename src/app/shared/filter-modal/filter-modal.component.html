@@ -1,0 +1,65 @@
+<h2 mat-dialog-title class="text-2xl font-medium">Filtros</h2>
+
+<mat-dialog-content class="flex flex-col gap-6 min-w-80">
+  @if (data.isAdmin) {
+    <div class="flex flex-col gap-2">
+      <span class="text-xs font-semibold tracking-wider text-zinc-500">UBICACIÓN</span>
+      <div class="flex flex-row flex-wrap gap-2">
+        <button
+          class="px-4 py-2 rounded-full text-sm font-medium transition border-2 cursor-pointer"
+          [class.bg-koq]="selectedLocationId() === null"
+          [class.text-white]="selectedLocationId() === null"
+          [class.border-koq]="selectedLocationId() === null"
+          [class.bg-gray-100]="selectedLocationId() !== null"
+          [class.text-zinc-600]="selectedLocationId() !== null"
+          [class.border-gray-200]="selectedLocationId() !== null"
+          [class.hover:border-koq]="selectedLocationId() !== null"
+          (click)="toggleLocation(null)"
+        >
+          Todas
+        </button>
+        @for (loc of data.locations; track loc.id) {
+          <button
+            class="px-4 py-2 rounded-full text-sm font-medium transition border-2 cursor-pointer"
+            [class.bg-koq]="selectedLocationId() === loc.id"
+            [class.text-white]="selectedLocationId() === loc.id"
+            [class.border-koq]="selectedLocationId() === loc.id"
+            [class.bg-gray-100]="selectedLocationId() !== loc.id"
+            [class.text-zinc-600]="selectedLocationId() !== loc.id"
+            [class.border-gray-200]="selectedLocationId() !== loc.id"
+            [class.hover:border-koq]="selectedLocationId() !== loc.id"
+            (click)="toggleLocation(loc.id)"
+          >
+            {{ loc.name }}
+          </button>
+        }
+      </div>
+    </div>
+  }
+
+  <div class="flex flex-col gap-2">
+    <span class="text-xs font-semibold tracking-wider text-zinc-500">ESTADO DE STOCK</span>
+    <div class="flex flex-row flex-wrap gap-2">
+      @for (value of ['all', 'low', 'out']; track value) {
+        <button
+          class="px-4 py-2 rounded-full text-sm font-medium transition border-2 cursor-pointer"
+          [class.bg-koq]="selectedStockFilter() === value"
+          [class.text-white]="selectedStockFilter() === value"
+          [class.border-koq]="selectedStockFilter() === value"
+          [class.bg-gray-100]="selectedStockFilter() !== value"
+          [class.text-zinc-600]="selectedStockFilter() !== value"
+          [class.border-gray-200]="selectedStockFilter() !== value"
+          [class.hover:border-koq]="selectedStockFilter() !== value"
+          (click)="setStockFilter($any(value))"
+        >
+          {{ stockLabel($any(value)) }}
+        </button>
+      }
+    </div>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="close()">Cancelar</button>
+  <button mat-flat-button color="primary" (click)="apply()">Aplicar</button>
+</mat-dialog-actions>

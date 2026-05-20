@@ -1,3 +1,17 @@
 :host {
   display: block;
 }
+
+.details-panel {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 260ms ease, opacity 260ms ease, padding 260ms ease;
+  padding: 0 1rem;
+}
+
+.details-panel.expanded {
+  max-height: 1000px; /* large enough for content */
+  opacity: 1;
+  padding: 1rem;
+}
