@@ -4,6 +4,7 @@ import { AppLayoutComponent } from './layouts/app-layout/app-layout.component';
 import { authGuard } from './core/guards/auth.guard';
 import { CatalogComponent } from './pages/catalog/catalog.component';
 import { TransferenciaComponent } from './pages/transfer/transferencia.component';
+import { CreateProductComponent } from './pages/create-product/create-product.component';
 
 export const routes: Routes = [
   {
@@ -17,6 +18,7 @@ export const routes: Routes = [
     children: [
       { path: 'catalogo', component: CatalogComponent },
       { path: 'transferencia', component: TransferenciaComponent },
+      { path: 'crear-producto', component: CreateProductComponent },
       { path: '', redirectTo: 'catalogo', pathMatch: 'full' },
     ],
   },
