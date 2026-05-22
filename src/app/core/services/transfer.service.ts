@@ -154,6 +154,52 @@ export class TransferService {
     }
   }
 
+  addItemsFromPicker(model: SelectableModel, quantities: Record<string, Record<string, number>>): void {
+    const items = [...this.items()];
+    const origin = this.originId();
+
+    for (const colorId of Object.keys(quantities)) {
+      for (const size of Object.keys(quantities[colorId])) {
+        const qty = quantities[colorId][size];
+        if (qty <= 0) continue;
+
+        const productId = this.getProductId(model.modelId, colorId, size);
+        if (!productId) continue;
+
+        const stockAtOrigin = this.getStockForColorSize(productId, origin);
+        if (stockAtOrigin <= 0) continue;
+
+        const existing = items.findIndex(
+          (i) =>
+            i.productId === productId &&
+            i.modelId === model.modelId &&
+            i.colorId === colorId &&
+            i.size === size,
+        );
+
+        if (existing !== -1) {
+          const newQty = Math.min(items[existing].quantity + qty, stockAtOrigin);
+          items[existing] = { ...items[existing], quantity: newQty, stockAtOrigin };
+        } else {
+          const colorName = COLORS.find((c) => c.id === colorId)?.name ?? colorId;
+          items.push({
+            modelId: model.modelId,
+            modelName: model.modelName,
+            imageUrl: model.imageUrl,
+            colorId,
+            colorName,
+            size,
+            productId,
+            stockAtOrigin,
+            quantity: Math.min(qty, stockAtOrigin),
+          });
+        }
+      }
+    }
+
+    this.items.set(items);
+  }
+
   changeQuantity(index: number, delta: number): void {
     const currentItems = [...this.items()];
     const item = currentItems[index];

@@ -1,0 +1,65 @@
+<div class="flex flex-col min-w-[560px]">
+  <h2 mat-dialog-title class="flex flex-row items-center gap-3">
+    <img [src]="data.model.imageUrl" class="size-12 rounded-xl" />
+    <div class="flex flex-col">
+      <span class="text-xl font-bold">{{ data.model.modelName }}</span>
+      <span class="text-xs text-zinc-400">{{ data.model.totalStock }} unidades disponibles en origen</span>
+    </div>
+  </h2>
+
+  <mat-dialog-content>
+    <div class="overflow-x-auto border border-gray-200 rounded-2xl">
+      <table class="w-full text-xs">
+        <thead>
+          <tr class="border-b border-gray-200 bg-gray-50">
+            <th class="text-left py-3 px-4 text-zinc-500 font-medium">COLOR</th>
+            @for (size of data.model.sizes; track size) {
+              <th class="text-center py-3 px-4 text-zinc-500 font-medium">T. {{ size }}</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (colorId of data.model.colors; track colorId.id) {
+            <tr class="border-b border-gray-100">
+              <td class="py-3 px-4 font-medium">{{ getColorName(colorId.id) | uppercase }}</td>
+              @for (size of data.model.sizes; track size) {
+                @let stock = getStock(colorId.id, size);
+                @let qty = getQty(colorId.id, size);
+                <td class="py-2 px-3 text-center">
+                  @if (stock > 0) {
+                    <div class="flex flex-col items-center gap-1">
+                      <input
+                        type="number"
+                        min="0"
+                        [max]="stock"
+                        class="w-16 text-center border border-gray-300 rounded-lg px-2 py-1.5 text-sm outline-none focus:border-koq"
+                        [value]="qty"
+                        (input)="setQty(colorId.id, size, $any($event.target).value)"
+                        placeholder="0"
+                      />
+                      <span class="text-zinc-400">{{ stock }} disp.</span>
+                    </div>
+                  } @else {
+                    <span class="text-zinc-300">—</span>
+                  }
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="close()">Cancelar</button>
+    <button
+      mat-flat-button
+      color="primary"
+      (click)="confirm()"
+      [disabled]="totalSelected() === 0"
+    >
+      Agregar al resumen ({{ totalSelected() }})
+    </button>
+  </mat-dialog-actions>
+</div>

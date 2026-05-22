@@ -1,12 +1,17 @@
 import { UpperCasePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatIcon } from '@angular/material/icon';
+import { MatDialog } from '@angular/material/dialog';
 import {
   TransferService,
   SelectableModel,
 } from '../../core/services/transfer.service';
-import { CatalogService } from '../../core/services/catalog.service';
+import {
+  VariantPickerModalComponent,
+  VariantPickerData,
+  VariantPickerResult,
+} from '../../shared/variant-picker-modal/variant-picker-modal.component';
 
 @Component({
   selector: 'app-transferencia',
@@ -17,14 +22,10 @@ import { CatalogService } from '../../core/services/catalog.service';
 })
 export class TransferenciaComponent {
   readonly transferService = inject(TransferService);
-  private readonly catalogService = inject(CatalogService);
+  private readonly dialog = inject(MatDialog);
 
   readonly searchControl = new FormControl('');
   readonly confirmed = signal(false);
-
-  readonly selectedModel = signal<SelectableModel | null>(null);
-  readonly selectedColorId = signal<string | null>(null);
-  readonly selectedSize = signal<string | null>(null);
 
   constructor() {
     this.searchControl.valueChanges.subscribe((v) =>
@@ -32,45 +33,29 @@ export class TransferenciaComponent {
     );
   }
 
-  selectModel(model: SelectableModel): void {
-    if (this.selectedModel()?.modelId === model.modelId) {
-      // Already selected — toggle off
-      this.selectedModel.set(null);
-      this.selectedColorId.set(null);
-      this.selectedSize.set(null);
-      return;
-    }
-    this.selectedModel.set(model);
-    this.selectedColorId.set(model.colors[0]?.id ?? null);
-    this.selectedSize.set(model.sizes[0] ?? null);
-  }
+  openVariantPicker(model: SelectableModel): void {
+    const data: VariantPickerData = {
+      model,
+      originId: this.transferService.originId(),
+    };
 
-  addToTransfer(): void {
-    const model = this.selectedModel();
-    const colorId = this.selectedColorId();
-    const size = this.selectedSize();
-    if (model && colorId && size) {
-      this.transferService.addItem(model, colorId, size);
-    }
-  }
+    const dialogRef = this.dialog.open<
+      VariantPickerModalComponent,
+      VariantPickerData,
+      VariantPickerResult
+    >(VariantPickerModalComponent, { data, maxWidth: '90vw' });
 
-  getSelectedVariantStock(): number {
-    const model = this.selectedModel();
-    const colorId = this.selectedColorId();
-    const size = this.selectedSize();
-    if (!model || !colorId || !size) return 0;
-    const productId = this.transferService.getProductId(model.modelId, colorId, size);
-    if (!productId) return 0;
-    return this.transferService.getStockForColorSize(productId, this.transferService.originId());
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        this.transferService.addItemsFromPicker(model, result.quantities);
+      }
+    });
   }
 
   confirmTransfer(): void {
     const ok = this.transferService.confirmTransfer();
     if (ok) {
       this.confirmed.set(true);
-      this.selectedModel.set(null);
-      this.selectedColorId.set(null);
-      this.selectedSize.set(null);
       setTimeout(() => this.confirmed.set(false), 3000);
     }
   }
