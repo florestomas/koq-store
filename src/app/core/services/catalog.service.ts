@@ -18,9 +18,13 @@ export class CatalogService {
   readonly stockFilter = signal<StockFilter>('all');
   readonly locationFilterId = signal<string | null>(null);
 
+  readonly refreshCounter = signal(0);
+
   readonly categories = computed<Category[]>(() => CATEGORIES);
 
   readonly filteredItems = computed<CatalogItem[]>(() => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const _refresh = this.refreshCounter();
     const term = this.searchTerm().toLowerCase().trim();
     const catId = this.selectedCategoryId();
     const stockF = this.stockFilter();
@@ -163,5 +167,9 @@ export class CatalogService {
 
   getLocations() {
     return LOCATIONS;
+  }
+
+  triggerRefresh(): void {
+    this.refreshCounter.set(this.refreshCounter() + 1);
   }
 }

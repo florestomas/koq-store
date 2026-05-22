@@ -1,0 +1,237 @@
+<div class="flex flex-col min-w-[640px] max-h-[80vh]">
+  <h2 mat-dialog-title class="text-2xl font-medium flex items-center gap-3">
+    <img [src]="data.item.imageUrl" class="size-12 rounded-xl" />
+    {{ data.item.modelName }}
+  </h2>
+
+  <nav class="flex flex-row border-b border-gray-200 px-6">
+    @for (tab of tabs; track tab.key) {
+      <button
+        (click)="selectTab(tab.key)"
+        class="py-3 px-6 text-sm font-medium tracking-wider border-b-2 transition"
+        [class.text-koq]="activeTab() === tab.key"
+        [class.border-koq]="activeTab() === tab.key"
+        [class.text-zinc-400]="activeTab() !== tab.key"
+        [class.border-transparent]="activeTab() !== tab.key"
+        [class.hover:text-zinc-600]="activeTab() !== tab.key"
+      >
+        {{ tab.label }}
+      </button>
+    }
+  </nav>
+
+  <mat-dialog-content class="pt-6">
+    @if (activeTab() === 'basic') {
+      <div class="flex flex-col gap-4">
+        <div class="flex flex-row gap-4">
+          <img [src]="data.item.imageUrl" class="size-32 rounded-2xl object-cover" />
+          <div class="flex flex-col gap-3 flex-1">
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-semibold text-zinc-500">NOMBRE</label>
+              <input
+                class="border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-koq"
+                [formControl]="form.controls.name"
+              />
+            </div>
+            <div class="flex flex-col gap-1">
+              <label class="text-xs font-semibold text-zinc-500">CATEGORÍA</label>
+              <select
+                class="border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-koq bg-white"
+                [formControl]="form.controls.categoryId"
+              >
+                @for (cat of data.categories; track cat.id) {
+                  <option [value]="cat.id">{{ cat.name }}</option>
+                }
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-1">
+          <label class="text-xs font-semibold text-zinc-500">DESCRIPCIÓN</label>
+          <textarea
+            class="border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-koq resize-none"
+            rows="3"
+            [formControl]="form.controls.description"
+          ></textarea>
+        </div>
+
+        <div class="flex flex-row gap-6">
+          <div class="flex-1 flex flex-col gap-1">
+            <label class="text-xs font-semibold text-zinc-500">STOCK TOTAL</label>
+            <p class="text-2xl font-bold">{{ data.item.totalStock }} <span class="text-base text-zinc-400 font-normal">unidades</span></p>
+          </div>
+          <div class="flex-1 flex flex-col gap-1">
+            <label class="text-xs font-semibold text-zinc-500">COLORES</label>
+            <p class="text-2xl font-bold">{{ modelColors().length }}</p>
+          </div>
+          <div class="flex-1 flex flex-col gap-1">
+            <label class="text-xs font-semibold text-zinc-500">TALLES</label>
+            <p class="text-2xl font-bold">{{ uniqueSizes().length }}</p>
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (activeTab() === 'stock') {
+      <div class="flex flex-col gap-6">
+        @for (loc of data.locations; track loc.id) {
+          <div class="flex flex-col gap-2">
+            <div class="flex flex-row items-center gap-2">
+              <mat-icon class="text-zinc-400 text-base">store</mat-icon>
+              <span class="text-sm font-semibold">{{ loc.name | uppercase }}</span>
+                @if (data.isAdmin) {
+                <div class="flex flex-row items-center gap-3 ml-auto">
+                  <span class="text-xs text-zinc-400"
+                    >Stock actual: <strong class="text-zinc-700">{{ getStockForLocation(loc.id) }}</strong></span
+                  >
+                  <label class="text-xs text-zinc-400">Stock mínimo:</label>
+                  <input
+                    type="number"
+                    class="border border-gray-300 rounded-lg px-2 py-1 text-sm w-20 text-center outline-none focus:border-koq"
+                    [value]="getMinStockForLocation(loc.id)"
+                    (input)="setMinStockForLocation(loc.id, $any($event.target).value)"
+                    min="0"
+                  />
+                </div>
+              } @else {
+                <span class="text-xs text-zinc-400 ml-auto">
+                  Total: {{ getStockForLocation(loc.id) }} / Mínimo: {{ getMinStockForLocation(loc.id) }}
+                </span>
+              }
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-xs border-collapse">
+                <thead>
+                  <tr class="border-b border-gray-200">
+                    <th class="text-left py-2 px-3 text-zinc-500 font-medium">COLOR</th>
+                    @for (size of uniqueSizes(); track size) {
+                      <th class="text-center py-2 px-3 text-zinc-500 font-medium">TALLE {{ size }}</th>
+                    }
+                    <th class="text-center py-2 px-3 text-zinc-500 font-medium">TOTAL</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (color of modelColors(); track color.id) {
+                    <tr class="border-b border-gray-100">
+                      <td class="py-2 px-3 font-medium">{{ color.name | uppercase }}</td>
+                      @for (size of uniqueSizes(); track size) {
+                        @let stock = getStockForColorSizeInLocation(color.id, size, loc.id);
+                        <td class="text-center py-2 px-3">
+                          @if (data.isAdmin) {
+                            <input
+                              type="number"
+                              min="0"
+                              class="size-8 rounded-full text-xs text-center border border-gray-300 outline-none focus:border-koq bg-gray-100"
+                              [class.bg-red-50]="stock === 0"
+                              [class.text-red-400]="stock === 0"
+                              [class.border-red-200]="stock === 0"
+                              [value]="stock"
+                              (input)="setCellCurrentStock(loc.id, color.id, size, $any($event.target).value)"
+                            />
+                          } @else {
+                            <span
+                              class="inline-flex items-center justify-center size-8 rounded-full text-xs"
+                              [class.bg-gray-100]="stock > 0"
+                              [class.bg-red-50]="stock === 0"
+                              [class.text-red-400]="stock === 0"
+                            >{{ stock }}</span>
+                          }
+                        </td>
+                      }
+                      <td class="text-center py-2 px-3 font-semibold">{{ getColorStockForLocation(color.id, loc.id) }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    @if (activeTab() === 'variants') {
+      <div class="flex flex-col gap-6">
+        <div class="flex flex-col gap-3">
+          <span class="text-xs font-semibold text-zinc-500">COLORES ({{ modelColors().length }})</span>
+          <div class="flex flex-row flex-wrap gap-3 items-center">
+            @for (color of modelColors(); track color.id) {
+              <div class="relative flex flex-col items-center gap-1 group">
+                @if (data.isAdmin) {
+                  <button
+                    (click)="removeColor(color.id)"
+                    class="absolute -top-2 -right-2 size-5 rounded-full bg-red-400 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
+                  >&times;</button>
+                }
+                <div class="size-16 rounded-xl bg-gray-100 flex items-center justify-center border-2 border-gray-200">
+                  <span class="text-xs text-zinc-500 text-center px-1">{{ color.name }}</span>
+                </div>
+                <span class="text-xs text-zinc-500">{{ color.name | uppercase }}</span>
+              </div>
+            }
+            @if (data.isAdmin) {
+              <div class="flex flex-row items-center gap-2">
+                <input
+                  type="text"
+                  placeholder="Nombre del color"
+                  class="border border-gray-300 rounded-full px-3 py-2 text-sm w-36 text-center outline-none focus:border-koq"
+                  [value]="newColorName()"
+                  (input)="newColorName.set($any($event.target).value)"
+                  list="colorSuggestions"
+                />
+                <datalist id="colorSuggestions">
+                  @for (c of availableColors(); track c.id) {
+                    <option [value]="c.name"></option>
+                  }
+                </datalist>
+                <button
+                  (click)="addColor()"
+                  class="px-3 py-2 rounded-full text-xs font-medium bg-koq text-white hover:opacity-90 transition"
+                >+ Agregar</button>
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-3">
+          <span class="text-xs font-semibold text-zinc-500">TALLES ({{ uniqueSizes().length }})</span>
+          <div class="flex flex-row flex-wrap gap-2 items-center">
+            @for (size of uniqueSizes(); track size) {
+              <div class="relative group">
+                @if (data.isAdmin) {
+                  <button
+                    (click)="removeSize(size)"
+                    class="absolute -top-2 -right-2 size-5 rounded-full bg-red-400 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
+                  >&times;</button>
+                }
+                <span class="px-4 py-2 rounded-full bg-gray-100 text-sm font-medium">{{ size }}</span>
+              </div>
+            }
+            @if (data.isAdmin) {
+              <div class="flex flex-row items-center gap-2">
+                <input
+                  type="number"
+                  min="0"
+                  max="14"
+                  placeholder="Talle"
+                  class="border border-gray-300 rounded-full px-3 py-2 text-sm w-20 text-center outline-none focus:border-koq"
+                  [value]="newSizeInput()"
+                  (input)="newSizeInput.set($any($event.target).value)"
+                />
+                <button
+                  (click)="addSize()"
+                  class="px-3 py-2 rounded-full text-xs font-medium bg-koq text-white hover:opacity-90 transition"
+                >+ Agregar</button>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    }
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end" class="px-6 pb-4">
+    <button mat-button (click)="close()">Cancelar</button>
+    <button mat-flat-button color="primary" (click)="save()">Guardar</button>
+  </mat-dialog-actions>
+</div>

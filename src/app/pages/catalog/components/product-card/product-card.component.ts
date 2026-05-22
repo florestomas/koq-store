@@ -1,9 +1,17 @@
 import { UpperCasePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
+import { MatDialog } from '@angular/material/dialog';
 import { StockBadgeComponent } from '../stock-badge.component/stock-badge.component';
 import { CatalogItem, ColorSizeRow } from '../../../../interfaces/catalog-item';
 import { COLORS } from '../../../../mocks/colors.mock';
+import { CATEGORIES } from '../../../../mocks/category.mock';
+import { LOCATIONS } from '../../../../mocks/location.mock';
+import { AuthService } from '../../../../core/services/auth.service';
+import {
+  ProductEditModalComponent,
+  ProductEditModalData,
+} from '../../../../shared/product-edit-modal/product-edit-modal.component';
 
 @Component({
   selector: 'app-product-card',
@@ -16,6 +24,18 @@ export class ProductCardComponent {
   readonly item = input.required<CatalogItem>();
   readonly cardExpanded = signal(false);
   readonly selectedLocationId = signal<string | null>('1');
+  private readonly dialog = inject(MatDialog);
+  private readonly authService = inject(AuthService);
+
+  openEdit(): void {
+    const data: ProductEditModalData = {
+      item: this.item(),
+      categories: CATEGORIES,
+      locations: LOCATIONS,
+      isAdmin: this.authService.isAdmin(),
+    };
+    this.dialog.open(ProductEditModalComponent, { data, maxWidth: '90vw' });
+  }
 
   readonly currentGrid = computed<ColorSizeRow[]>(() => {
     const locId = this.selectedLocationId();
