@@ -80,26 +80,29 @@
     <div class="flex flex-col gap-3 overflow-y-auto flex-1 pr-1">
       @for (model of transferService.selectableModels(); track model.modelId) {
         <div
-          class="flex flex-row items-center bg-white border border-gray-200 rounded-2xl p-4 gap-4 hover:border-koq hover:shadow-md transition cursor-pointer"
+          class="flex flex-row items-center bg-white border border-gray-200 rounded-2xl p-4 gap-3 hover:border-koq hover:shadow-md transition cursor-pointer"
           [class.border-koq]="selectedModel()?.modelId === model.modelId"
           [class.ring-2]="selectedModel()?.modelId === model.modelId"
           [class.ring-koq]="selectedModel()?.modelId === model.modelId"
           (click)="selectModel(model)"
         >
-          <img [src]="model.imageUrl" class="size-16 rounded-xl object-cover" />
-          <div class="flex flex-col flex-1">
+          <!-- Left Block: image + info -->
+          <img [src]="model.imageUrl" class="size-14 shrink-0 rounded-xl object-cover" />
+          <div class="flex flex-col flex-1 min-w-0">
             <span class="px-2 py-0.5 w-min rounded-full text-xs bg-koq/20 text-koq font-medium">
               {{ model.categoryName | uppercase }}
             </span>
-            <p class="text-xl font-bold mt-1">{{ model.modelName }}</p>
+            <p class="text-lg font-bold mt-1 truncate">{{ model.modelName }}</p>
             <p class="text-xs text-zinc-400">
-              Disponible: <strong class="text-zinc-700">{{ model.totalStock }}</strong> unidades
+              <strong class="text-zinc-700">{{ model.totalStock }}</strong> unidades
             </p>
           </div>
+
+          <!-- Right Block: actions (only when selected) -->
           @if (selectedModel()?.modelId === model.modelId) {
-            <div class="flex flex-row items-center gap-3">
+            <div class="flex flex-row items-center gap-2 shrink-0">
               <select
-                class="border border-gray-300 rounded-xl px-3 py-2 text-sm outline-none focus:border-koq bg-white"
+                class="border border-gray-300 rounded-xl px-2 py-2 text-xs outline-none focus:border-koq bg-white max-w-24"
                 [value]="selectedColorId()"
                 (change)="selectedColorId.set($any($event.target).value)"
                 (click)="$event.stopPropagation()"
@@ -109,28 +112,35 @@
                 }
               </select>
               <select
-                class="border border-gray-300 rounded-xl px-3 py-2 text-sm outline-none focus:border-koq bg-white"
+                class="border border-gray-300 rounded-xl px-2 py-2 text-xs outline-none focus:border-koq bg-white max-w-24"
                 [value]="selectedSize()"
                 (change)="selectedSize.set($any($event.target).value)"
                 (click)="$event.stopPropagation()"
               >
                 @for (s of model.sizes; track s) {
-                  <option [value]="s">Talle {{ s }}</option>
+                  <option [value]="s">T. {{ s }}</option>
                 }
               </select>
               @let variantStock = getSelectedVariantStock();
+              <span class="text-xs text-center shrink-0 w-12">
+                @if (variantStock > 0) {
+                  <strong class="text-zinc-700">{{ variantStock }}</strong>
+                  <span class="text-zinc-400"> disp.</span>
+                } @else {
+                  <span class="text-red-400">Agotado</span>
+                }
+              </span>
               <button
                 (click)="addToTransfer(); $event.stopPropagation()"
-                class="px-4 py-2 rounded-full text-sm font-semibold transition disabled:opacity-30 disabled:cursor-not-allowed"
+                class="px-3 py-2 rounded-full text-xs font-semibold shrink-0 transition disabled:opacity-30 disabled:cursor-not-allowed"
                 [class.bg-koq]="variantStock > 0"
                 [class.text-white]="variantStock > 0"
                 [class.hover:opacity-90]="variantStock > 0"
                 [class.bg-gray-200]="variantStock === 0"
                 [class.text-zinc-400]="variantStock === 0"
                 [disabled]="variantStock === 0"
-                [title]="variantStock === 0 ? 'Sin stock en origen' : 'Agregar al resumen'"
               >
-                {{ variantStock === 0 ? 'Sin stock' : '+ Agregar' }}
+                {{ variantStock > 0 ? '+ Agregar' : 'Sin stock' }}
               </button>
             </div>
           }
