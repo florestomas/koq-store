@@ -1,0 +1,225 @@
+<div class="flex flex-row w-full h-full gap-6 p-8">
+  <!-- Left Column (50%) -->
+  <div class="flex-1 flex flex-col gap-4 min-w-0">
+    <!-- Header -->
+    <div class="flex flex-row w-full justify-between items-center">
+      <div class="flex flex-col">
+        <h1 class="text-5xl text-black font-medium">{{ 'Crear Transferencia' | uppercase }}</h1>
+        <div class="flex flex-row items-center text-zinc-500 gap-2 mt-1">
+          <mat-icon class="material-icons-outlined">swap_horiz</mat-icon>
+          <p class="text-base font-light">ORIGEN &rarr; DESTINO</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Origin → Destination -->
+    <div class="flex flex-row items-center gap-3">
+      <div class="flex flex-col items-center bg-white border-2 border-koq rounded-2xl px-5 py-2 min-w-28">
+        <span class="text-xs text-zinc-400 tracking-wider mb-0.5">ORIGEN</span>
+        <span class="text-base font-bold text-koq">{{ getLocationName(transferService.originId()) }}</span>
+      </div>
+      <mat-icon class="text-2xl text-zinc-300 animate-pulse">arrow_forward</mat-icon>
+      <select
+        class="border-2 border-gray-200 rounded-2xl px-5 py-2 text-base font-bold outline-none focus:border-koq bg-white cursor-pointer"
+        [value]="transferService.destinationId()"
+        (change)="transferService.destinationId.set($any($event.target).value)"
+      >
+        <option value="" disabled selected>Seleccionar local...</option>
+        @for (loc of transferService.getLocations(); track loc.id) {
+          @if (loc.id !== transferService.originId()) {
+            <option [value]="loc.id">{{ loc.name }}</option>
+          }
+        }
+      </select>
+    </div>
+
+    <!-- Search -->
+    <div class="flex flex-row items-center gap-2 bg-gray-100 rounded-full px-4 py-2.5 border-2 border-transparent focus-within:border-koq">
+      <mat-icon class="text-zinc-400">search</mat-icon>
+      <input
+        class="bg-transparent outline-none text-sm flex-1"
+        type="text"
+        placeholder="Buscar modelo, SKU..."
+        [formControl]="searchControl"
+      />
+    </div>
+
+    <!-- Category tabs -->
+    <nav class="flex flex-row gap-2 flex-wrap">
+      <button
+        (click)="transferService.categoryFilterId.set(null)"
+        class="px-4 py-2 rounded-full text-xs font-semibold tracking-wider transition border-2 cursor-pointer"
+        [class.bg-koq]="!transferService.categoryFilterId()"
+        [class.text-white]="!transferService.categoryFilterId()"
+        [class.border-koq]="!transferService.categoryFilterId()"
+        [class.bg-gray-100]="transferService.categoryFilterId() !== null"
+        [class.text-zinc-500]="transferService.categoryFilterId() !== null"
+        [class.border-gray-200]="transferService.categoryFilterId() !== null"
+        [class.hover:border-koq]="transferService.categoryFilterId() !== null"
+      >
+        TODOS
+      </button>
+      @for (cat of transferService.categories(); track cat.id) {
+        <button
+          (click)="transferService.categoryFilterId.set(cat.id)"
+          class="px-4 py-2 rounded-full text-xs font-semibold tracking-wider transition border-2 cursor-pointer"
+          [class.bg-koq]="transferService.categoryFilterId() === cat.id"
+          [class.text-white]="transferService.categoryFilterId() === cat.id"
+          [class.border-koq]="transferService.categoryFilterId() === cat.id"
+          [class.bg-gray-100]="transferService.categoryFilterId() !== cat.id"
+          [class.text-zinc-500]="transferService.categoryFilterId() !== cat.id"
+          [class.border-gray-200]="transferService.categoryFilterId() !== cat.id"
+          [class.hover:border-koq]="transferService.categoryFilterId() !== cat.id"
+        >
+          {{ cat.name | uppercase }}
+        </button>
+      }
+    </nav>
+
+    <!-- Product Grid -->
+    <div class="flex flex-col gap-3 overflow-y-auto flex-1 pr-1">
+      @for (model of transferService.selectableModels(); track model.modelId) {
+        <div
+          class="flex flex-row items-center bg-white border border-gray-200 rounded-2xl p-4 gap-4 hover:border-koq hover:shadow-md transition cursor-pointer"
+          [class.border-koq]="selectedModel()?.modelId === model.modelId"
+          [class.ring-2]="selectedModel()?.modelId === model.modelId"
+          [class.ring-koq]="selectedModel()?.modelId === model.modelId"
+          (click)="selectModel(model)"
+        >
+          <img [src]="model.imageUrl" class="size-16 rounded-xl object-cover" />
+          <div class="flex flex-col flex-1">
+            <span class="px-2 py-0.5 w-min rounded-full text-xs bg-koq/20 text-koq font-medium">
+              {{ model.categoryName | uppercase }}
+            </span>
+            <p class="text-xl font-bold mt-1">{{ model.modelName }}</p>
+            <p class="text-xs text-zinc-400">
+              Disponible: <strong class="text-zinc-700">{{ model.totalStock }}</strong> unidades
+            </p>
+          </div>
+          @if (selectedModel()?.modelId === model.modelId) {
+            <div class="flex flex-row items-center gap-3">
+              <select
+                class="border border-gray-300 rounded-xl px-3 py-2 text-sm outline-none focus:border-koq bg-white"
+                [value]="selectedColorId()"
+                (change)="selectedColorId.set($any($event.target).value)"
+                (click)="$event.stopPropagation()"
+              >
+                @for (c of model.colors; track c.id) {
+                  <option [value]="c.id">{{ c.name }}</option>
+                }
+              </select>
+              <select
+                class="border border-gray-300 rounded-xl px-3 py-2 text-sm outline-none focus:border-koq bg-white"
+                [value]="selectedSize()"
+                (change)="selectedSize.set($any($event.target).value)"
+                (click)="$event.stopPropagation()"
+              >
+                @for (s of model.sizes; track s) {
+                  <option [value]="s">Talle {{ s }}</option>
+                }
+              </select>
+              @let variantStock = getSelectedVariantStock();
+              <button
+                (click)="addToTransfer(); $event.stopPropagation()"
+                class="px-4 py-2 rounded-full text-sm font-semibold transition disabled:opacity-30 disabled:cursor-not-allowed"
+                [class.bg-koq]="variantStock > 0"
+                [class.text-white]="variantStock > 0"
+                [class.hover:opacity-90]="variantStock > 0"
+                [class.bg-gray-200]="variantStock === 0"
+                [class.text-zinc-400]="variantStock === 0"
+                [disabled]="variantStock === 0"
+                [title]="variantStock === 0 ? 'Sin stock en origen' : 'Agregar al resumen'"
+              >
+                {{ variantStock === 0 ? 'Sin stock' : '+ Agregar' }}
+              </button>
+            </div>
+          }
+        </div>
+      }
+      @empty {
+        <div class="flex flex-col items-center justify-center py-16 text-zinc-400">
+          <mat-icon class="text-5xl mb-3">inventory_2</mat-icon>
+          <p class="text-lg font-medium">No se encontraron productos</p>
+          <p class="text-sm">Probá con otra búsqueda o categoría</p>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Right Column (50%) — Summary -->
+  <div class="flex-1 flex flex-col bg-white border border-gray-200 rounded-3xl p-6 shadow-sm min-w-0 h-full">
+    <div class="flex flex-row items-center justify-between mb-4">
+      <div class="flex flex-row items-center gap-2">
+        <mat-icon class="text-koq">receipt_long</mat-icon>
+        <h2 class="text-lg font-bold">Resumen</h2>
+      </div>
+      @if (confirmed()) {
+        <div class="px-4 py-1.5 rounded-full bg-green-100 text-green-700 text-xs font-medium flex items-center gap-1.5">
+          <mat-icon class="text-sm">check_circle</mat-icon> Transferencia confirmada
+        </div>
+      }
+    </div>
+
+    @if (transferService.items().length === 0) {
+      <div class="flex flex-col items-center justify-center flex-1 text-zinc-400">
+        <mat-icon class="text-6xl mb-4">local_shipping</mat-icon>
+        <p class="text-base font-medium">No hay productos agregados</p>
+        <p class="text-sm">Seleccioná productos de la izquierda</p>
+      </div>
+    }
+
+    @if (transferService.items().length > 0) {
+      <div class="flex flex-col gap-2 overflow-y-auto flex-1 mb-4">
+        @for (item of transferService.items(); track $index) {
+          <div class="flex flex-row items-center gap-3 bg-gray-50 rounded-2xl p-3">
+            <img [src]="item.imageUrl" class="size-10 rounded-lg object-cover" />
+            <div class="flex flex-col flex-1 min-w-0">
+              <p class="text-sm font-semibold truncate">{{ item.modelName }}</p>
+              <p class="text-xs text-zinc-400">
+                {{ item.colorName | uppercase }} &middot; Talle {{ item.size }}
+              </p>
+            </div>
+            <div class="flex flex-row items-center gap-1">
+              <button
+                (click)="transferService.changeQuantity($index, -1)"
+                class="size-7 rounded-full border border-gray-300 flex items-center justify-center text-sm font-bold hover:bg-red-50 hover:border-red-300 hover:text-red-500 transition"
+              >&minus;</button>
+              <span class="w-8 text-center text-sm font-bold">{{ item.quantity }}</span>
+              <button
+                (click)="transferService.changeQuantity($index, 1)"
+                class="size-7 rounded-full border border-gray-300 flex items-center justify-center text-sm font-bold hover:bg-koq/10 hover:border-koq hover:text-koq transition"
+              >+</button>
+            </div>
+            <button
+              (click)="transferService.removeItem($index)"
+              class="size-7 rounded-full flex items-center justify-center text-zinc-400 hover:bg-red-50 hover:text-red-400 transition"
+            >
+              <mat-icon class="text-base">close</mat-icon>
+            </button>
+          </div>
+        }
+      </div>
+
+      <div class="border-t border-gray-200 pt-4 flex flex-col gap-2 mt-auto">
+        <div class="flex flex-row justify-between text-sm">
+          <span class="text-zinc-500">Total items</span>
+          <span class="font-bold">{{ transferService.totalItems() }}</span>
+        </div>
+        <div class="flex flex-row justify-between text-sm">
+          <span class="text-zinc-500">Total unidades</span>
+          <span class="font-bold">{{ transferService.totalQuantity() }}</span>
+        </div>
+        <button
+          (click)="confirmTransfer()"
+          class="mt-3 w-full py-3.5 rounded-full text-sm font-bold tracking-wider text-white transition disabled:opacity-40 disabled:cursor-not-allowed"
+          [class.bg-koq]="transferService.destinationId() && transferService.items().length > 0"
+          [class.hover:opacity-90]="transferService.destinationId() && transferService.items().length > 0"
+          [class.bg-gray-300]="!transferService.destinationId() || transferService.items().length === 0"
+          [disabled]="!transferService.destinationId() || transferService.items().length === 0"
+        >
+          CONFIRMAR TRANSFERENCIA
+        </button>
+      </div>
+    }
+  </div>
+</div>
