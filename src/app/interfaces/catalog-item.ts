@@ -15,6 +15,18 @@ export interface StockAlert {
   type: 'low' | 'out';
 }
 
+export interface ProductRef {
+  id: string;
+  idColor: string;
+  size: string;
+}
+
+export interface StockRef {
+  idProduct: string;
+  idLocation: string;
+  currentStock: number;
+}
+
 export interface CatalogItem {
   modelId: string;
   modelName: string;
@@ -24,4 +36,6 @@ export interface CatalogItem {
   locationStocks: LocationStock[];
   colorSizeGrid: ColorSizeRow[];
   stockAlerts: StockAlert[];
+  products: ProductRef[];
+  allStocks: StockRef[];
 }

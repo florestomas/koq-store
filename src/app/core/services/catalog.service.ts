@@ -6,7 +6,7 @@ import { STOCK_LOCATIONS } from '../../mocks/stock-location.mock';
 import { LOCATIONS } from '../../mocks/location.mock';
 import { COLORS } from '../../mocks/colors.mock';
 import { CLOTHING_MODEL_COLORS } from '../../mocks/clothing-model-colors.mock';
-import { CatalogItem, StockAlert } from '../../interfaces/catalog-item';
+import { CatalogItem, StockAlert, ProductRef, StockRef } from '../../interfaces/catalog-item';
 import { Category } from '../../interfaces/category';
 
 export type StockFilter = 'all' | 'low' | 'out';
@@ -102,6 +102,20 @@ export class CatalogService {
           };
         });
 
+      const products: ProductRef[] = modelProducts.map((p) => ({
+        id: p.id,
+        idColor: p.idColor,
+        size: p.size,
+      }));
+
+      const allStocks: StockRef[] = STOCK_LOCATIONS.filter((s) =>
+        productIds.includes(s.idProduct),
+      ).map((s) => ({
+        idProduct: s.idProduct,
+        idLocation: s.idLocation,
+        currentStock: s.currentStock,
+      }));
+
       return {
         modelId: model.id,
         modelName: model.name,
@@ -111,6 +125,8 @@ export class CatalogService {
         locationStocks,
         colorSizeGrid,
         stockAlerts,
+        products,
+        allStocks,
       };
     });
 
