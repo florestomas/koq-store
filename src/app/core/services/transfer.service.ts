@@ -10,6 +10,7 @@ import { TRANSFERS } from '../../mocks/transfer.mock';
 import { TRANSFER_DETAILS } from '../../mocks/transfer-details.mock';
 import { AuthService } from './auth.service';
 import { CatalogService } from './catalog.service';
+import { StockMovementService } from './stock-movement.service';
 
 export interface TransferItem {
   modelId: string;
@@ -47,6 +48,7 @@ export class TransferService {
 
   private readonly authService = inject(AuthService);
   private readonly catalogService = inject(CatalogService);
+  private readonly stockMovementService = inject(StockMovementService);
 
   readonly totalItems = computed(() => this.items().length);
   readonly totalQuantity = computed(() =>
@@ -278,6 +280,9 @@ export class TransferService {
           minimumStock: 1,
         });
       }
+
+      this.stockMovementService.logMovement('out', item.productId, this.originId(), item.quantity, 'transfer', nextTransferId);
+      this.stockMovementService.logMovement('in', item.productId, destId, item.quantity, 'transfer', nextTransferId);
     }
 
     this.items.set([]);

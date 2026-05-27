@@ -1,7 +1,8 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { SALES } from '../../mocks/sales.mock';
 import { SALE_DETAILS } from '../../mocks/sale-detail.mock';
 import { STOCK_LOCATIONS } from '../../mocks/stock-location.mock';
+import { StockMovementService } from './stock-movement.service';
 
 export interface CartItem {
   productId: string;
@@ -24,6 +25,8 @@ export interface ConfirmSaleData {
 
 @Injectable({ providedIn: 'root' })
 export class SaleService {
+  private readonly stockMovementService = inject(StockMovementService);
+
   confirmSale(data: ConfirmSaleData): boolean {
     const { items, idLocation, idUser, channel, discountType, discountValue } = data;
 
@@ -62,6 +65,8 @@ export class SaleService {
       if (stockRecord) {
         stockRecord.currentStock = Math.max(0, stockRecord.currentStock - item.quantity);
       }
+
+      this.stockMovementService.logMovement('out', item.productId, idLocation, item.quantity, 'sale', nextSaleId);
     }
 
     return true;

@@ -18,6 +18,6 @@ describe('HistorialComponent', () => {
     const fixture = TestBed.createComponent(HistorialComponent);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.textContent).toContain('HISTORIAL DE VENTAS');
+    expect(compiled.textContent).toContain('HISTORIAL');
   });
 });

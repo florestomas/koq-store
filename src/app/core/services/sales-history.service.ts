@@ -8,6 +8,7 @@ import { COLORS } from '../../mocks/colors.mock';
 import { USERS } from '../../mocks/users.mock';
 import { STOCK_LOCATIONS } from '../../mocks/stock-location.mock';
 import { LOCATIONS } from '../../mocks/location.mock';
+import { StockMovementService } from './stock-movement.service';
 
 export interface SaleDetailRow {
   modelName: string;
@@ -43,6 +44,7 @@ export interface TopProduct {
 @Injectable({ providedIn: 'root' })
 export class SalesHistoryService {
   private readonly authService = inject(AuthService);
+  private readonly stockMovementService = inject(StockMovementService);
 
   readonly dateFrom = signal<string | null>(null);
   readonly dateTo = signal<string | null>(null);
@@ -226,6 +228,8 @@ export class SalesHistoryService {
       if (stockRecord) {
         stockRecord.currentStock += detail.quantity;
       }
+
+      this.stockMovementService.logMovement('in', detail.idProduct, sale.idLocation, detail.quantity, 'sale', saleId);
     }
 
     this.refresh();

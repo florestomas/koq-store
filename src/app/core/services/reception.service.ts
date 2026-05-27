@@ -8,6 +8,7 @@ import { COLORS } from '../../mocks/colors.mock';
 import { LOCATIONS } from '../../mocks/location.mock';
 import { STOCK_LOCATIONS } from '../../mocks/stock-location.mock';
 import { CLOTHING_MODEL_COLORS } from '../../mocks/clothing-model-colors.mock';
+import { StockMovementService } from './stock-movement.service';
 
 export interface DetailRow {
   detailId: string;
@@ -37,6 +38,7 @@ export interface ReceptionRow {
 @Injectable({ providedIn: 'root' })
 export class ReceptionService {
   private readonly authService = inject(AuthService);
+  private readonly stockMovementService = inject(StockMovementService);
   private readonly refreshCounter = signal(0);
 
   readonly pendingTransfers = computed<ReceptionRow[]>(() => {
@@ -170,6 +172,8 @@ export class ReceptionService {
             minimumStock: 1,
           });
         }
+
+        this.stockMovementService.logMovement('in', detail.idProduct, userLocationId, receivedQty, 'transfer', transferId);
       }
     }
 
