@@ -1,0 +1,72 @@
+<div class="flex flex-col w-full h-full p-8">
+  <!-- Screen-only header -->
+  <div class="no-print">
+    <div class="flex flex-row items-center gap-3 mb-8">
+      <mat-icon class="text-4xl text-koq">warning</mat-icon>
+      <h1 class="text-4xl text-black font-medium">{{ 'Alertas de Stock' | uppercase }}</h1>
+    </div>
+  </div>
+
+  <!-- Print header -->
+  <div class="print-header">
+    <h1>Lista de Reposición — {{ today | date:'dd/MM/yyyy' }}</h1>
+  </div>
+
+  <!-- Export / Print button -->
+  <div class="flex flex-row items-center justify-between mb-6 no-print">
+    <p class="text-sm text-zinc-500">
+      <strong class="text-zinc-700">{{ alertService.alertCount() }}</strong>
+      {{ alertService.alertCount() === 1 ? 'alerta' : 'alertas' }} de stock bajo
+    </p>
+    <button
+      (click)="print()"
+      class="flex flex-row items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold tracking-wider text-white bg-koq hover:opacity-90 transition cursor-pointer"
+    >
+      <mat-icon class="text-lg">print</mat-icon>
+      EXPORTAR / IMPRIMIR
+    </button>
+  </div>
+
+  <!-- Empty state -->
+  @if (alertService.alerts().length === 0) {
+    <div class="flex flex-col items-center justify-center flex-1 text-zinc-400">
+      <mat-icon class="text-7xl mb-4 text-green-500">check_circle</mat-icon>
+      <p class="text-xl font-medium text-green-600">Todo el stock está en orden</p>
+      <p class="text-sm text-zinc-400 mt-1">No hay productos con stock bajo</p>
+    </div>
+  }
+
+  <!-- Alerts table -->
+  @if (alertService.alerts().length > 0) {
+    <div class="overflow-x-auto border border-gray-200 rounded-3xl bg-white shadow-sm">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-200 bg-gray-50">
+            <th class="text-left py-4 px-5 text-zinc-500 font-semibold text-xs uppercase tracking-wider">Modelo</th>
+            <th class="text-left py-4 px-5 text-zinc-500 font-semibold text-xs uppercase tracking-wider">Talle</th>
+            <th class="text-left py-4 px-5 text-zinc-500 font-semibold text-xs uppercase tracking-wider">Color</th>
+            <th class="text-left py-4 px-5 text-zinc-500 font-semibold text-xs uppercase tracking-wider">Ubicación</th>
+            <th class="text-right py-4 px-5 text-zinc-500 font-semibold text-xs uppercase tracking-wider">Stock actual</th>
+            <th class="text-right py-4 px-5 text-zinc-500 font-semibold text-xs uppercase tracking-wider">Stock mínimo</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (alert of alertService.alerts(); track alert.id) {
+            <tr
+              class="border-b border-gray-100 last:border-b-0"
+              [class.alert-critical]="alert.currentStock === 0"
+              [class.alert-low]="alert.currentStock > 0"
+            >
+              <td class="py-3.5 px-5 font-medium">{{ alert.modelName }}</td>
+              <td class="py-3.5 px-5 text-zinc-600">T. {{ alert.size }}</td>
+              <td class="py-3.5 px-5 text-zinc-600">{{ alert.colorName }}</td>
+              <td class="py-3.5 px-5 text-zinc-600">{{ alert.locationName }}</td>
+              <td class="py-3.5 px-5 text-right font-bold" [class.text-red-600]="alert.currentStock === 0">{{ alert.currentStock }}</td>
+              <td class="py-3.5 px-5 text-right text-zinc-500">{{ alert.minimumStock }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

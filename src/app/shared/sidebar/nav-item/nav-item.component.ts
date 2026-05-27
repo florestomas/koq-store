@@ -13,4 +13,5 @@ export class NavItemComponent {
   @Input() iconName: string = 'inventory_2';
   @Input() navName: string = 'LOREMIMPSUM';
   @Input() navLink: string = '/sape';
+  @Input() badge: string | number | null = null;
 }

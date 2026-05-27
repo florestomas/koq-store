@@ -1,0 +1,239 @@
+<div class="flex flex-col w-full h-full p-8 gap-6">
+  <!-- Header -->
+  <div class="flex flex-row items-center gap-3">
+    <mat-icon class="text-3xl text-koq">history</mat-icon>
+    <h1 class="text-4xl text-black font-medium">{{ 'Historial de Ventas' | uppercase }}</h1>
+  </div>
+
+  <!-- Summary strip -->
+  <div class="flex flex-col md:flex-row gap-4">
+    <div class="flex-1 bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+      <p class="text-xs text-zinc-400 font-semibold tracking-wider uppercase mb-1">Ingresos totales</p>
+      <p class="text-2xl font-bold text-koq">$ {{ salesHistoryService.totalRevenue() | number:'1.0-0' }}</p>
+    </div>
+    <div class="flex-1 bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+      <p class="text-xs text-zinc-400 font-semibold tracking-wider uppercase mb-1">Canal con más ventas</p>
+      @if (salesHistoryService.topChannel(); as tc) {
+        <div class="flex flex-row items-center gap-2">
+          <mat-icon class="text-koq text-xl">{{ getChannelIcon(tc.name) }}</mat-icon>
+          <p class="text-xl font-bold text-zinc-800 capitalize">{{ tc.name === 'mercadolibre' ? 'Mercado Libre' : tc.name }}</p>
+          <span class="text-sm text-zinc-400">({{ tc.count }})</span>
+        </div>
+      } @else {
+        <p class="text-base text-zinc-400">—</p>
+      }
+    </div>
+    <div class="flex-[2] bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+      <p class="text-xs text-zinc-400 font-semibold tracking-wider uppercase mb-1">Top 5 productos más vendidos</p>
+      @if (salesHistoryService.topProducts().length > 0) {
+        <div class="flex flex-row flex-wrap gap-x-6 gap-y-1">
+          @for (p of salesHistoryService.topProducts(); track $index) {
+            <span class="text-sm text-zinc-700">
+              <strong>{{ p.modelName }}</strong>
+              @if (p.size) { T.{{ p.size }} }
+              {{ p.colorName }}
+              <span class="text-koq font-bold">&times;{{ p.totalQuantity }}</span>
+              @if (!$last) { <span class="text-zinc-300 mx-1">|</span> }
+            </span>
+          }
+        </div>
+      } @else {
+        <p class="text-base text-zinc-400">—</p>
+      }
+    </div>
+  </div>
+
+  <!-- Filters bar -->
+  <div class="flex flex-row flex-wrap items-end gap-4">
+    <!-- Date range -->
+    <div class="flex flex-col gap-1">
+      <label class="text-xs text-zinc-400 font-semibold tracking-wider uppercase">Desde</label>
+      <input
+        type="date"
+        class="border border-gray-300 rounded-xl px-4 py-2 text-sm outline-none focus:border-koq bg-white"
+        [value]="salesHistoryService.dateFrom() ?? ''"
+        (change)="setDateFrom($any($event.target).value)"
+      />
+    </div>
+    <div class="flex flex-col gap-1">
+      <label class="text-xs text-zinc-400 font-semibold tracking-wider uppercase">Hasta</label>
+      <input
+        type="date"
+        class="border border-gray-300 rounded-xl px-4 py-2 text-sm outline-none focus:border-koq bg-white"
+        [value]="salesHistoryService.dateTo() ?? ''"
+        (change)="setDateTo($any($event.target).value)"
+      />
+    </div>
+
+    <!-- Channel filter -->
+    <div class="flex flex-col gap-1">
+      <label class="text-xs text-zinc-400 font-semibold tracking-wider uppercase">Canal</label>
+      <div class="flex flex-row gap-1.5">
+        @for (ch of channels; track ch) {
+          <button
+            (click)="setChannel(ch)"
+            class="px-3.5 py-2 rounded-xl text-xs font-bold tracking-wider transition border-2 cursor-pointer capitalize"
+            [class.bg-koq]="salesHistoryService.channel() === ch"
+            [class.text-white]="salesHistoryService.channel() === ch"
+            [class.border-koq]="salesHistoryService.channel() === ch"
+            [class.bg-white]="salesHistoryService.channel() !== ch"
+            [class.text-zinc-500]="salesHistoryService.channel() !== ch"
+            [class.border-gray-200]="salesHistoryService.channel() !== ch"
+            [class.hover:border-koq]="salesHistoryService.channel() !== ch"
+          >
+            @switch (ch) {
+              @case ('all') { TODOS }
+              @case ('local') { LOCAL }
+              @case ('whatsapp') { WHATSAPP }
+              @case ('mercadolibre') { M. LIBRE }
+            }
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Location filter (admin only) -->
+    @if (isAdmin()) {
+      <div class="flex flex-col gap-1">
+        <label class="text-xs text-zinc-400 font-semibold tracking-wider uppercase">Ubicación</label>
+        <select
+          class="border border-gray-300 rounded-xl px-4 py-2 text-sm outline-none focus:border-koq bg-white"
+          [value]="salesHistoryService.locationId() ?? ''"
+          (change)="setLocation($any($event.target).value)"
+        >
+          <option value="">Todas</option>
+          @for (loc of salesHistoryService.availableLocations; track loc.id) {
+            <option [value]="loc.id">{{ loc.name }}</option>
+          }
+        </select>
+      </div>
+    }
+  </div>
+
+  <!-- Sales list -->
+  @if (salesHistoryService.filteredSales().length === 0) {
+    <div class="flex flex-col items-center justify-center flex-1 text-zinc-400">
+      <mat-icon class="text-7xl mb-4 text-zinc-300">receipt_long</mat-icon>
+      <p class="text-xl font-medium text-zinc-500">No se encontraron ventas</p>
+      <p class="text-sm text-zinc-400 mt-1">Probá con otros filtros</p>
+    </div>
+  }
+
+  @if (salesHistoryService.filteredSales().length > 0) {
+    <div class="flex flex-col gap-3">
+      @for (sale of salesHistoryService.filteredSales(); track sale.id) {
+        <div
+          class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden cursor-pointer transition hover:shadow-md"
+          [class.opacity-60]="sale.status === 'cancelled'"
+        >
+          <!-- Main row — clickable -->
+          <div
+            class="flex flex-row items-center gap-4 px-6 py-4"
+            (click)="toggleExpand(sale.id)"
+          >
+            <mat-icon class="text-zinc-300 text-lg shrink-0 transition-transform duration-300"
+              [class.rotate-90]="expandedSaleId() === sale.id"
+            >chevron_right</mat-icon>
+
+            <div class="flex flex-col min-w-0 w-28 shrink-0">
+              <span class="text-sm font-semibold text-zinc-800">{{ sale.dateTime | date:'dd/MM/yyyy' }}</span>
+              <span class="text-xs text-zinc-400">{{ sale.dateTime | date:'HH:mm' }}</span>
+            </div>
+
+            <span class="text-sm text-zinc-600 min-w-28 shrink-0">{{ sale.operatorName }}</span>
+
+            <mat-icon class="text-lg shrink-0"
+              [class.text-green-600]="sale.channel === 'local'"
+              [class.text-blue-500]="sale.channel === 'whatsapp'"
+              [class.text-yellow-600]="sale.channel === 'mercadolibre'"
+            >{{ getChannelIcon(sale.channel) }}</mat-icon>
+
+            <span class="flex-1 min-w-0"></span>
+
+            <span class="text-base font-bold text-zinc-800 shrink-0">$ {{ sale.totalAmount | number:'1.0-0' }}</span>
+
+            @if (sale.status === 'active') {
+              <span class="px-3 py-1 rounded-full text-[11px] font-bold tracking-wider bg-green-100 text-green-700 shrink-0">ACTIVA</span>
+            } @else {
+              <span class="px-3 py-1 rounded-full text-[11px] font-bold tracking-wider bg-red-100 text-red-600 line-through shrink-0">ANULADA</span>
+            }
+          </div>
+
+          <!-- Expandable detail -->
+          <div
+            class="expandable-content"
+            [class.expanded]="expandedSaleId() === sale.id"
+          >
+            <div class="border-t border-gray-100 px-6 py-4">
+              <!-- Detail table -->
+              <table class="w-full text-sm mb-3">
+                <thead>
+                  <tr class="border-b border-gray-100">
+                    <th class="text-left py-2 text-zinc-400 font-medium text-xs uppercase tracking-wider">Modelo</th>
+                    <th class="text-left py-2 text-zinc-400 font-medium text-xs uppercase tracking-wider">Talle</th>
+                    <th class="text-left py-2 text-zinc-400 font-medium text-xs uppercase tracking-wider">Color</th>
+                    <th class="text-right py-2 text-zinc-400 font-medium text-xs uppercase tracking-wider">Cant.</th>
+                    <th class="text-right py-2 text-zinc-400 font-medium text-xs uppercase tracking-wider">P. Unit.</th>
+                    <th class="text-right py-2 text-zinc-400 font-medium text-xs uppercase tracking-wider">Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (det of sale.details; track $index) {
+                    <tr class="border-b border-gray-50 last:border-b-0">
+                      <td class="py-2 font-medium">{{ det.modelName }}</td>
+                      <td class="py-2 text-zinc-500">T. {{ det.size }}</td>
+                      <td class="py-2 text-zinc-500">{{ det.colorName }}</td>
+                      <td class="py-2 text-right">{{ det.quantity }}</td>
+                      <td class="py-2 text-right">$ {{ det.unitPrice | number:'1.0-0' }}</td>
+                      <td class="py-2 text-right font-semibold">$ {{ det.quantity * det.unitPrice | number:'1.0-0' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+
+              <!-- Totals -->
+              <div class="flex flex-col items-end gap-1 text-sm border-t border-gray-100 pt-3">
+                <div class="flex flex-row gap-6">
+                  <span class="text-zinc-400">Subtotal</span>
+                  <span class="font-semibold w-24 text-right">$ {{ sale.totalBeforeDiscount | number:'1.0-0' }}</span>
+                </div>
+                @if (sale.discountType && sale.discountType !== 'none') {
+                  <div class="flex flex-row gap-6">
+                    <span class="text-green-600">
+                      Descuento
+                      @if (sale.discountType === 'percentage') {
+                        ({{ sale.discountValue }}%)
+                      }
+                    </span>
+                    <span class="font-semibold w-24 text-right text-green-600">
+                      &minus; $ {{ sale.discountType === 'percentage'
+                        ? (sale.totalBeforeDiscount * (sale.discountValue ?? 0) / 100 | number:'1.0-0')
+                        : (sale.discountValue ?? 0) }}
+                    </span>
+                  </div>
+                }
+                <div class="flex flex-row gap-6 text-base">
+                  <span class="font-bold text-zinc-700">Total</span>
+                  <span class="font-bold w-24 text-right text-koq">$ {{ sale.totalAmount | number:'1.0-0' }}</span>
+                </div>
+              </div>
+
+              <!-- Cancel button (only for active sales) -->
+              @if (sale.status === 'active') {
+                <div class="mt-4 flex justify-end">
+                  <button
+                    (click)="$event.stopPropagation(); confirmCancel(sale.id)"
+                    class="flex flex-row items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold tracking-wider text-red-600 border border-red-200 hover:bg-red-50 transition cursor-pointer"
+                  >
+                    <mat-icon class="text-base">cancel</mat-icon>
+                    ANULAR VENTA
+                  </button>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

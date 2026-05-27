@@ -6,6 +6,8 @@ import { CatalogComponent } from './pages/catalog/catalog.component';
 import { TransferenciaComponent } from './pages/transfer/transferencia.component';
 import { CreateProductComponent } from './pages/create-product/create-product.component';
 import { NewSaleComponent } from './pages/new-sale/new-sale.component';
+import { AlertasComponent } from './pages/alertas/alertas.component';
+import { HistorialComponent } from './pages/historial/historial.component';
 
 export const routes: Routes = [
   {
@@ -21,6 +23,8 @@ export const routes: Routes = [
       { path: 'transferencia', component: TransferenciaComponent },
       { path: 'crear-producto', component: CreateProductComponent },
       { path: 'ventas/nueva', component: NewSaleComponent },
+      { path: 'alertas', component: AlertasComponent },
+      { path: 'historial', component: HistorialComponent },
       { path: '', redirectTo: 'catalogo', pathMatch: 'full' },
     ],
   },
