@@ -13,21 +13,25 @@
       [iconName]="'inventory_2'"
       [navName]="'CATALOGO'"
     ></app-nav-item>
-    <app-nav-item
-      [navLink]="'crear-producto'"
-      [iconName]="'add_box'"
-      [navName]="'CREAR PRODUCTO'"
-    ></app-nav-item>
+    @if (isAdmin()) {
+      <app-nav-item
+        [navLink]="'crear-producto'"
+        [iconName]="'add_box'"
+        [navName]="'CREAR PRODUCTO'"
+      ></app-nav-item>
+    }
     <app-nav-item
       [navLink]="'ventas/nueva'"
       [iconName]="'point_of_sale'"
       [navName]="'VENTAS'"
     ></app-nav-item>
-    <app-nav-item
-      [navLink]="'transferencia'"
-      [iconName]="'local_shipping'"
-      [navName]="'TRANSFERENCIA'"
-    ></app-nav-item>
+    @if (isAdmin()) {
+      <app-nav-item
+        [navLink]="'transferencia'"
+        [iconName]="'local_shipping'"
+        [navName]="'TRANSFERENCIA'"
+      ></app-nav-item>
+    }
     <app-nav-item
       [navLink]="'recepciones'"
       [iconName]="'archive'"
@@ -44,9 +48,9 @@
   <div
     class="flex flex-col justify-start items-start p-6 gap-2 w-full mt-auto border-t-2 border-gray-300"
   >
-    <div class="flex flex-row gap-x-2">
-      <mat-icon class="border rounded-full pr-6">person</mat-icon>
-      <p class="text-xl">{{ user() }}</p>
+    <div class="flex flex-row gap-x-2 items-center">
+      <mat-icon>person</mat-icon>
+      <p class="text-lg font-medium truncate">{{ authService.currentUser()?.user ?? 'TALLER' }}</p>
     </div>
 
     <app-nav-item

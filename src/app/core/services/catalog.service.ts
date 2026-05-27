@@ -1,4 +1,4 @@
-import { computed, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
 import { CLOTHING_MODELS } from '../../mocks/clothing-models.mock';
 import { CATEGORIES } from '../../mocks/category.mock';
 import { PRODUCTS } from '../../mocks/products.mock';
@@ -8,11 +8,14 @@ import { COLORS } from '../../mocks/colors.mock';
 import { CLOTHING_MODEL_COLORS } from '../../mocks/clothing-model-colors.mock';
 import { CatalogItem, StockAlert, ProductRef, StockRef } from '../../interfaces/catalog-item';
 import { Category } from '../../interfaces/category';
+import { AuthService } from './auth.service';
 
 export type StockFilter = 'all' | 'low' | 'out';
 
 @Injectable({ providedIn: 'root' })
 export class CatalogService {
+  private readonly authService = inject(AuthService);
+
   readonly searchTerm = signal('');
   readonly selectedCategoryId = signal<string | null>(null);
   readonly stockFilter = signal<StockFilter>('all');
@@ -25,10 +28,13 @@ export class CatalogService {
   readonly filteredItems = computed<CatalogItem[]>(() => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const _refresh = this.refreshCounter();
+    const user = this.authService.currentUser();
+    const isAdmin = user?.role === 'admin';
+
     const term = this.searchTerm().toLowerCase().trim();
     const catId = this.selectedCategoryId();
     const stockF = this.stockFilter();
-    const locId = this.locationFilterId();
+    const locId = isAdmin ? this.locationFilterId() : (user?.idLocation ?? null);
 
     let models = CLOTHING_MODELS.filter((m) => m.active);
 
@@ -162,6 +168,8 @@ export class CatalogService {
   }
 
   setLocationFilter(locationId: string | null): void {
+    const user = this.authService.currentUser();
+    if (user?.role !== 'admin') return;
     this.locationFilterId.set(locationId);
   }
 

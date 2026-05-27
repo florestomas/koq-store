@@ -46,3 +46,50 @@ src/app/
 - Expandable detail panels use CSS `grid-template-rows` transition (0fr → 1fr) with `overflow: hidden` for smooth animation
 - Print views use `@media print` + `.no-print` class (native `window.print()`)
 - All confirmation dialogs use `window.confirm()` (no Material dialog pattern yet)
+
+## Role-Based Access Control (RBAC)
+
+### Layer 1 — Route guards
+- `authGuard` on the entire layout: blocks unauthenticated users
+- `operadorGuard` on `/transferencia` and `/crear-producto`: blocks `operator` role, redirects to `/catalogo`
+
+### Layer 2 — UI & service enforcement
+- **Sidebar**: `CREAR PRODUCTO` and `TRANSFERENCIA` nav items hidden for operators
+- **Catalog**: `setLocationFilter()` is a no-op for operators; `filteredItems` computed forces `idLocation` to operator's own location
+- **Alerts**: service filters by `idLocation` for operators; location filter bar hidden
+- **History**: service filters by `idLocation` for operators; location `<select>` hidden
+- **Receptions**: service filters pending transfers by `idDestination` for operators
+- **Sales**: `new-sale` component reads stock and writes sale using the user's `idLocation`
+
+### Supabase RLS policies (to implement when backend is active)
+```sql
+-- stock_locations: operators see only their location
+CREATE POLICY "operator_select_own_location" ON stock_locations
+  FOR SELECT USING (
+    auth.jwt() ->> 'role' = 'operator'
+    AND id_location = (auth.jwt() ->> 'id_location')::int
+  );
+
+-- stock_locations: only admins can write
+CREATE POLICY "admin_write_stock" ON stock_locations
+  FOR INSERT WITH CHECK ((auth.jwt() ->> 'role') = 'admin');
+CREATE POLICY "admin_update_stock" ON stock_locations
+  FOR UPDATE USING ((auth.jwt() ->> 'role') = 'admin');
+
+-- sales: operators select/insert only their location
+CREATE POLICY "operator_sales_scope" ON sales
+  FOR ALL USING (
+    auth.jwt() ->> 'role' = 'operator'
+    AND id_location = (auth.jwt() ->> 'id_location')::int
+  );
+
+-- transfers: admins only
+CREATE POLICY "admin_transfers" ON transfers
+  FOR ALL USING ((auth.jwt() ->> 'role') = 'admin');
+
+-- products / clothing_models / colors / categories: admins only
+CREATE POLICY "admin_write_catalog" ON clothing_models
+  FOR INSERT WITH CHECK ((auth.jwt() ->> 'role') = 'admin');
+CREATE POLICY "admin_write_products" ON products
+  FOR INSERT WITH CHECK ((auth.jwt() ->> 'role') = 'admin');
+```

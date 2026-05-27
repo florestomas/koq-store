@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { AuthComponent } from './pages/auth/auth.component';
 import { AppLayoutComponent } from './layouts/app-layout/app-layout.component';
 import { authGuard } from './core/guards/auth.guard';
+import { operadorGuard } from './core/guards/operador.guard';
 import { CatalogComponent } from './pages/catalog/catalog.component';
 import { TransferenciaComponent } from './pages/transfer/transferencia.component';
 import { CreateProductComponent } from './pages/create-product/create-product.component';
@@ -21,8 +22,8 @@ export const routes: Routes = [
     canActivate: [authGuard],
     children: [
       { path: 'catalogo', component: CatalogComponent },
-      { path: 'transferencia', component: TransferenciaComponent },
-      { path: 'crear-producto', component: CreateProductComponent },
+      { path: 'transferencia', component: TransferenciaComponent, canActivate: [operadorGuard] },
+      { path: 'crear-producto', component: CreateProductComponent, canActivate: [operadorGuard] },
       { path: 'ventas/nueva', component: NewSaleComponent },
       { path: 'alertas', component: AlertasComponent },
       { path: 'historial', component: HistorialComponent },

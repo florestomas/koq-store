@@ -16,6 +16,7 @@ export class AuthService {
   logged: WritableSignal<boolean> = signal(true);
   currentUser: WritableSignal<User | null> = signal(USERS[0]);
   isAdmin: Signal<boolean> = computed(() => this.currentUser()?.role === 'admin');
+  isOperator: Signal<boolean> = computed(() => this.currentUser()?.role === 'operator');
 
   login(user: string, password?: string): Observable<ESTADO> {
     let userLogIn = USERS.find((users) => users.user == user);

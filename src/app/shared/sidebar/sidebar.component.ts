@@ -1,8 +1,9 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { NavItemComponent } from './nav-item/nav-item.component';
 import { MatIcon } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
 import { AlertService } from '../../core/services/alert.service';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -13,6 +14,7 @@ import { AlertService } from '../../core/services/alert.service';
 })
 export class SidebarComponent {
   private readonly alertService = inject(AlertService);
+  readonly authService = inject(AuthService);
   readonly alertCount = this.alertService.alertCount;
-  user = signal('TALLER');
+  readonly isAdmin = this.authService.isAdmin;
 }
