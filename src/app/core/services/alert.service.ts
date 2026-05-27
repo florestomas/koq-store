@@ -1,10 +1,6 @@
 import { computed, Injectable, signal, inject, WritableSignal } from '@angular/core';
 import { AuthService } from './auth.service';
-import { STOCK_LOCATIONS } from '../../mocks/stock-location.mock';
-import { PRODUCTS } from '../../mocks/products.mock';
-import { CLOTHING_MODELS } from '../../mocks/clothing-models.mock';
-import { COLORS } from '../../mocks/colors.mock';
-import { LOCATIONS } from '../../mocks/location.mock';
+import { CatalogService } from './catalog.service';
 
 export interface AlertItem {
   id: string;
@@ -21,6 +17,7 @@ export interface AlertItem {
 @Injectable({ providedIn: 'root' })
 export class AlertService {
   private readonly authService = inject(AuthService);
+  private readonly catalog = inject(CatalogService);
   private readonly refreshCounter = signal(0);
 
   readonly selectedLocationId: WritableSignal<string | null> = signal(null);
@@ -32,7 +29,13 @@ export class AlertService {
     const userLocationId = user?.idLocation;
     const filterLocationId = this.selectedLocationId();
 
-    let stockLocations = STOCK_LOCATIONS;
+    const allStocks = this.catalog.catalogStocks();
+    const allProducts = this.catalog.catalogProducts();
+    const allModels = this.catalog.catalogModels();
+    const allColors = this.catalog.colors();
+    const allLocations = this.catalog.locations();
+
+    let stockLocations = allStocks;
 
     if (!isAdmin && userLocationId) {
       stockLocations = stockLocations.filter(
@@ -51,16 +54,16 @@ export class AlertService {
     const result: AlertItem[] = [];
 
     for (const s of lowStock) {
-      const product = PRODUCTS.find((p) => p.id === s.idProduct && p.active);
+      const product = allProducts.find((p) => p.id === s.idProduct && p.active);
       if (!product) continue;
 
-      const model = CLOTHING_MODELS.find(
+      const model = allModels.find(
         (m) => m.id === product.idClothingModel && m.active,
       );
       if (!model) continue;
 
-      const color = COLORS.find((c) => c.id === product.idColor);
-      const location = LOCATIONS.find((l) => l.id === s.idLocation);
+      const color = allColors.find((c) => c.id === product.idColor);
+      const location = allLocations.find((l) => l.id === s.idLocation);
 
       result.push({
         id: s.id,

@@ -1,14 +1,15 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
-import { CLOTHING_MODELS } from '../../mocks/clothing-models.mock';
-import { CATEGORIES } from '../../mocks/category.mock';
-import { PRODUCTS } from '../../mocks/products.mock';
-import { STOCK_LOCATIONS } from '../../mocks/stock-location.mock';
-import { LOCATIONS } from '../../mocks/location.mock';
-import { COLORS } from '../../mocks/colors.mock';
-import { CLOTHING_MODEL_COLORS } from '../../mocks/clothing-model-colors.mock';
+import { getSupabase } from './supabase.service';
+import { AuthService } from './auth.service';
+import { toCamelCase } from '../utils/supabase-utils';
 import { CatalogItem, StockAlert, ProductRef, StockRef } from '../../interfaces/catalog-item';
 import { Category } from '../../interfaces/category';
-import { AuthService } from './auth.service';
+import { ClothingModel } from '../../interfaces/clothing-model';
+import { Color } from '../../interfaces/color';
+import { ClothingModelColor } from '../../interfaces/clothing-model-color';
+import { Product } from '../../interfaces/product';
+import { StockLocation } from '../../interfaces/stock-location';
+import { Location } from '../../interfaces/location';
 
 export type StockFilter = 'all' | 'low' | 'out';
 
@@ -23,10 +24,25 @@ export class CatalogService {
 
   readonly refreshCounter = signal(0);
 
-  readonly categories = computed<Category[]>(() => CATEGORIES);
+  private readonly categoriesSig = signal<Category[]>([]);
+  private readonly modelsSig = signal<ClothingModel[]>([]);
+  private readonly productsSig = signal<Product[]>([]);
+  private readonly stocksSig = signal<StockLocation[]>([]);
+  private readonly colorsSig = signal<Color[]>([]);
+  private readonly modelColorsSig = signal<ClothingModelColor[]>([]);
+  private readonly locationsSig = signal<Location[]>([]);
+
+  readonly loaded = signal(false);
+
+  readonly categories = computed<Category[]>(() => this.categoriesSig());
+  readonly colors = computed<Color[]>(() => this.colorsSig());
+  readonly locations = computed<Location[]>(() => this.locationsSig());
+  readonly catalogModels = computed<ClothingModel[]>(() => this.modelsSig());
+  readonly catalogProducts = computed<Product[]>(() => this.productsSig());
+  readonly catalogStocks = computed<StockLocation[]>(() => this.stocksSig());
+  readonly catalogModelColors = computed<ClothingModelColor[]>(() => this.modelColorsSig());
 
   readonly filteredItems = computed<CatalogItem[]>(() => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const _refresh = this.refreshCounter();
     const user = this.authService.currentUser();
     const isAdmin = user?.role === 'admin';
@@ -36,7 +52,15 @@ export class CatalogService {
     const stockF = this.stockFilter();
     const locId = isAdmin ? this.locationFilterId() : (user?.idLocation ?? null);
 
-    let models = CLOTHING_MODELS.filter((m) => m.active);
+    const allModels = this.modelsSig();
+    const allProducts = this.productsSig();
+    const allStocksList = this.stocksSig();
+    const allCategories = this.categoriesSig();
+    const allColors = this.colorsSig();
+    const allModelColors = this.modelColorsSig();
+    const allLocations = this.locationsSig();
+
+    let models = allModels.filter((m) => m.active);
 
     if (term) {
       models = models.filter((m) => m.name.toLowerCase().includes(term));
@@ -47,18 +71,18 @@ export class CatalogService {
     }
 
     const items: CatalogItem[] = models.map((model) => {
-      const modelProducts = PRODUCTS.filter((p) => p.idClothingModel === model.id && p.active);
+      const modelProducts = allProducts.filter((p) => p.idClothingModel === model.id && p.active);
       const productIds = modelProducts.map((p) => p.id);
 
-      const locationIds = locId ? [locId] : LOCATIONS.map((l) => l.id);
-      const stocks = STOCK_LOCATIONS.filter(
+      const locationIds = locId ? [locId] : allLocations.map((l) => l.id);
+      const stocks = allStocksList.filter(
         (s) => productIds.includes(s.idProduct) && locationIds.includes(s.idLocation),
       );
 
       const categoryName =
-        CATEGORIES.find((c) => c.id === model.idCategory)?.name ?? '';
+        allCategories.find((c) => c.id === model.idCategory)?.name ?? '';
 
-      const modelColors = CLOTHING_MODEL_COLORS.filter(
+      const modelColors = allModelColors.filter(
         (mc) => mc.idClothingModel === model.id,
       );
       const imageUrl = modelColors[0]?.imageUrl ?? '';
@@ -69,7 +93,7 @@ export class CatalogService {
         const minTotal = locStocks.reduce((sum, s) => sum + s.minimumStock, 0);
         return {
           locationId: lid,
-          locationName: LOCATIONS.find((l) => l.id === lid)?.name ?? lid,
+          locationName: allLocations.find((l) => l.id === lid)?.name ?? lid,
           stock: total,
           minimumStock: minTotal,
         };
@@ -79,7 +103,7 @@ export class CatalogService {
 
       const productColors = [...new Set(modelProducts.map((p) => p.idColor))];
       const colorSizeGrid = productColors.map((cid) => {
-        const colorName = COLORS.find((c) => c.id === cid)?.name ?? cid;
+        const colorName = allColors.find((c) => c.id === cid)?.name ?? cid;
         const colorProducts = modelProducts.filter((p) => p.idColor === cid);
         const sizes = [...new Set(colorProducts.map((p) => p.size))].sort((a, b) => parseInt(a) - parseInt(b)).map((size) => {
           const sizeProducts = colorProducts.filter((p) => p.size === size);
@@ -118,7 +142,7 @@ export class CatalogService {
         size: p.size,
       }));
 
-      const allStocks: StockRef[] = STOCK_LOCATIONS.filter((s) =>
+      const allStocks: StockRef[] = allStocksList.filter((s) =>
         productIds.includes(s.idProduct),
       ).map((s) => ({
         idProduct: s.idProduct,
@@ -155,6 +179,46 @@ export class CatalogService {
     this.filteredItems().reduce((sum, item) => sum + item.totalStock, 0),
   );
 
+  constructor() {
+    this.loadData();
+  }
+
+  private async loadData(): Promise<void> {
+    try {
+      await this.authService.waitForInit();
+      const supabase = getSupabase();
+      const [
+        { data: rawCategories },
+        { data: rawModels },
+        { data: rawProducts },
+        { data: rawStocks },
+        { data: rawColors },
+        { data: rawModelColors },
+        { data: rawLocations },
+      ] = await Promise.all([
+        supabase.from('categories').select('*'),
+        supabase.from('clothing_models').select('*'),
+        supabase.from('products').select('*'),
+        supabase.from('stock_locations').select('*'),
+        supabase.from('colors').select('*'),
+        supabase.from('clothing_model_colors').select('*'),
+        supabase.from('locations').select('*'),
+      ]);
+
+      if (rawCategories) this.categoriesSig.set(rawCategories.map((r) => toCamelCase<Category>(r)));
+      if (rawModels) this.modelsSig.set(rawModels.map((r) => toCamelCase<ClothingModel>(r)));
+      if (rawProducts) this.productsSig.set(rawProducts.map((r) => toCamelCase<Product>(r)));
+      if (rawStocks) this.stocksSig.set(rawStocks.map((r) => toCamelCase<StockLocation>(r)));
+      if (rawColors) this.colorsSig.set(rawColors.map((r) => toCamelCase<Color>(r)));
+      if (rawModelColors) this.modelColorsSig.set(rawModelColors.map((r) => toCamelCase<ClothingModelColor>(r)));
+      if (rawLocations) this.locationsSig.set(rawLocations.map((r) => toCamelCase<Location>(r)));
+    } catch (err) {
+      console.error('Error loading catalog data:', err);
+    } finally {
+      this.loaded.set(true);
+    }
+  }
+
   setSearchTerm(value: string): void {
     this.searchTerm.set(value);
   }
@@ -174,7 +238,7 @@ export class CatalogService {
   }
 
   getLocations() {
-    return LOCATIONS;
+    return this.locationsSig();
   }
 
   triggerRefresh(): void {

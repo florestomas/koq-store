@@ -5,8 +5,7 @@
 ```bash
 npm start              # dev server (http://localhost:4200)
 npm test               # run unit tests (Vitest)
-npx vitest --run       # run tests directly without Angular CLI
-npx vitest --run src/app/app.spec.ts  # run a single test file
+npm test -- --include src/app/app.spec.ts  # run a single test file
 npm run build          # production build → dist/
 ```
 

@@ -1,8 +1,5 @@
-import { Injectable, inject } from '@angular/core';
-import { SALES } from '../../mocks/sales.mock';
-import { SALE_DETAILS } from '../../mocks/sale-detail.mock';
-import { STOCK_LOCATIONS } from '../../mocks/stock-location.mock';
-import { StockMovementService } from './stock-movement.service';
+import { Injectable, signal } from '@angular/core';
+import { getSupabase } from './supabase.service';
 
 export interface CartItem {
   productId: string;
@@ -14,7 +11,7 @@ export interface CartItem {
   imageUrl: string;
 }
 
-export interface ConfirmSaleData {
+interface ConfirmSaleParams {
   items: CartItem[];
   idLocation: string;
   idUser: string;
@@ -25,48 +22,31 @@ export interface ConfirmSaleData {
 
 @Injectable({ providedIn: 'root' })
 export class SaleService {
-  private readonly stockMovementService = inject(StockMovementService);
+  async confirmSale(data: ConfirmSaleParams): Promise<boolean> {
+    const { items, idLocation, idUser, channel, discountType, discountValue } =
+      data;
+    if (items.length === 0 || !channel) return false;
 
-  confirmSale(data: ConfirmSaleData): boolean {
-    const { items, idLocation, idUser, channel, discountType, discountValue } = data;
+    const p_items = items.map((item) => ({
+      id_product: item.productId,
+      quantity: item.quantity,
+      unit_price: item.unitPrice,
+    }));
 
-    if (items.length === 0) return false;
-    if (!channel) return false;
-
-    const nextSaleId = String(Math.max(...SALES.map((s) => parseInt(s.id)), 0) + 1);
-
-    SALES.push({
-      id: nextSaleId,
-      dateTime: new Date().toISOString(),
-      idLocation,
-      idUser,
-      channel,
-      discountType: discountType ?? undefined,
-      discountValue: discountType ? discountValue : undefined,
-      status: 'active',
+    const { error } = await getSupabase().rpc('confirmar_venta', {
+      p_id: crypto.randomUUID(),
+      p_id_location: idLocation,
+      p_id_user: idUser,
+      p_channel: channel,
+      p_discount_type: discountType ?? null,
+      p_discount_value: discountValue ?? null,
+      p_note: null,
+      p_items,
     });
 
-    for (const item of items) {
-      const nextDetailId = String(
-        Math.max(...SALE_DETAILS.map((d) => parseInt(d.id)), 0) + 1,
-      );
-
-      SALE_DETAILS.push({
-        id: nextDetailId,
-        idSale: nextSaleId,
-        idProduct: item.productId,
-        quantity: item.quantity,
-        unitPrice: item.unitPrice,
-      });
-
-      const stockRecord = STOCK_LOCATIONS.find(
-        (s) => s.idProduct === item.productId && s.idLocation === idLocation,
-      );
-      if (stockRecord) {
-        stockRecord.currentStock = Math.max(0, stockRecord.currentStock - item.quantity);
-      }
-
-      this.stockMovementService.logMovement('out', item.productId, idLocation, item.quantity, 'sale', nextSaleId);
+    if (error) {
+      console.error('Sale error:', error);
+      return false;
     }
 
     return true;

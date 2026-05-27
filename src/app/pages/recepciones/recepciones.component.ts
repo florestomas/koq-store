@@ -75,7 +75,7 @@ export class RecepcionesComponent {
     return this.getReceivedQty(detail.productId, detail.quantitySent) !== detail.quantitySent;
   }
 
-  confirmCurrentReception(): void {
+  async confirmCurrentReception(): Promise<void> {
     const transfer = this.selectedTransfer();
     if (!transfer) return;
 
@@ -94,7 +94,7 @@ export class RecepcionesComponent {
       );
     }
 
-    const ok = this.receptionService.confirmReception(
+    const ok = await this.receptionService.confirmReception(
       transfer.id,
       receivedMap,
     );

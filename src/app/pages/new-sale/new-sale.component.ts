@@ -4,13 +4,8 @@ import { UpperCasePipe, DecimalPipe } from '@angular/common';
 import { MatIcon } from '@angular/material/icon';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
+import { CatalogService } from '../../core/services/catalog.service';
 import { SaleService, CartItem } from '../../core/services/sale.service';
-import { CLOTHING_MODELS } from '../../mocks/clothing-models.mock';
-import { PRODUCTS } from '../../mocks/products.mock';
-import { STOCK_LOCATIONS } from '../../mocks/stock-location.mock';
-import { COLORS } from '../../mocks/colors.mock';
-import { CLOTHING_MODEL_COLORS } from '../../mocks/clothing-model-colors.mock';
-import { CATEGORIES } from '../../mocks/category.mock';
 import { ClothingModel } from '../../interfaces/clothing-model';
 import { Category } from '../../interfaces/category';
 
@@ -43,6 +38,7 @@ export interface ModelSearchResult {
 export class NewSaleComponent {
   private readonly authService = inject(AuthService);
   private readonly saleService = inject(SaleService);
+  readonly catalogService = inject(CatalogService);
 
   readonly searchControl = new FormControl('');
   readonly searchTerm = signal('');
@@ -69,15 +65,21 @@ export class NewSaleComponent {
 
   readonly availableModels = computed<ModelSearchResult[]>(() => {
     const locId = this.userLocationId();
+    const models = this.catalogService.catalogModels();
+    const products = this.catalogService.catalogProducts();
+    const stocks = this.catalogService.catalogStocks();
+    const modelColors = this.catalogService.catalogModelColors();
+    const categories = this.catalogService.categories();
 
-    return CLOTHING_MODELS.filter((m) => m.active)
+    return models
+      .filter((m) => m.active)
       .map((model) => {
-        const modelProducts = PRODUCTS.filter(
+        const modelProducts = products.filter(
           (p) => p.idClothingModel === model.id && p.active,
         );
         const productIds = modelProducts.map((p) => p.id);
 
-        const stocksAtLocation = STOCK_LOCATIONS.filter(
+        const stocksAtLocation = stocks.filter(
           (s) => productIds.includes(s.idProduct) && s.idLocation === locId,
         );
 
@@ -87,12 +89,12 @@ export class NewSaleComponent {
         );
 
         const imageUrl =
-          CLOTHING_MODEL_COLORS.find(
+          modelColors.find(
             (mc) => mc.idClothingModel === model.id,
           )?.imageUrl ?? '';
 
         const categoryName =
-          CATEGORIES.find((c) => c.id === model.idCategory)?.name ?? '';
+          categories.find((c) => c.id === model.idCategory)?.name ?? '';
 
         return { model, imageUrl, categoryName, totalStock };
       })
@@ -118,18 +120,19 @@ export class NewSaleComponent {
   });
 
   readonly categories = computed<Category[]>(() => {
-    const locId = this.userLocationId();
+    const categories = this.catalogService.categories();
     const modelIdsWithStock = new Set(
       this.availableModels().map((r) => r.model.idCategory),
     );
-    return CATEGORIES.filter((c) => modelIdsWithStock.has(c.id));
+    return categories.filter((c) => modelIdsWithStock.has(c.id));
   });
 
   readonly modelImageUrl = computed(() => {
     const model = this.selectedModel();
     if (!model) return '';
+    const modelColors = this.catalogService.catalogModelColors();
     return (
-      CLOTHING_MODEL_COLORS.find((mc) => mc.idClothingModel === model.id)
+      modelColors.find((mc) => mc.idClothingModel === model.id)
         ?.imageUrl ?? ''
     );
   });
@@ -137,7 +140,8 @@ export class NewSaleComponent {
   readonly modelProducts = computed(() => {
     const model = this.selectedModel();
     if (!model) return [];
-    return PRODUCTS.filter(
+    const products = this.catalogService.catalogProducts();
+    return products.filter(
       (p) => p.idClothingModel === model.id && p.active,
     );
   });
@@ -145,11 +149,14 @@ export class NewSaleComponent {
   readonly modelTotalStock = computed(() => {
     const products = this.modelProducts();
     const locId = this.userLocationId();
-    return STOCK_LOCATIONS.filter(
-      (s) =>
-        products.some((p) => p.id === s.idProduct) &&
-        s.idLocation === locId,
-    ).reduce((sum, s) => sum + s.currentStock, 0);
+    const stocks = this.catalogService.catalogStocks();
+    return stocks
+      .filter(
+        (s) =>
+          products.some((p) => p.id === s.idProduct) &&
+          s.idLocation === locId,
+      )
+      .reduce((sum, s) => sum + s.currentStock, 0);
   });
 
   readonly allSizes = computed(() => {
@@ -163,17 +170,19 @@ export class NewSaleComponent {
     const products = this.modelProducts();
     const locId = this.userLocationId();
     const sizes = this.allSizes();
+    const colors = this.catalogService.colors();
+    const stocks = this.catalogService.catalogStocks();
     const colorIds = [...new Set(products.map((p) => p.idColor))];
 
     return colorIds.map((colorId) => {
-      const colorName = COLORS.find((c) => c.id === colorId)?.name ?? colorId;
+      const colorName = colors.find((c) => c.id === colorId)?.name ?? colorId;
       const colorProducts = products.filter((p) => p.idColor === colorId);
 
       const cells: VariantCell[] = sizes.map((size) => {
         const product = colorProducts.find((p) => p.size === size);
         if (!product) return { productId: null, size, stock: 0 };
         const stock =
-          STOCK_LOCATIONS.find(
+          stocks.find(
             (s) => s.idProduct === product.id && s.idLocation === locId,
           )?.currentStock ?? 0;
         return { productId: product.id, size, stock };
@@ -266,7 +275,8 @@ export class NewSaleComponent {
         const qty = quantities[cell.productId] ?? 0;
         if (qty <= 0) continue;
 
-        const product = PRODUCTS.find((p) => p.id === cell.productId);
+        const products = this.catalogService.catalogProducts();
+        const product = products.find((p) => p.id === cell.productId);
         if (!product) continue;
 
         const existing = this.cartItems().findIndex(
@@ -314,8 +324,9 @@ export class NewSaleComponent {
         items[index] = { ...item, quantity: newQty };
       }
     } else {
+      const stocks = this.catalogService.catalogStocks();
       const availableStock =
-        STOCK_LOCATIONS.find(
+        stocks.find(
           (s) =>
             s.idProduct === item.productId &&
             s.idLocation === this.userLocationId(),
@@ -357,13 +368,13 @@ export class NewSaleComponent {
     return parseInt(value) || 0;
   }
 
-  confirmSale(): void {
+  async confirmSale(): Promise<void> {
     const channel = this.channel();
     const items = this.cartItems();
     const user = this.user();
     if (!channel || items.length === 0 || !user) return;
 
-    const ok = this.saleService.confirmSale({
+    const ok = await this.saleService.confirmSale({
       items,
       idLocation: user.idLocation,
       idUser: user.id,

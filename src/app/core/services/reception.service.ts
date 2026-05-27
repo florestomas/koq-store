@@ -1,14 +1,10 @@
 import { computed, Injectable, signal, inject } from '@angular/core';
 import { AuthService } from './auth.service';
-import { TRANSFERS } from '../../mocks/transfer.mock';
-import { TRANSFER_DETAILS } from '../../mocks/transfer-details.mock';
-import { PRODUCTS } from '../../mocks/products.mock';
-import { CLOTHING_MODELS } from '../../mocks/clothing-models.mock';
-import { COLORS } from '../../mocks/colors.mock';
-import { LOCATIONS } from '../../mocks/location.mock';
-import { STOCK_LOCATIONS } from '../../mocks/stock-location.mock';
-import { CLOTHING_MODEL_COLORS } from '../../mocks/clothing-model-colors.mock';
-import { StockMovementService } from './stock-movement.service';
+import { CatalogService } from './catalog.service';
+import { getSupabase } from './supabase.service';
+import { toCamelCase } from '../utils/supabase-utils';
+import { Transfer } from '../../interfaces/transfer';
+import { TransferDetail } from '../../interfaces/transfer-detail';
 
 export interface DetailRow {
   detailId: string;
@@ -38,8 +34,11 @@ export interface ReceptionRow {
 @Injectable({ providedIn: 'root' })
 export class ReceptionService {
   private readonly authService = inject(AuthService);
-  private readonly stockMovementService = inject(StockMovementService);
+  private readonly catalog = inject(CatalogService);
   private readonly refreshCounter = signal(0);
+
+  private readonly transfersSig = signal<Transfer[]>([]);
+  private readonly transferDetailsSig = signal<TransferDetail[]>([]);
 
   readonly pendingTransfers = computed<ReceptionRow[]>(() => {
     this.refreshCounter();
@@ -47,7 +46,16 @@ export class ReceptionService {
     const isAdmin = user?.role === 'admin';
     const userLocationId = user?.idLocation;
 
-    let transfers = TRANSFERS.filter((t) => t.status === 'pending');
+    const allProducts = this.catalog.catalogProducts();
+    const allModels = this.catalog.catalogModels();
+    const allColors = this.catalog.colors();
+    const allLocations = this.catalog.locations();
+    const allStocks = this.catalog.catalogStocks();
+    const allModelColors = this.catalog.catalogModelColors();
+    const allTransfers = this.transfersSig();
+    const allTransferDetails = this.transferDetailsSig();
+
+    let transfers = allTransfers.filter((t) => t.status === 'pending');
 
     if (!isAdmin && userLocationId) {
       transfers = transfers.filter(
@@ -61,60 +69,58 @@ export class ReceptionService {
     );
 
     return transfers.map((t) => {
-      const origin = LOCATIONS.find((l) => l.id === t.idOrigin);
-      const destination = LOCATIONS.find(
+      const origin = allLocations.find((l) => l.id === t.idOrigin);
+      const destination = allLocations.find(
         (l) => l.id === t.idDestination,
       );
 
-      const details: DetailRow[] = TRANSFER_DETAILS.filter(
-        (d) => d.idTransfer === t.id,
-      ).map((d) => {
-        const product = PRODUCTS.find((p) => p.id === d.idProduct);
-        const model = product
-          ? CLOTHING_MODELS.find(
-              (m) => m.id === product.idClothingModel,
-            )
-          : undefined;
-        const color = product
-          ? COLORS.find((c) => c.id === product.idColor)
-          : undefined;
+      const details: DetailRow[] = allTransferDetails
+        .filter((d) => d.idTransfer === t.id)
+        .map((d) => {
+          const product = allProducts.find((p) => p.id === d.idProduct);
+          const model = product
+            ? allModels.find((m) => m.id === product.idClothingModel)
+            : undefined;
+          const color = product
+            ? allColors.find((c) => c.id === product.idColor)
+            : undefined;
 
-        const modelColor = product
-          ? CLOTHING_MODEL_COLORS.find(
-              (mc) =>
-                mc.idClothingModel === product.idClothingModel &&
-                mc.idColor === product.idColor,
-            )
-          : undefined;
+          const modelColor = product
+            ? allModelColors.find(
+                (mc) =>
+                  mc.idClothingModel === product.idClothingModel &&
+                  mc.idColor === product.idColor,
+              )
+            : undefined;
 
-        const destStock = STOCK_LOCATIONS.find(
-          (s) =>
-            s.idProduct === d.idProduct &&
-            s.idLocation === t.idDestination,
-        );
-        const currentStock = destStock?.currentStock ?? 0;
-        const minStock = destStock?.minimumStock ?? 1;
-        const stockStatus: 'critical' | 'low' | 'ok' =
-          currentStock === 0
-            ? 'critical'
-            : currentStock <= minStock
-              ? 'low'
-              : 'ok';
+          const destStock = allStocks.find(
+            (s) =>
+              s.idProduct === d.idProduct &&
+              s.idLocation === t.idDestination,
+          );
+          const currentStock = destStock?.currentStock ?? 0;
+          const minStock = destStock?.minimumStock ?? 1;
+          const stockStatus: 'critical' | 'low' | 'ok' =
+            currentStock === 0
+              ? 'critical'
+              : currentStock <= minStock
+                ? 'low'
+                : 'ok';
 
-        return {
-          detailId: d.id,
-          productId: d.idProduct,
-          modelId: model?.id ?? '',
-          modelName: model?.name ?? 'Producto',
-          size: product?.size ?? '',
-          colorId: color?.id ?? '',
-          colorName: color?.name ?? '',
-          imageUrl: modelColor?.imageUrl ?? '',
-          quantitySent: d.quantity,
-          stockStatus,
-          productSku: `T. ${product?.size ?? ''} · ${color?.name ?? ''}`,
-        };
-      });
+          return {
+            detailId: d.id,
+            productId: d.idProduct,
+            modelId: model?.id ?? '',
+            modelName: model?.name ?? 'Producto',
+            size: product?.size ?? '',
+            colorId: color?.id ?? '',
+            colorName: color?.name ?? '',
+            imageUrl: modelColor?.imageUrl ?? '',
+            quantitySent: d.quantity,
+            stockStatus,
+            productSku: `T. ${product?.size ?? ''} · ${color?.name ?? ''}`,
+          };
+        });
 
       return {
         id: t.id,
@@ -129,57 +135,50 @@ export class ReceptionService {
     });
   });
 
-  confirmReception(
+  constructor() {
+    this.authService.waitForInit().then(() => this.loadTransfers());
+  }
+
+  private async loadTransfers(): Promise<void> {
+    try {
+      const supabase = getSupabase();
+      const [{ data: transfers }, { data: details }] = await Promise.all([
+        supabase.from('transfers').select('*'),
+        supabase.from('transfer_details').select('*'),
+      ]);
+      if (transfers) this.transfersSig.set(transfers.map((r) => toCamelCase<Transfer>(r)));
+      if (details) this.transferDetailsSig.set(details.map((r) => toCamelCase<TransferDetail>(r)));
+    } catch (err) {
+      console.error('Error loading transfers:', err);
+    }
+  }
+
+  async confirmReception(
     transferId: string,
     receivedMap: Record<string, number>,
-  ): boolean {
+  ): Promise<boolean> {
     const user = this.authService.currentUser();
     if (!user) return false;
 
-    const transfer = TRANSFERS.find((t) => t.id === transferId);
-    if (!transfer || transfer.status !== 'pending') return false;
-
-    const userLocationId = user.idLocation;
-
-    const details = TRANSFER_DETAILS.filter(
+    const details = this.transferDetailsSig().filter(
       (d) => d.idTransfer === transferId,
     );
 
-    for (const detail of details) {
-      const receivedQty = receivedMap[detail.idProduct] ?? detail.quantity;
-      detail.quantityReceived = receivedQty;
+    const p_items = details.map((d) => ({
+      id_product: d.idProduct,
+      quantity_received: receivedMap[d.idProduct] ?? d.quantity,
+    }));
 
-      if (receivedQty > 0) {
-        const stockRecord = STOCK_LOCATIONS.find(
-          (s) =>
-            s.idProduct === detail.idProduct &&
-            s.idLocation === userLocationId,
-        );
-        if (stockRecord) {
-          stockRecord.currentStock += receivedQty;
-        } else {
-          const nextId = String(
-            Math.max(
-              ...STOCK_LOCATIONS.map((s) => parseInt(s.id)),
-              0,
-            ) + 1,
-          );
-          STOCK_LOCATIONS.push({
-            id: nextId,
-            idProduct: detail.idProduct,
-            idLocation: userLocationId,
-            currentStock: receivedQty,
-            minimumStock: 1,
-          });
-        }
+    const { error } = await getSupabase().rpc('confirmar_recepcion', {
+      p_id_transfer: transferId,
+      p_id_user_destination: user.id,
+      p_items,
+    });
 
-        this.stockMovementService.logMovement('in', detail.idProduct, userLocationId, receivedQty, 'transfer', transferId);
-      }
+    if (error) {
+      console.error('Error confirming reception:', error);
+      return false;
     }
-
-    transfer.status = 'confirmed';
-    transfer.confirmedAt = new Date().toISOString();
-    transfer.idUserDestination = user.id;
 
     this.refresh();
     return true;
@@ -187,5 +186,6 @@ export class ReceptionService {
 
   refresh(): void {
     this.refreshCounter.update((c) => c + 1);
+    this.loadTransfers();
   }
 }

@@ -3,7 +3,7 @@ import { DatePipe, UpperCasePipe } from '@angular/common';
 import { MatIcon } from '@angular/material/icon';
 import { AlertService } from '../../core/services/alert.service';
 import { AuthService } from '../../core/services/auth.service';
-import { LOCATIONS } from '../../mocks/location.mock';
+import { CatalogService } from '../../core/services/catalog.service';
 
 @Component({
   selector: 'app-alertas',
@@ -14,9 +14,10 @@ import { LOCATIONS } from '../../mocks/location.mock';
 })
 export class AlertasComponent {
   readonly alertService = inject(AlertService);
+  readonly catalogService = inject(CatalogService);
   readonly authService = inject(AuthService);
   readonly today = new Date();
-  readonly locations = LOCATIONS;
+  readonly locations = computed(() => this.catalogService.locations());
 
   readonly isAdmin = this.authService.isAdmin;
   readonly selectedLocationId = this.alertService.selectedLocationId;

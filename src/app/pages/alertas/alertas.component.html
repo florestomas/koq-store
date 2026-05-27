@@ -45,7 +45,7 @@
           [class.text-zinc-600]="selectedLocationId() !== null"
           (click)="setLocationFilter(null)"
         >Todas</button>
-        @for (loc of locations; track loc.id) {
+        @for (loc of locations(); track loc.id) {
           <button
             class="px-4 py-1.5 rounded-full text-xs font-bold tracking-wider transition cursor-pointer"
             [class.bg-koq]="selectedLocationId() === loc.id"
