@@ -1,0 +1,292 @@
+<div class="flex flex-col md:flex-row w-full h-full gap-6 p-8">
+  <!-- Left Column — Search + Product Selector -->
+  <div class="flex-1 flex flex-col gap-4 min-w-0">
+    <!-- Header -->
+    <div class="flex flex-row items-center gap-3">
+      <mat-icon class="text-3xl text-koq">point_of_sale</mat-icon>
+      <h1 class="text-4xl text-black font-medium">{{ 'Nueva Venta' | uppercase }}</h1>
+    </div>
+
+    <!-- Success flash -->
+    @if (confirmed()) {
+      <div class="flex items-center gap-2 px-4 py-3 rounded-2xl bg-green-100 text-green-700 text-sm font-medium">
+        <mat-icon class="text-lg">check_circle</mat-icon>
+        Venta registrada correctamente
+      </div>
+    }
+
+    <!-- Error flash -->
+    @if (error(); as err) {
+      <div class="flex items-center gap-2 px-4 py-3 rounded-2xl bg-red-100 text-red-700 text-sm font-medium">
+        <mat-icon class="text-lg">error</mat-icon>
+        {{ err }}
+      </div>
+    }
+
+    <!-- Search input -->
+    <div class="relative">
+      <div class="flex flex-row items-center gap-2 bg-gray-100 rounded-full px-4 py-2.5 border-2 border-transparent focus-within:border-koq">
+        <mat-icon class="text-zinc-400">search</mat-icon>
+        <input
+          class="bg-transparent outline-none text-sm flex-1"
+          type="text"
+          placeholder="Buscar modelo por nombre..."
+          [formControl]="searchControl"
+        />
+        @if (selectedModel()) {
+          <button (click)="clearModel()" class="text-zinc-400 hover:text-zinc-700 transition">
+            <mat-icon class="text-base">close</mat-icon>
+          </button>
+        }
+      </div>
+
+      <!-- Dropdown results -->
+      @if (showDropdown() && searchResults().length > 0) {
+        <div class="absolute top-full mt-1 left-0 right-0 bg-white border border-gray-200 rounded-2xl shadow-lg z-10 overflow-hidden">
+          @for (model of searchResults(); track model.id) {
+            <button
+              (click)="selectModel(model)"
+              class="w-full flex flex-row items-center gap-3 px-4 py-3 text-left hover:bg-koq/5 transition cursor-pointer border-b border-gray-100 last:border-b-0"
+            >
+              <div class="flex flex-col flex-1 min-w-0">
+                <span class="text-sm font-semibold truncate">{{ model.name }}</span>
+              </div>
+              <mat-icon class="text-zinc-300 text-lg">chevron_right</mat-icon>
+            </button>
+          }
+        </div>
+      }
+
+      @if (showDropdown() && searchResults().length === 0 && searchTerm().trim()) {
+        <div class="absolute top-full mt-1 left-0 right-0 bg-white border border-gray-200 rounded-2xl shadow-lg z-10 p-6 text-center text-zinc-400 text-sm">
+          <mat-icon class="text-3xl mb-2">search_off</mat-icon>
+          <p>No se encontraron modelos</p>
+        </div>
+      }
+    </div>
+
+    <!-- Product selector: variant grid -->
+    @if (selectedModel(); as model) {
+      <div class="flex flex-col gap-3 mt-2">
+        <div class="flex flex-row items-center gap-3">
+          <div class="flex flex-col flex-1">
+            <span class="text-xs text-zinc-400 tracking-wider uppercase font-semibold">Modelo seleccionado</span>
+            <p class="text-xl font-bold mt-0.5">{{ model.name }}</p>
+          </div>
+          @if (modelImageUrl()) {
+            <img [src]="modelImageUrl()" class="size-14 rounded-xl object-cover shrink-0" />
+          }
+        </div>
+
+        @if (variantGrid().length > 0) {
+          <div class="overflow-x-auto border border-gray-200 rounded-2xl bg-white">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-gray-200 bg-gray-50">
+                  <th class="text-left py-3 px-4 text-zinc-500 font-medium text-xs uppercase tracking-wider">Color</th>
+                  @for (size of allSizes(); track size) {
+                    <th class="text-center py-3 px-3 text-zinc-500 font-medium text-xs uppercase tracking-wider">T. {{ size }}</th>
+                  }
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of variantGrid(); track row.colorName) {
+                  <tr class="border-b border-gray-100 last:border-b-0">
+                    <td class="py-2.5 px-4 font-medium text-sm">{{ row.colorName }}</td>
+                    @for (cell of row.cells; track cell.size) {
+                      <td class="py-2.5 px-3 text-center">
+                        @if (cell.productId) {
+                          <button
+                            (click)="addToCart(cell)"
+                            [disabled]="cell.stock === 0"
+                            class="w-14 h-10 rounded-xl text-sm font-bold transition border-2 cursor-pointer"
+                            [class.bg-koq/10]="cell.stock > 0"
+                            [class.text-koq]="cell.stock > 0"
+                            [class.border-koq/30]="cell.stock > 0"
+                            [class.hover:bg-koq]="cell.stock > 0"
+                            [class.hover:text-white]="cell.stock > 0"
+                            [class.bg-gray-100]="cell.stock === 0"
+                            [class.text-gray-300]="cell.stock === 0"
+                            [class.border-gray-200]="cell.stock === 0"
+                            [class.opacity-50]="cell.stock === 0"
+                            [class.cursor-not-allowed]="cell.stock === 0"
+                          >
+                            {{ cell.stock }}
+                          </button>
+                        } @else {
+                          <span class="text-gray-200 text-xs">&mdash;</span>
+                        }
+                      </td>
+                    }
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <p class="text-xs text-zinc-400 mt-1">Hacé clic en una celda con stock para agregar al carrito</p>
+        } @else {
+          <div class="flex flex-col items-center justify-center py-10 text-zinc-400 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+            <mat-icon class="text-4xl mb-2">inventory_2</mat-icon>
+            <p class="text-sm font-medium">Este modelo no tiene variantes disponibles</p>
+          </div>
+        }
+      </div>
+    } @else {
+      <!-- No model selected -->
+      <div class="flex flex-col items-center justify-center flex-1 py-16 text-zinc-400 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
+        <mat-icon class="text-6xl mb-4">search</mat-icon>
+        <p class="text-lg font-medium">Buscá un modelo para comenzar</p>
+        <p class="text-sm">Usá el buscador de arriba para encontrar productos</p>
+      </div>
+    }
+  </div>
+
+  <!-- Right Column — Cart Summary -->
+  <div class="flex-1 flex flex-col bg-white border border-gray-200 rounded-3xl p-6 shadow-sm min-w-0 h-full md:max-h-[calc(100vh-8rem)]">
+    <div class="flex flex-row items-center gap-2 mb-4">
+      <mat-icon class="text-koq">shopping_cart</mat-icon>
+      <h2 class="text-lg font-bold">Resumen de venta</h2>
+      @if (cartItems().length > 0) {
+        <span class="ml-auto text-xs text-zinc-400">{{ cartItems().length }} {{ cartItems().length === 1 ? 'item' : 'items' }}</span>
+      }
+    </div>
+
+    <!-- Empty cart -->
+    @if (cartItems().length === 0) {
+      <div class="flex flex-col items-center justify-center flex-1 text-zinc-400">
+        <mat-icon class="text-6xl mb-4">add_shopping_cart</mat-icon>
+        <p class="text-base font-medium">Carrito vacío</p>
+        <p class="text-sm">Seleccioná productos de la izquierda</p>
+      </div>
+    }
+
+    <!-- Cart items -->
+    @if (cartItems().length > 0) {
+      <div class="flex flex-col gap-2 overflow-y-auto flex-1 mb-4 pr-1">
+        @for (item of cartItems(); track item.productId; let i = $index) {
+          <div class="flex flex-row items-center gap-3 bg-gray-50 rounded-2xl p-3">
+            <img [src]="item.imageUrl" class="size-10 rounded-lg object-cover shrink-0" />
+            <div class="flex flex-col flex-1 min-w-0">
+              <p class="text-sm font-semibold truncate leading-tight">{{ item.modelName }}</p>
+              <p class="text-xs text-zinc-400 leading-tight mt-0.5">
+                {{ item.colorName | uppercase }} &middot; Talle {{ item.size }}
+              </p>
+              <p class="text-xs text-koq font-semibold mt-0.5">$ {{ item.unitPrice | number:'1.0-0' }} c/u</p>
+            </div>
+            <div class="flex flex-col items-end gap-1">
+              <div class="flex flex-row items-center gap-1">
+                <button
+                  (click)="changeQuantity(i, -1)"
+                  class="size-7 rounded-full border border-gray-300 flex items-center justify-center text-sm font-bold hover:bg-red-50 hover:border-red-300 hover:text-red-500 transition cursor-pointer"
+                >&minus;</button>
+                <span class="w-8 text-center text-sm font-bold">{{ item.quantity }}</span>
+                <button
+                  (click)="changeQuantity(i, 1)"
+                  class="size-7 rounded-full border border-gray-300 flex items-center justify-center text-sm font-bold hover:bg-koq/10 hover:border-koq hover:text-koq transition cursor-pointer"
+                >+</button>
+              </div>
+              <p class="text-xs font-bold text-zinc-700">$ {{ item.quantity * item.unitPrice | number:'1.0-0' }}</p>
+            </div>
+            <button
+              (click)="removeItem(i)"
+              class="size-7 rounded-full flex items-center justify-center text-zinc-400 hover:bg-red-50 hover:text-red-400 transition cursor-pointer shrink-0"
+            >
+              <mat-icon class="text-base">close</mat-icon>
+            </button>
+          </div>
+        }
+      </div>
+
+      <!-- Discount -->
+      <div class="border-t border-gray-200 pt-4 flex flex-col gap-3">
+        <div class="flex flex-row items-center justify-between">
+          <span class="text-xs font-semibold text-zinc-500 tracking-wider uppercase">Descuento</span>
+          <button
+            (click)="cycleDiscountMode()"
+            class="px-3 py-1 rounded-full text-xs font-medium transition border cursor-pointer"
+            [class.border-koq]="discountType() !== 'none'"
+            [class.text-koq]="discountType() !== 'none'"
+            [class.bg-koq/10]="discountType() !== 'none'"
+            [class.border-gray-300]="discountType() === 'none'"
+            [class.text-zinc-400]="discountType() === 'none'"
+          >
+            @if (discountType() === 'none') { Sin descuento }
+            @else if (discountType() === 'percentage') { Porcentaje }
+            @else { Monto fijo }
+          </button>
+        </div>
+
+        @if (discountType() !== 'none') {
+          <div class="flex flex-row items-center gap-2">
+            @if (discountType() === 'percentage') {
+              <span class="text-sm font-medium text-zinc-500">%</span>
+            } @else {
+              <span class="text-sm font-medium text-zinc-500">$</span>
+            }
+            <input
+              type="number"
+              min="0"
+              class="flex-1 border border-gray-300 rounded-xl px-4 py-2 text-sm outline-none focus:border-koq text-right"
+              [value]="discountValue()"
+              (input)="discountValue.set(parseNumber($any($event.target).value))"
+              placeholder="0"
+            />
+          </div>
+        }
+
+        <!-- Channel selector -->
+        <div class="flex flex-col gap-1.5">
+          <span class="text-xs font-semibold text-zinc-500 tracking-wider uppercase">Canal de venta</span>
+          <div class="flex flex-row gap-2">
+            @for (ch of channels; track ch) {
+              <button
+                (click)="selectChannel(ch)"
+                class="flex-1 py-2.5 rounded-xl text-xs font-bold tracking-wider transition border-2 cursor-pointer"
+                [class.bg-koq]="channel() === ch"
+                [class.text-white]="channel() === ch"
+                [class.border-koq]="channel() === ch"
+                [class.bg-white]="channel() !== ch"
+                [class.text-zinc-500]="channel() !== ch"
+                [class.border-gray-200]="channel() !== ch"
+                [class.hover:border-koq]="channel() !== ch"
+              >
+                @switch (ch) {
+                  @case ('local') { LOCAL }
+                  @case ('whatsapp') { WHATSAPP }
+                  @case ('mercadolibre') { MERCADO LIBRE }
+                }
+              </button>
+            }
+          </div>
+        </div>
+
+        <!-- Totals -->
+        <div class="flex flex-col gap-1.5 bg-gray-50 rounded-2xl p-4">
+          <div class="flex flex-row justify-between text-sm">
+            <span class="text-zinc-500">Subtotal</span>
+            <span class="font-semibold">$ {{ totalBeforeDiscount() | number:'1.0-0' }}</span>
+          </div>
+          @if (discountAmount() > 0) {
+            <div class="flex flex-row justify-between text-sm">
+              <span class="text-green-600">Descuento</span>
+              <span class="font-semibold text-green-600">&minus; $ {{ discountAmount() | number:'1.0-0' }}</span>
+            </div>
+          }
+          <div class="flex flex-row justify-between text-base font-bold border-t border-gray-200 pt-2 mt-1">
+            <span>Total</span>
+            <span class="text-koq">$ {{ total() | number:'1.0-0' }}</span>
+          </div>
+        </div>
+
+        <!-- Confirm button -->
+        <button
+          (click)="confirmSale()"
+          [disabled]="!canConfirm()"
+          class="w-full py-3.5 rounded-full text-sm font-bold tracking-wider text-white transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed bg-koq hover:opacity-90"
+        >
+          CONFIRMAR VENTA
+        </button>
+      </div>
+    }
+  </div>
+</div>
