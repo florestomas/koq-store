@@ -3,9 +3,7 @@ import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/materia
 import { MatButtonModule } from '@angular/material/button';
 import { UpperCasePipe } from '@angular/common';
 import { SelectableModel } from '../../core/services/transfer.service';
-import { COLORS } from '../../mocks/colors.mock';
-import { PRODUCTS } from '../../mocks/products.mock';
-import { STOCK_LOCATIONS } from '../../mocks/stock-location.mock';
+import { CatalogService } from '../../core/services/catalog.service';
 
 export interface VariantPickerData {
   model: SelectableModel;
@@ -26,21 +24,30 @@ export interface VariantPickerResult {
 export class VariantPickerModalComponent {
   readonly data: VariantPickerData = inject(MAT_DIALOG_DATA);
   readonly dialogRef = inject<MatDialogRef<VariantPickerModalComponent, VariantPickerResult>>(MatDialogRef);
+  private readonly catalog = inject(CatalogService);
 
   readonly quantities = signal<Record<string, Record<string, number>>>({});
 
   getColorName(colorId: string): string {
-    return COLORS.find((c) => c.id === colorId)?.name ?? colorId;
+    return this.catalog.colors().find((c) => c.id === colorId)?.name ?? colorId;
   }
 
   getStock(colorId: string, size: string): number {
-    const product = PRODUCTS.find(
-      (p) => p.idClothingModel === this.data.model.modelId && p.idColor === colorId && p.size === size && p.active,
+    const allProducts = this.catalog.catalogProducts();
+    const allStocks = this.catalog.catalogStocks();
+    const product = allProducts.find(
+      (p) =>
+        p.idClothingModel === this.data.model.modelId &&
+        p.idColor === colorId &&
+        p.size === size &&
+        p.active,
     );
     if (!product) return 0;
-    return STOCK_LOCATIONS.filter(
-      (s) => s.idProduct === product.id && s.idLocation === this.data.originId,
-    ).reduce((sum, s) => sum + s.currentStock, 0);
+    return allStocks
+      .filter(
+        (s) => s.idProduct === product.id && s.idLocation === this.data.originId,
+      )
+      .reduce((sum, s) => sum + s.currentStock, 0);
   }
 
   getQty(colorId: string, size: string): number {

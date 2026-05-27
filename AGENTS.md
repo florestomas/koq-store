@@ -26,7 +26,7 @@ src/app/
   layouts/       route-level layout components
   pages/         routed feature components (auth, catalog, transfer, create-product)
   interfaces/    TypeScript interfaces
-  mocks/         hard-coded mock data (no real backend yet)
+  mocks/         unused — kept as reference, all services now hit Supabase directly
 ```
 
 - Single project, single app: `src/main.ts` bootstraps `App` with `appConfig`
@@ -39,9 +39,7 @@ src/app/
 - Templates are external (`.html` files), as configured in `.vscode/settings.json`
 - `AuthService.logged` is `signal(true)` by default so the app skips login during development
 - Tests use Vitest globals (configured in `tsconfig.spec.json`); no need to import `describe`/`it`/`expect`
-- Mock data arrays in `src/app/mocks/` are mutated at runtime (CreateProduct, TransferService) — stateful across the session
 - Spec files: `app.spec.ts`, `new-sale.spec.ts`, `alertas.spec.ts`, `historial.spec.ts`, `recepciones.spec.ts`
-- New mock transactions (confirm sale, cancel sale, confirm reception) mutate `STOCK_LOCATIONS`, `TRANSFERS`, and `TRANSFER_DETAILS` arrays in place — stateful across the session
 - Expandable detail panels use CSS `grid-template-rows` transition (0fr → 1fr) with `overflow: hidden` for smooth animation
 - Print views use `@media print` + `.no-print` class (native `window.print()`)
 - All confirmation dialogs use `window.confirm()` (no Material dialog pattern yet)

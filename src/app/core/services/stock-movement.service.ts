@@ -1,10 +1,8 @@
 import { computed, Injectable, signal, inject } from '@angular/core';
 import { AuthService } from './auth.service';
-import { STOCK_MOVEMENTS } from '../../mocks/stock-movements.mock';
-import { PRODUCTS } from '../../mocks/products.mock';
-import { CLOTHING_MODELS } from '../../mocks/clothing-models.mock';
-import { COLORS } from '../../mocks/colors.mock';
-import { LOCATIONS } from '../../mocks/location.mock';
+import { CatalogService } from './catalog.service';
+import { getSupabase } from './supabase.service';
+import { toCamelCase } from '../utils/supabase-utils';
 import { StockMovement } from '../../interfaces/stock-movement';
 
 export interface MovementRow {
@@ -23,12 +21,15 @@ export interface MovementRow {
 @Injectable({ providedIn: 'root' })
 export class StockMovementService {
   private readonly authService = inject(AuthService);
+  private readonly catalog = inject(CatalogService);
 
   readonly dateFrom = signal<string | null>(null);
   readonly dateTo = signal<string | null>(null);
   readonly locationId = signal<string | null>(null);
   readonly typeFilter = signal<'all' | 'in' | 'out'>('all');
   readonly productSearch = signal('');
+
+  private readonly movementsSig = signal<StockMovement[]>([]);
 
   readonly filteredMovements = computed<MovementRow[]>(() => {
     const user = this.authService.currentUser();
@@ -41,7 +42,12 @@ export class StockMovementService {
     const type = this.typeFilter();
     const search = this.productSearch().toLowerCase().trim();
 
-    let movements: StockMovement[] = STOCK_MOVEMENTS;
+    const allProducts = this.catalog.catalogProducts();
+    const allModels = this.catalog.catalogModels();
+    const allColors = this.catalog.colors();
+    const allLocations = this.catalog.locations();
+
+    let movements: StockMovement[] = this.movementsSig();
 
     if (!isAdmin && userLocationId) {
       movements = movements.filter((m) => m.idLocation === userLocationId);
@@ -59,14 +65,14 @@ export class StockMovementService {
     }
 
     const result: MovementRow[] = movements.map((m) => {
-      const product = PRODUCTS.find((p) => p.id === m.idProduct);
+      const product = allProducts.find((p) => p.id === m.idProduct);
       const model = product
-        ? CLOTHING_MODELS.find((x) => x.id === product.idClothingModel)
+        ? allModels.find((x) => x.id === product.idClothingModel)
         : undefined;
       const color = product
-        ? COLORS.find((c) => c.id === product.idColor)
+        ? allColors.find((c) => c.id === product.idColor)
         : undefined;
-      const location = LOCATIONS.find((l) => l.id === m.idLocation);
+      const location = allLocations.find((l) => l.id === m.idLocation);
 
       return {
         id: m.id,
@@ -111,27 +117,43 @@ export class StockMovementService {
       .reduce((sum, m) => sum + m.quantity, 0),
   );
 
-  logMovement(
+  constructor() {
+    this.authService.waitForInit().then(() => this.loadMovements());
+  }
+
+  private async loadMovements(): Promise<void> {
+    try {
+      const { data } = await getSupabase().from('stock_movements').select('*');
+      if (data) this.movementsSig.set(data.map((r) => toCamelCase<StockMovement>(r)));
+    } catch (err) {
+      console.error('Error loading stock movements:', err);
+    }
+  }
+
+  async logMovement(
     type: 'in' | 'out',
     idProduct: string,
     idLocation: string,
     quantity: number,
     referenceType: 'sale' | 'transfer',
     referenceId: string,
-  ): void {
-    const nextId = String(
-      Math.max(...STOCK_MOVEMENTS.map((m) => parseInt(m.id)), 0) + 1,
-    );
-
-    STOCK_MOVEMENTS.push({
-      id: nextId,
-      dateTime: new Date().toISOString(),
-      idProduct,
-      idLocation,
+  ): Promise<void> {
+    const { error } = await getSupabase().from('stock_movements').insert({
+      id: crypto.randomUUID(),
+      date_time: new Date().toISOString(),
+      id_product: idProduct,
+      id_location: idLocation,
       type,
       quantity,
-      referenceType,
-      referenceId,
+      reference_type: referenceType,
+      reference_id: referenceId,
     });
+
+    if (error) {
+      console.error('Error logging stock movement:', error);
+      return;
+    }
+
+    await this.loadMovements();
   }
 }

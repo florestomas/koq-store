@@ -41,7 +41,7 @@
             [formControl]="form.controls.categoryId"
           >
             <option value="" disabled selected>Seleccionar...</option>
-            @for (cat of categories(); track cat.id) {
+            @for (cat of categories; track cat.id) {
               <option [value]="cat.id">{{ cat.name }}</option>
             }
           </select>

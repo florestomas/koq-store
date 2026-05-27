@@ -1,16 +1,8 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
-import { CLOTHING_MODELS } from '../../mocks/clothing-models.mock';
-import { CATEGORIES } from '../../mocks/category.mock';
-import { PRODUCTS } from '../../mocks/products.mock';
-import { STOCK_LOCATIONS } from '../../mocks/stock-location.mock';
-import { LOCATIONS } from '../../mocks/location.mock';
-import { COLORS } from '../../mocks/colors.mock';
-import { CLOTHING_MODEL_COLORS } from '../../mocks/clothing-model-colors.mock';
-import { TRANSFERS } from '../../mocks/transfer.mock';
-import { TRANSFER_DETAILS } from '../../mocks/transfer-details.mock';
 import { AuthService } from './auth.service';
 import { CatalogService } from './catalog.service';
 import { StockMovementService } from './stock-movement.service';
+import { getSupabase } from './supabase.service';
 
 export interface TransferItem {
   modelId: string;
@@ -55,39 +47,52 @@ export class TransferService {
     this.items().reduce((sum, i) => sum + i.quantity, 0),
   );
 
-  readonly categories = computed(() => CATEGORIES);
+  readonly categories = computed(() => this.catalogService.categories());
 
   readonly selectableModels = computed<SelectableModel[]>(() => {
     const term = this.searchTerm().toLowerCase().trim();
     const catId = this.categoryFilterId();
     const origin = this.originId();
 
-    return CLOTHING_MODELS.filter((m) => m.active)
+    const allModels = this.catalogService.catalogModels();
+    const allProducts = this.catalogService.catalogProducts();
+    const allStocks = this.catalogService.catalogStocks();
+    const allColors = this.catalogService.colors();
+    const allModelColors = this.catalogService.catalogModelColors();
+    const allCategories = this.catalogService.categories();
+
+    return allModels
+      .filter((m) => m.active)
       .filter((m) => (term ? m.name.toLowerCase().includes(term) : true))
       .filter((m) => (catId ? m.idCategory === catId : true))
       .map((m) => {
-        const modelProducts = PRODUCTS.filter(
+        const modelProducts = allProducts.filter(
           (p) => p.idClothingModel === m.id && p.active,
         );
 
         const colorIds = [...new Set(modelProducts.map((p) => p.idColor))];
         const colors = colorIds.map((cid) => ({
           id: cid,
-          name: COLORS.find((c) => c.id === cid)?.name ?? cid,
+          name: allColors.find((c) => c.id === cid)?.name ?? cid,
         }));
 
         const sizes = [...new Set(modelProducts.map((p) => p.size))].sort(
           (a, b) => parseInt(a) - parseInt(b),
         );
 
-        const totalStock = STOCK_LOCATIONS.filter(
-          (s) => s.idLocation === origin && modelProducts.some((p) => p.id === s.idProduct),
-        ).reduce((sum, s) => sum + s.currentStock, 0);
+        const totalStock = allStocks
+          .filter(
+            (s) =>
+              s.idLocation === origin &&
+              modelProducts.some((p) => p.id === s.idProduct),
+          )
+          .reduce((sum, s) => sum + s.currentStock, 0);
 
         const imageUrl =
-          CLOTHING_MODEL_COLORS.find((mc) => mc.idClothingModel === m.id)?.imageUrl ?? '';
+          allModelColors.find((mc) => mc.idClothingModel === m.id)?.imageUrl ?? '';
 
-        const categoryName = CATEGORIES.find((c) => c.id === m.idCategory)?.name ?? '';
+        const categoryName =
+          allCategories.find((c) => c.id === m.idCategory)?.name ?? '';
 
         return {
           modelId: m.id,
@@ -103,16 +108,27 @@ export class TransferService {
   });
 
   getStockForColorSize(productId: string, locationId: string): number {
-    return STOCK_LOCATIONS.filter(
-      (s) => s.idProduct === productId && s.idLocation === locationId,
-    ).reduce((sum, s) => sum + s.currentStock, 0);
+    return this.catalogService
+      .catalogStocks()
+      .filter(
+        (s) => s.idProduct === productId && s.idLocation === locationId,
+      )
+      .reduce((sum, s) => sum + s.currentStock, 0);
   }
 
-  getProductId(modelId: string, colorId: string, size: string): string | null {
+  getProductId(
+    modelId: string,
+    colorId: string,
+    size: string,
+  ): string | null {
+    const allProducts = this.catalogService.catalogProducts();
     return (
-      PRODUCTS.find(
+      allProducts.find(
         (p) =>
-          p.idClothingModel === modelId && p.idColor === colorId && p.size === size && p.active,
+          p.idClothingModel === modelId &&
+          p.idColor === colorId &&
+          p.size === size &&
+          p.active,
       )?.id ?? null
     );
   }
@@ -138,11 +154,16 @@ export class TransferService {
       const currentItems = [...this.items()];
       const current = currentItems[existing];
       if (current.quantity < stockAtOrigin) {
-        currentItems[existing] = { ...current, quantity: current.quantity + 1 };
+        currentItems[existing] = {
+          ...current,
+          quantity: current.quantity + 1,
+        };
         this.items.set(currentItems);
       }
     } else {
-      const colorName = COLORS.find((c) => c.id === colorId)?.name ?? colorId;
+      const allColors = this.catalogService.colors();
+      const colorName =
+        allColors.find((c) => c.id === colorId)?.name ?? colorId;
       this.items.update((items) => [
         ...items,
         {
@@ -160,9 +181,15 @@ export class TransferService {
     }
   }
 
-  addItemsFromPicker(model: SelectableModel, quantities: Record<string, Record<string, number>>): void {
+  addItemsFromPicker(
+    model: SelectableModel,
+    quantities: Record<string, Record<string, number>>,
+  ): void {
     const items = [...this.items()];
     const origin = this.originId();
+    const allColors = this.catalogService.colors();
+    const allProducts = this.catalogService.catalogProducts();
+    const allStocks = this.catalogService.catalogStocks();
 
     for (const colorId of Object.keys(quantities)) {
       for (const size of Object.keys(quantities[colorId])) {
@@ -172,7 +199,12 @@ export class TransferService {
         const productId = this.getProductId(model.modelId, colorId, size);
         if (!productId) continue;
 
-        const stockAtOrigin = this.getStockForColorSize(productId, origin);
+        const stockAtOrigin =
+          allStocks
+            .filter(
+              (s) => s.idProduct === productId && s.idLocation === origin,
+            )
+            .reduce((sum, s) => sum + s.currentStock, 0) ?? 0;
         if (stockAtOrigin <= 0) continue;
 
         const existing = items.findIndex(
@@ -184,10 +216,18 @@ export class TransferService {
         );
 
         if (existing !== -1) {
-          const newQty = Math.min(items[existing].quantity + qty, stockAtOrigin);
-          items[existing] = { ...items[existing], quantity: newQty, stockAtOrigin };
+          const newQty = Math.min(
+            items[existing].quantity + qty,
+            stockAtOrigin,
+          );
+          items[existing] = {
+            ...items[existing],
+            quantity: newQty,
+            stockAtOrigin,
+          };
         } else {
-          const colorName = COLORS.find((c) => c.id === colorId)?.name ?? colorId;
+          const colorName =
+            allColors.find((c) => c.id === colorId)?.name ?? colorId;
           items.push({
             modelId: model.modelId,
             modelName: model.modelName,
@@ -226,7 +266,7 @@ export class TransferService {
     this.items.set(currentItems);
   }
 
-  confirmTransfer(): boolean {
+  async confirmTransfer(): Promise<boolean> {
     const destId = this.destinationId();
     const currentItems = this.items();
     if (!destId || currentItems.length === 0) return false;
@@ -234,55 +274,100 @@ export class TransferService {
     const user = this.authService.currentUser();
     if (!user) return false;
 
-    const nextTransferId = String(
-      Math.max(...TRANSFERS.map((t) => parseInt(t.id)), 0) + 1,
-    );
+    const supabase = getSupabase();
+    const transferId = crypto.randomUUID();
 
-    TRANSFERS.push({
-      id: nextTransferId,
-      dateTime: new Date().toISOString(),
-      idOrigin: this.originId(),
-      idDestination: destId,
-      idUserOrigin: user.id,
-      status: 'confirmed',
-      confirmedAt: new Date().toISOString(),
-    });
-
-    for (const item of currentItems) {
-      const nextDetailId = String(
-        Math.max(...TRANSFER_DETAILS.map((d) => parseInt(d.id)), 0) + 1,
-      );
-      TRANSFER_DETAILS.push({
-        id: nextDetailId,
-        idTransfer: nextTransferId,
-        idProduct: item.productId,
-        quantity: item.quantity,
+    const { error: transferError } = await supabase
+      .from('transfers')
+      .insert({
+        id: transferId,
+        date_time: new Date().toISOString(),
+        id_origin: this.originId(),
+        id_destination: destId,
+        id_user_origin: user.id,
+        status: 'confirmed',
+        confirmed_at: new Date().toISOString(),
       });
 
-      const originStock = STOCK_LOCATIONS.find(
-        (s) => s.idProduct === item.productId && s.idLocation === this.originId(),
-      );
-      if (originStock) {
-        originStock.currentStock = Math.max(0, originStock.currentStock - item.quantity);
+    if (transferError) {
+      console.error('Error creating transfer:', transferError);
+      return false;
+    }
+
+    for (const item of currentItems) {
+      const { error: detailError } = await supabase
+        .from('transfer_details')
+        .insert({
+          id: crypto.randomUUID(),
+          id_transfer: transferId,
+          id_product: item.productId,
+          quantity: item.quantity,
+        });
+
+      if (detailError) {
+        console.error('Error creating transfer detail:', detailError);
+        return false;
       }
 
-      const destStock = STOCK_LOCATIONS.find(
-        (s) => s.idProduct === item.productId && s.idLocation === destId,
-      );
-      if (destStock) {
-        destStock.currentStock += item.quantity;
+      const { data: originStocks } = await supabase
+        .from('stock_locations')
+        .select('*')
+        .eq('id_product', item.productId)
+        .eq('id_location', this.originId());
+
+      if (originStocks && originStocks.length > 0) {
+        const originStock = originStocks[0];
+        await supabase
+          .from('stock_locations')
+          .update({
+            current_stock: Math.max(
+              0,
+              originStock.current_stock - item.quantity,
+            ),
+          })
+          .eq('id', originStock.id);
+      }
+
+      const { data: destStocks } = await supabase
+        .from('stock_locations')
+        .select('*')
+        .eq('id_product', item.productId)
+        .eq('id_location', destId);
+
+      if (destStocks && destStocks.length > 0) {
+        const destStock = destStocks[0];
+        await supabase
+          .from('stock_locations')
+          .update({
+            current_stock: destStock.current_stock + item.quantity,
+          })
+          .eq('id', destStock.id);
       } else {
-        STOCK_LOCATIONS.push({
-          id: String(Math.max(...STOCK_LOCATIONS.map((s) => parseInt(s.id)), 0) + 1),
-          idProduct: item.productId,
-          idLocation: destId,
-          currentStock: item.quantity,
-          minimumStock: 1,
+        await supabase.from('stock_locations').insert({
+          id: crypto.randomUUID(),
+          id_product: item.productId,
+          id_location: destId,
+          current_stock: item.quantity,
+          minimum_stock: 1,
         });
       }
 
-      this.stockMovementService.logMovement('out', item.productId, this.originId(), item.quantity, 'transfer', nextTransferId);
-      this.stockMovementService.logMovement('in', item.productId, destId, item.quantity, 'transfer', nextTransferId);
+      await this.stockMovementService.logMovement(
+        'out',
+        item.productId,
+        this.originId(),
+        item.quantity,
+        'transfer',
+        transferId,
+      );
+      await this.stockMovementService.logMovement(
+        'in',
+        item.productId,
+        destId,
+        item.quantity,
+        'transfer',
+        transferId,
+      );
     }
 
     this.items.set([]);
@@ -291,6 +376,6 @@ export class TransferService {
   }
 
   getLocations() {
-    return LOCATIONS;
+    return this.catalogService.locations();
   }
 }

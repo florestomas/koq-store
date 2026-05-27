@@ -148,9 +148,9 @@ export class HistorialComponent {
     }
   }
 
-  confirmCancel(saleId: string): void {
+  async confirmCancel(saleId: string): Promise<void> {
     if (window.confirm('¿Estás seguro de que querés anular esta venta?')) {
-      const ok = this.salesHistoryService.cancelSale(saleId);
+      const ok = await this.salesHistoryService.cancelSale(saleId);
       if (!ok) {
         console.error('No se pudo anular la venta');
       }

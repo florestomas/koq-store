@@ -1,14 +1,11 @@
 import { computed, Injectable, signal, inject } from '@angular/core';
 import { AuthService } from './auth.service';
-import { SALES } from '../../mocks/sales.mock';
-import { SALE_DETAILS } from '../../mocks/sale-detail.mock';
-import { PRODUCTS } from '../../mocks/products.mock';
-import { CLOTHING_MODELS } from '../../mocks/clothing-models.mock';
-import { COLORS } from '../../mocks/colors.mock';
-import { USERS } from '../../mocks/users.mock';
-import { STOCK_LOCATIONS } from '../../mocks/stock-location.mock';
-import { LOCATIONS } from '../../mocks/location.mock';
+import { CatalogService } from './catalog.service';
 import { StockMovementService } from './stock-movement.service';
+import { getSupabase } from './supabase.service';
+import { toCamelCase } from '../utils/supabase-utils';
+import { Sale } from '../../interfaces/sale';
+import { SaleDetail } from '../../interfaces/sale-detail';
 
 export interface SaleDetailRow {
   modelName: string;
@@ -45,6 +42,7 @@ export interface TopProduct {
 export class SalesHistoryService {
   private readonly authService = inject(AuthService);
   private readonly stockMovementService = inject(StockMovementService);
+  private readonly catalog = inject(CatalogService);
 
   readonly dateFrom = signal<string | null>(null);
   readonly dateTo = signal<string | null>(null);
@@ -52,7 +50,10 @@ export class SalesHistoryService {
   readonly locationId = signal<string | null>(null);
   private readonly refreshCounter = signal(0);
 
-  readonly availableLocations = LOCATIONS;
+  get availableLocations() { return this.catalog.locations(); }
+
+  private readonly salesSig = signal<Sale[]>([]);
+  private readonly saleDetailsSig = signal<SaleDetail[]>([]);
 
   readonly filteredSales = computed<SaleRow[]>(() => {
     this.refreshCounter();
@@ -65,7 +66,12 @@ export class SalesHistoryService {
     const ch = this.channel();
     const locId = this.locationId();
 
-    let sales = SALES;
+    const allProducts = this.catalog.catalogProducts();
+    const allModels = this.catalog.catalogModels();
+    const allColors = this.catalog.colors();
+    const allUsers = this.catalog.users();
+
+    let sales = this.salesSig();
 
     if (isAdmin && locId) {
       sales = sales.filter((s) => s.idLocation === locId);
@@ -85,29 +91,29 @@ export class SalesHistoryService {
     }
 
     const result: SaleRow[] = sales.map((sale) => {
-      const userObj = USERS.find((u) => u.id === sale.idUser);
+      const userObj = allUsers.find((u) => u.id === sale.idUser);
       const operatorName = userObj?.user ?? 'Desconocido';
 
-      const details: SaleDetailRow[] = SALE_DETAILS.filter(
-        (d) => d.idSale === sale.id,
-      ).map((d) => {
-        const product = PRODUCTS.find((p) => p.id === d.idProduct);
-        const model = product
-          ? CLOTHING_MODELS.find((m) => m.id === product.idClothingModel)
-          : undefined;
-        const color = product
-          ? COLORS.find((c) => c.id === product.idColor)
-          : undefined;
+      const details: SaleDetailRow[] = this.saleDetailsSig()
+        .filter((d) => d.idSale === sale.id)
+        .map((d) => {
+          const product = allProducts.find((p) => p.id === d.idProduct);
+          const model = product
+            ? allModels.find((m) => m.id === product.idClothingModel)
+            : undefined;
+          const color = product
+            ? allColors.find((c) => c.id === product.idColor)
+            : undefined;
 
-        return {
-          modelName: model?.name ?? 'Producto',
-          size: product?.size ?? '',
-          colorName: color?.name ?? '',
-          quantity: d.quantity,
-          unitPrice: d.unitPrice,
-          productId: d.idProduct,
-        };
-      });
+          return {
+            modelName: model?.name ?? 'Producto',
+            size: product?.size ?? '',
+            colorName: color?.name ?? '',
+            quantity: d.quantity,
+            unitPrice: d.unitPrice,
+            productId: d.idProduct,
+          };
+        });
 
       const totalBefore = details.reduce(
         (sum, d) => sum + d.quantity * d.unitPrice,
@@ -185,10 +191,7 @@ export class SalesHistoryService {
       (s) => s.status === 'active',
     );
 
-    const groups: Record<
-      string,
-      TopProduct
-    > = {};
+    const groups: Record<string, TopProduct> = {};
 
     for (const sale of activeSales) {
       for (const detail of sale.details) {
@@ -211,32 +214,77 @@ export class SalesHistoryService {
       .slice(0, 5);
   });
 
-  cancelSale(saleId: string): boolean {
-    const sale = SALES.find((s) => s.id === saleId);
-    if (!sale || sale.status !== 'active') return false;
+  constructor() {
+    this.authService.waitForInit().then(() => this.loadSales());
+  }
 
-    sale.status = 'cancelled';
-    sale.cancelledAt = new Date().toISOString();
+  private async loadSales(): Promise<void> {
+    try {
+      const supabase = getSupabase();
+      const [{ data: sales }, { data: details }] = await Promise.all([
+        supabase.from('sales').select('*'),
+        supabase.from('sale_details').select('*'),
+      ]);
+      if (sales) this.salesSig.set(sales.map((r) => toCamelCase<Sale>(r)));
+      if (details) this.saleDetailsSig.set(details.map((r) => toCamelCase<SaleDetail>(r)));
+    } catch (err) {
+      console.error('Error loading sales:', err);
+    }
+  }
 
-    const details = SALE_DETAILS.filter((d) => d.idSale === saleId);
+  async cancelSale(saleId: string): Promise<boolean> {
+    try {
+      const supabase = getSupabase();
+      const sale = this.salesSig().find((s) => s.id === saleId);
+      if (!sale || sale.status !== 'active') return false;
 
-    for (const detail of details) {
-      const stockRecord = STOCK_LOCATIONS.find(
-        (s) =>
-          s.idProduct === detail.idProduct && s.idLocation === sale.idLocation,
-      );
-      if (stockRecord) {
-        stockRecord.currentStock += detail.quantity;
+      const { error: updateError } = await supabase
+        .from('sales')
+        .update({ status: 'cancelled', cancelled_at: new Date().toISOString() })
+        .eq('id', saleId);
+
+      if (updateError) {
+        console.error('Error cancelling sale:', updateError);
+        return false;
       }
 
-      this.stockMovementService.logMovement('in', detail.idProduct, sale.idLocation, detail.quantity, 'sale', saleId);
-    }
+      const details = this.saleDetailsSig().filter((d) => d.idSale === saleId);
 
-    this.refresh();
-    return true;
+      for (const detail of details) {
+        const { data: stockRows } = await supabase
+          .from('stock_locations')
+          .select('*')
+          .eq('id_product', detail.idProduct)
+          .eq('id_location', sale.idLocation);
+
+        if (stockRows && stockRows.length > 0) {
+          const stock = stockRows[0];
+          await supabase
+            .from('stock_locations')
+            .update({ current_stock: stock.current_stock + detail.quantity })
+            .eq('id', stock.id);
+        }
+
+        await this.stockMovementService.logMovement(
+          'in',
+          detail.idProduct,
+          sale.idLocation,
+          detail.quantity,
+          'sale',
+          saleId,
+        );
+      }
+
+      this.refresh();
+      return true;
+    } catch (err) {
+      console.error('Error in cancelSale:', err);
+      return false;
+    }
   }
 
   refresh(): void {
     this.refreshCounter.update((c) => c + 1);
+    this.loadSales();
   }
 }

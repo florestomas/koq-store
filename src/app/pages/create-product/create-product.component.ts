@@ -3,13 +3,8 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatIcon } from '@angular/material/icon';
-import { CLOTHING_MODELS } from '../../mocks/clothing-models.mock';
-import { CATEGORIES } from '../../mocks/category.mock';
-import { COLORS } from '../../mocks/colors.mock';
-import { PRODUCTS } from '../../mocks/products.mock';
-import { STOCK_LOCATIONS } from '../../mocks/stock-location.mock';
-import { CLOTHING_MODEL_COLORS } from '../../mocks/clothing-model-colors.mock';
 import { CatalogService } from '../../core/services/catalog.service';
+import { getSupabase } from '../../core/services/supabase.service';
 
 @Component({
   selector: 'app-create-product',
@@ -35,14 +30,13 @@ export class CreateProductComponent {
   readonly newSizeInput = signal('');
   readonly newColorName = signal('');
 
-  readonly COLORS = COLORS;
+  get COLORS() { return this.catalogService.colors(); }
+  get categories() { return this.catalogService.categories(); }
 
   readonly stockValues = signal<Record<string, Record<string, number>>>({});
 
-  readonly categories = signal(CATEGORIES);
-
   getColorName(colorId: string): string {
-    return COLORS.find((c) => c.id === colorId)?.name ?? colorId;
+    return this.COLORS.find((c) => c.id === colorId)?.name ?? colorId;
   }
 
   setStock(colorId: string, size: string, value: string): void {
@@ -59,14 +53,24 @@ export class CreateProductComponent {
     return this.stockValues()[colorId]?.[size] ?? 0;
   }
 
-  addColor(): void {
+  async addColor(): Promise<void> {
     const name = this.newColorName().trim();
     if (!name) return;
 
-    let colorId = COLORS.find((c) => c.name.toLowerCase() === name.toLowerCase())?.id;
+    const supabase = getSupabase();
+    let colorId = this.COLORS.find(
+      (c) => c.name.toLowerCase() === name.toLowerCase(),
+    )?.id;
     if (!colorId) {
-      colorId = String(Math.max(...COLORS.map((c) => parseInt(c.id)), 0) + 1);
-      COLORS.push({ id: colorId, name });
+      colorId = crypto.randomUUID();
+      const { error } = await supabase.from('colors').insert({
+        id: colorId,
+        name,
+      });
+      if (error) {
+        console.error('Error creating color:', error);
+        return;
+      }
     }
 
     if (!this.selectedColors().includes(colorId)) {
@@ -91,53 +95,80 @@ export class CreateProductComponent {
     this.selectedSizes.update((sizes) => sizes.filter((s) => s !== size));
   }
 
-  save(): void {
+  async save(): Promise<void> {
     if (this.form.invalid) return;
     const colors = this.selectedColors();
     const sizes = this.selectedSizes();
     if (colors.length === 0 || sizes.length === 0) return;
 
-    const modelId = String(Math.max(...CLOTHING_MODELS.map((m) => parseInt(m.id)), 0) + 1);
+    const supabase = getSupabase();
+    const modelId = crypto.randomUUID();
     const price = this.form.controls.price.value ?? 0;
     const stockRec = this.stockValues();
 
-    CLOTHING_MODELS.push({
+    const { error: modelError } = await supabase.from('clothing_models').insert({
       id: modelId,
       name: this.form.controls.name.value,
-      idCategory: this.form.controls.categoryId.value,
-      description: undefined,
-      createdAt: new Date().toISOString(),
+      id_category: this.form.controls.categoryId.value,
+      description: null,
+      created_at: new Date().toISOString(),
       active: true,
     });
 
+    if (modelError) {
+      console.error('Error creating model:', modelError);
+      return;
+    }
+
     for (const colorId of colors) {
-      CLOTHING_MODEL_COLORS.push({
-        id: String(Math.max(...CLOTHING_MODEL_COLORS.map((mc) => parseInt(mc.id)), 0) + 1),
-        idClothingModel: modelId,
-        idColor: colorId,
-        imageUrl: `https://placehold.co/400x400?text=Nuevo+Producto`,
-      });
+      const { error: mcError } = await supabase
+        .from('clothing_model_colors')
+        .insert({
+          id: crypto.randomUUID(),
+          id_clothing_model: modelId,
+          id_color: colorId,
+          image_url: `https://placehold.co/400x400?text=Nuevo+Producto`,
+        });
+
+      if (mcError) {
+        console.error('Error linking color:', mcError);
+        return;
+      }
 
       for (const size of sizes) {
-        const productId = String(Math.max(...PRODUCTS.map((p) => parseInt(p.id)), 0) + 1);
-        PRODUCTS.push({
-          id: productId,
-          idClothingModel: modelId,
-          size,
-          idColor: colorId,
-          costPrice: price,
-          salePrice: price,
-          active: true,
-        });
+        const productId = crypto.randomUUID();
+        const { error: prodError } = await supabase
+          .from('products')
+          .insert({
+            id: productId,
+            id_clothing_model: modelId,
+            size,
+            id_color: colorId,
+            cost_price: price,
+            sale_price: price,
+            active: true,
+          });
+
+        if (prodError) {
+          console.error('Error creating product:', prodError);
+          return;
+        }
 
         const qty = stockRec[colorId]?.[size] ?? 0;
-        STOCK_LOCATIONS.push({
-          id: String(Math.max(...STOCK_LOCATIONS.map((s) => parseInt(s.id)), 0) + 1),
-          idProduct: productId,
-          idLocation: '1',
-          currentStock: qty,
-          minimumStock: 1,
-        });
+        const { error: stockError } = await supabase
+          .from('stock_locations')
+          .insert({
+            id: crypto.randomUUID(),
+            id_product: productId,
+            id_location: '1',
+            current_stock: qty,
+            minimum_stock: 1,
+          });
+
+        if (stockError) {
+          console.error('Error creating stock record:', stockError);
+          return;
+        }
       }
     }
 

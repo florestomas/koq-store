@@ -7,13 +7,8 @@ import { UpperCasePipe } from '@angular/common';
 import { CatalogItem } from '../../interfaces/catalog-item';
 import { Category } from '../../interfaces/category';
 import { Location } from '../../interfaces/location';
-import { COLORS } from '../../mocks/colors.mock';
-import { CLOTHING_MODELS } from '../../mocks/clothing-models.mock';
-import { STOCK_LOCATIONS } from '../../mocks/stock-location.mock';
-import { PRODUCTS } from '../../mocks/products.mock';
-import { CLOTHING_MODEL_COLORS } from '../../mocks/clothing-model-colors.mock';
-import { LOCATIONS } from '../../mocks/location.mock';
 import { CatalogService } from '../../core/services/catalog.service';
+import { getSupabase } from '../../core/services/supabase.service';
 
 type TabName = 'basic' | 'stock' | 'variants';
 
@@ -44,12 +39,20 @@ export class ProductEditModalComponent {
     { key: 'variants', label: 'Variantes' },
   ];
 
-  private readonly model = CLOTHING_MODELS.find((m) => m.id === this.data.item.modelId);
+  private readonly allModels = computed(() => this.catalogService.catalogModels());
+  private readonly allProducts = computed(() => this.catalogService.catalogProducts());
+  private readonly allStocks = computed(() => this.catalogService.catalogStocks());
+  private readonly allColors = computed(() => this.catalogService.colors());
+  private readonly allModelColors = computed(() => this.catalogService.catalogModelColors());
+
+  private readonly model = computed(() =>
+    this.allModels().find((m) => m.id === this.data.item.modelId),
+  );
 
   readonly form = new FormGroup({
-    name: new FormControl(this.model?.name ?? '', { nonNullable: true }),
-    description: new FormControl(this.model?.description ?? ''),
-    categoryId: new FormControl(this.model?.idCategory ?? '', { nonNullable: true }),
+    name: new FormControl(this.model()?.name ?? '', { nonNullable: true }),
+    description: new FormControl(this.model()?.description ?? ''),
+    categoryId: new FormControl(this.model()?.idCategory ?? '', { nonNullable: true }),
   });
 
   readonly newSizeInput = signal('');
@@ -59,33 +62,37 @@ export class ProductEditModalComponent {
   private readonly variantsVersion = signal(0);
 
   readonly modelColors = computed(() => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const _v = this.variantsVersion();
+    const prods = this.allProducts();
+    const colors = this.allColors();
     const colorIds = [
       ...new Set(
-        PRODUCTS.filter((p) => p.idClothingModel === this.data.item.modelId && p.active).map(
-          (p) => p.idColor,
-        ),
+        prods
+          .filter((p) => p.idClothingModel === this.data.item.modelId && p.active)
+          .map((p) => p.idColor),
       ),
     ];
     return colorIds.map((cid) => ({
       id: cid,
-      name: COLORS.find((c) => c.id === cid)?.name ?? cid,
+      name: colors.find((c) => c.id === cid)?.name ?? cid,
     }));
   });
 
-  readonly availableColors = computed(() =>
-    COLORS.filter((c) => !this.modelColors().some((mc) => mc.id === c.id)),
-  );
+  readonly availableColors = computed(() => {
+    const mc = this.modelColors();
+    return this.allColors().filter((c) => !mc.some((m) => m.id === c.id));
+  });
 
   readonly uniqueSizes = computed(() => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const _v = this.variantsVersion();
+    const prods = this.allProducts();
     const sizes = [
       ...new Set(
-        PRODUCTS.filter(
-          (p) => p.idClothingModel === this.data.item.modelId && p.active,
-        ).map((p) => p.size),
+        prods
+          .filter(
+            (p) => p.idClothingModel === this.data.item.modelId && p.active,
+          )
+          .map((p) => p.size),
       ),
     ];
     return sizes.sort((a, b) => parseInt(a) - parseInt(b));
@@ -93,7 +100,7 @@ export class ProductEditModalComponent {
 
   getLocationStockEntry(locId: string) {
     const productIds = this.getModelProductIds();
-    return STOCK_LOCATIONS.filter(
+    return this.allStocks().filter(
       (s) => productIds.includes(s.idProduct) && s.idLocation === locId,
     );
   }
@@ -106,11 +113,19 @@ export class ProductEditModalComponent {
   }
 
   getColorStockForLocation(colorId: string, locationId: string): number {
-    const productIds = PRODUCTS.filter(
-      (p) => p.idClothingModel === this.data.item.modelId && p.active && p.idColor === colorId,
-    ).map((p) => p.id);
-    return STOCK_LOCATIONS
-      .filter((s) => s.idLocation === locationId && productIds.includes(s.idProduct))
+    const productIds = this.allProducts()
+      .filter(
+        (p) =>
+          p.idClothingModel === this.data.item.modelId &&
+          p.active &&
+          p.idColor === colorId,
+      )
+      .map((p) => p.id);
+    return this.allStocks()
+      .filter(
+        (s) =>
+          s.idLocation === locationId && productIds.includes(s.idProduct),
+      )
       .reduce((sum, s) => sum + s.currentStock, 0);
   }
 
@@ -121,221 +136,295 @@ export class ProductEditModalComponent {
     );
   }
 
-  setMinStockForLocation(locationId: string, value: string): void {
+  async setMinStockForLocation(locationId: string, value: string): Promise<void> {
     const newMin = parseInt(value) || 0;
-    const perProduct = Math.max(1, Math.floor(newMin / this.uniqueSizes().length));
     const entries = this.getLocationStockEntry(locationId);
+    const perProduct = Math.max(1, Math.floor(newMin / this.uniqueSizes().length));
     for (const entry of entries) {
-      entry.minimumStock = perProduct;
+      await getSupabase()
+        .from('stock_locations')
+        .update({ minimum_stock: perProduct })
+        .eq('id', entry.id);
     }
+    this.catalogService.triggerRefresh();
   }
 
-  setCurrentStockForLocation(locationId: string, value: string): void {
+  async setCurrentStockForLocation(locationId: string, value: string): Promise<void> {
     const newTotal = parseInt(value) || 0;
     const entries = this.getLocationStockEntry(locationId);
     if (entries.length === 0) return;
     const perProduct = Math.floor(newTotal / entries.length);
     let remainder = newTotal % entries.length;
     for (const entry of entries) {
-      entry.currentStock = perProduct + (remainder > 0 ? 1 : 0);
+      const newStock = perProduct + (remainder > 0 ? 1 : 0);
+      await getSupabase()
+        .from('stock_locations')
+        .update({ current_stock: newStock })
+        .eq('id', entry.id);
       if (remainder > 0) remainder--;
     }
+    this.catalogService.triggerRefresh();
   }
 
-  getStockForColorSizeInLocation(colorId: string, size: string, locationId: string): number {
-    const productIds = PRODUCTS.filter(
-      (p) =>
-        p.idClothingModel === this.data.item.modelId &&
-        p.active &&
-        p.idColor === colorId &&
-        p.size === size,
-    ).map((p) => p.id);
-    return STOCK_LOCATIONS
-      .filter((s) => s.idLocation === locationId && productIds.includes(s.idProduct))
+  getStockForColorSizeInLocation(
+    colorId: string,
+    size: string,
+    locationId: string,
+  ): number {
+    const productIds = this.allProducts()
+      .filter(
+        (p) =>
+          p.idClothingModel === this.data.item.modelId &&
+          p.active &&
+          p.idColor === colorId &&
+          p.size === size,
+      )
+      .map((p) => p.id);
+    return this.allStocks()
+      .filter(
+        (s) =>
+          s.idLocation === locationId && productIds.includes(s.idProduct),
+      )
       .reduce((sum, s) => sum + s.currentStock, 0);
   }
 
-  setCellCurrentStock(locationId: string, colorId: string, size: string, value: string): void {
+  async setCellCurrentStock(
+    locationId: string,
+    colorId: string,
+    size: string,
+    value: string,
+  ): Promise<void> {
     const newStock = Math.max(0, parseInt(value) || 0);
-    const productIds = PRODUCTS.filter(
-      (p) =>
-        p.idClothingModel === this.data.item.modelId &&
-        p.active &&
-        p.idColor === colorId &&
-        p.size === size,
-    ).map((p) => p.id);
-    const entries = STOCK_LOCATIONS.filter(
+    const productIds = this.allProducts()
+      .filter(
+        (p) =>
+          p.idClothingModel === this.data.item.modelId &&
+          p.active &&
+          p.idColor === colorId &&
+          p.size === size,
+      )
+      .map((p) => p.id);
+    const supabase = getSupabase();
+    const entries = this.allStocks().filter(
       (s) => productIds.includes(s.idProduct) && s.idLocation === locationId,
     );
     if (entries.length > 0) {
       for (const entry of entries) {
-        entry.currentStock = newStock;
+        await supabase
+          .from('stock_locations')
+          .update({ current_stock: newStock })
+          .eq('id', entry.id);
       }
     } else if (productIds.length > 0) {
-      const nextId = String(
-        Math.max(...STOCK_LOCATIONS.map((s) => parseInt(s.id)), 0) + 1,
-      );
-      STOCK_LOCATIONS.push({
-        id: nextId,
-        idProduct: productIds[0],
-        idLocation: locationId,
-        currentStock: newStock,
-        minimumStock: 1,
+      await supabase.from('stock_locations').insert({
+        id: crypto.randomUUID(),
+        id_product: productIds[0],
+        id_location: locationId,
+        current_stock: newStock,
+        minimum_stock: 1,
       });
     }
+    this.catalogService.triggerRefresh();
   }
 
-  addColor(): void {
+  async addColor(): Promise<void> {
     const name = this.newColorName().trim();
     if (!name) return;
 
-    // Find existing color (case-insensitive) or create
-    let colorId = COLORS.find(
+    const supabase = getSupabase();
+    const modelId = this.data.item.modelId;
+
+    let colorId = this.allColors().find(
       (c) => c.name.toLowerCase() === name.toLowerCase(),
     )?.id;
     if (!colorId) {
-      colorId = this.nextId(COLORS);
-      COLORS.push({ id: colorId, name });
+      colorId = crypto.randomUUID();
+      const { error } = await supabase.from('colors').insert({
+        id: colorId,
+        name,
+      });
+      if (error) {
+        console.error('Error creating color:', error);
+        return;
+      }
     }
 
-    // Prevent duplicate color on this model
     if (
-      CLOTHING_MODEL_COLORS.some(
-        (mc) => mc.idClothingModel === this.data.item.modelId && mc.idColor === colorId,
+      this.allModelColors().some(
+        (mc) =>
+          mc.idClothingModel === modelId && mc.idColor === colorId,
       )
     ) {
       this.newColorName.set('');
       return;
     }
 
-    const modelId = this.data.item.modelId;
-    const existingProduct = PRODUCTS.find((p) => p.idClothingModel === modelId && p.active);
+    const existingProduct = this.allProducts().find(
+      (p) => p.idClothingModel === modelId && p.active,
+    );
     const costPrice = existingProduct?.costPrice ?? 0;
     const salePrice = existingProduct?.salePrice ?? 0;
 
-    const nextModelColorId = this.nextId(CLOTHING_MODEL_COLORS);
-    CLOTHING_MODEL_COLORS.push({
-      id: nextModelColorId,
-      idClothingModel: modelId,
-      idColor: colorId,
-      imageUrl: `https://placehold.co/400x400?text=${encodeURIComponent(name)}`,
-    });
+    const { error: mcError } = await supabase
+      .from('clothing_model_colors')
+      .insert({
+        id: crypto.randomUUID(),
+        id_clothing_model: modelId,
+        id_color: colorId,
+        image_url: `https://placehold.co/400x400?text=${encodeURIComponent(name)}`,
+      });
+    if (mcError) {
+      console.error('Error linking color to model:', mcError);
+      return;
+    }
 
     for (const size of this.uniqueSizes()) {
-      const nextProductId = this.nextId(PRODUCTS);
-      PRODUCTS.push({
-        id: nextProductId,
-        idClothingModel: modelId,
-        size,
-        idColor: colorId,
-        costPrice,
-        salePrice,
-        active: true,
-      });
-      for (const loc of this.data.locations) {
-        STOCK_LOCATIONS.push({
-          id: this.nextId(STOCK_LOCATIONS),
-          idProduct: nextProductId,
-          idLocation: loc.id,
-          currentStock: 0,
-          minimumStock: 1,
+      const { error: prodError } = await supabase
+        .from('products')
+        .insert({
+          id: crypto.randomUUID(),
+          id_clothing_model: modelId,
+          size,
+          id_color: colorId,
+          cost_price: costPrice,
+          sale_price: salePrice,
+          active: true,
         });
+      if (prodError) {
+        console.error('Error creating product:', prodError);
+        return;
       }
     }
+
     this.newColorName.set('');
-    this.variantsVersion.set(this.variantsVersion() + 1);
+    this.variantsVersion.update((v) => v + 1);
+    this.catalogService.triggerRefresh();
   }
 
-  removeColor(colorId: string): void {
+  async removeColor(colorId: string): Promise<void> {
     const modelId = this.data.item.modelId;
-    const productIds = PRODUCTS.filter(
-      (p) => p.idClothingModel === modelId && p.idColor === colorId && p.active,
-    ).map((p) => p.id);
+    const supabase = getSupabase();
+
+    const productIds = this.allProducts()
+      .filter(
+        (p) =>
+          p.idClothingModel === modelId &&
+          p.idColor === colorId &&
+          p.active,
+      )
+      .map((p) => p.id);
 
     for (const pid of productIds) {
-      const idx = PRODUCTS.findIndex((p) => p.id === pid);
-      if (idx !== -1) PRODUCTS.splice(idx, 1);
-      for (let i = STOCK_LOCATIONS.length - 1; i >= 0; i--) {
-        if (STOCK_LOCATIONS[i].idProduct === pid) STOCK_LOCATIONS.splice(i, 1);
-      }
+      const { error: pErr } = await supabase
+        .from('products')
+        .update({ active: false })
+        .eq('id', pid);
+      if (pErr) console.error('Error deactivating product:', pErr);
     }
 
-    const mcIdx = CLOTHING_MODEL_COLORS.findIndex(
+    const mcEntries = this.allModelColors().filter(
       (mc) => mc.idClothingModel === modelId && mc.idColor === colorId,
     );
-    if (mcIdx !== -1) CLOTHING_MODEL_COLORS.splice(mcIdx, 1);
-    this.variantsVersion.set(this.variantsVersion() + 1);
+    for (const mc of mcEntries) {
+      const { error: mcErr } = await supabase
+        .from('clothing_model_colors')
+        .delete()
+        .eq('id', mc.id);
+      if (mcErr) console.error('Error removing model-color link:', mcErr);
+    }
+
+    this.variantsVersion.update((v) => v + 1);
+    this.catalogService.triggerRefresh();
   }
 
-  addSize(): void {
+  async addSize(): Promise<void> {
     const size = this.newSizeInput().trim();
     if (!size) return;
+
     const modelId = this.data.item.modelId;
-    const existingProduct = PRODUCTS.find((p) => p.idClothingModel === modelId && p.active);
+    const existingProduct = this.allProducts().find(
+      (p) => p.idClothingModel === modelId && p.active,
+    );
     const costPrice = existingProduct?.costPrice ?? 0;
     const salePrice = existingProduct?.salePrice ?? 0;
+    const supabase = getSupabase();
 
     for (const color of this.modelColors()) {
-      const nextProductId = this.nextId(PRODUCTS);
-      PRODUCTS.push({
-        id: nextProductId,
-        idClothingModel: modelId,
-        size,
-        idColor: color.id,
-        costPrice,
-        salePrice,
-        active: true,
-      });
-      for (const loc of this.data.locations) {
-        STOCK_LOCATIONS.push({
-          id: this.nextId(STOCK_LOCATIONS),
-          idProduct: nextProductId,
-          idLocation: loc.id,
-          currentStock: 0,
-          minimumStock: 1,
+      const { error: prodError } = await supabase
+        .from('products')
+        .insert({
+          id: crypto.randomUUID(),
+          id_clothing_model: modelId,
+          size,
+          id_color: color.id,
+          cost_price: costPrice,
+          sale_price: salePrice,
+          active: true,
         });
+      if (prodError) {
+        console.error('Error creating product for size:', prodError);
+        return;
       }
     }
+
     this.newSizeInput.set('');
-    this.variantsVersion.set(this.variantsVersion() + 1);
+    this.variantsVersion.update((v) => v + 1);
+    this.catalogService.triggerRefresh();
   }
 
-  removeSize(size: string): void {
+  async removeSize(size: string): Promise<void> {
     const modelId = this.data.item.modelId;
-    const productIds = PRODUCTS.filter(
-      (p) => p.idClothingModel === modelId && p.size === size && p.active,
-    ).map((p) => p.id);
+    const supabase = getSupabase();
+
+    const productIds = this.allProducts()
+      .filter(
+        (p) =>
+          p.idClothingModel === modelId && p.size === size && p.active,
+      )
+      .map((p) => p.id);
 
     for (const pid of productIds) {
-      const idx = PRODUCTS.findIndex((p) => p.id === pid);
-      if (idx !== -1) PRODUCTS.splice(idx, 1);
-      for (let i = STOCK_LOCATIONS.length - 1; i >= 0; i--) {
-        if (STOCK_LOCATIONS[i].idProduct === pid) STOCK_LOCATIONS.splice(i, 1);
-      }
+      const { error: pErr } = await supabase
+        .from('products')
+        .update({ active: false })
+        .eq('id', pid);
+      if (pErr) console.error('Error deactivating product:', pErr);
     }
-    this.variantsVersion.set(this.variantsVersion() + 1);
-  }
 
-  private nextId(arr: { id: string }[]): string {
-    return String(Math.max(...arr.map((x) => parseInt(x.id)), 0) + 1);
+    this.variantsVersion.update((v) => v + 1);
+    this.catalogService.triggerRefresh();
   }
 
   private getModelProductIds(): string[] {
-    return PRODUCTS.filter(
-      (p) => p.idClothingModel === this.data.item.modelId && p.active,
-    ).map((p) => p.id);
+    return this.allProducts()
+      .filter(
+        (p) => p.idClothingModel === this.data.item.modelId && p.active,
+      )
+      .map((p) => p.id);
   }
 
   selectTab(tab: TabName): void {
     this.activeTab.set(tab);
   }
 
-  save(): void {
-    if (this.model) {
-      this.model.name = this.form.controls.name.value;
-      this.model.description = this.form.controls.description.value || undefined;
-      this.model.idCategory = this.form.controls.categoryId.value;
+  async save(): Promise<void> {
+    const modelId = this.data.item.modelId;
+    const supabase = getSupabase();
+
+    const { error } = await supabase
+      .from('clothing_models')
+      .update({
+        name: this.form.controls.name.value,
+        description: this.form.controls.description.value || undefined,
+        id_category: this.form.controls.categoryId.value,
+      })
+      .eq('id', modelId);
+
+    if (error) {
+      console.error('Error saving model:', error);
+      return;
     }
+
     this.catalogService.triggerRefresh();
     this.dialogRef.close();
   }

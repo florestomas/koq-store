@@ -52,8 +52,8 @@ export class TransferenciaComponent {
     });
   }
 
-  confirmTransfer(): void {
-    const ok = this.transferService.confirmTransfer();
+  async confirmTransfer(): Promise<void> {
+    const ok = await this.transferService.confirmTransfer();
     if (ok) {
       this.confirmed.set(true);
       setTimeout(() => this.confirmed.set(false), 3000);

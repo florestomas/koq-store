@@ -10,6 +10,7 @@ import { ClothingModelColor } from '../../interfaces/clothing-model-color';
 import { Product } from '../../interfaces/product';
 import { StockLocation } from '../../interfaces/stock-location';
 import { Location } from '../../interfaces/location';
+import { User } from '../../interfaces/user';
 
 export type StockFilter = 'all' | 'low' | 'out';
 
@@ -31,12 +32,14 @@ export class CatalogService {
   private readonly colorsSig = signal<Color[]>([]);
   private readonly modelColorsSig = signal<ClothingModelColor[]>([]);
   private readonly locationsSig = signal<Location[]>([]);
+  private readonly usersSig = signal<User[]>([]);
 
   readonly loaded = signal(false);
 
   readonly categories = computed<Category[]>(() => this.categoriesSig());
   readonly colors = computed<Color[]>(() => this.colorsSig());
   readonly locations = computed<Location[]>(() => this.locationsSig());
+  readonly users = computed<User[]>(() => this.usersSig());
   readonly catalogModels = computed<ClothingModel[]>(() => this.modelsSig());
   readonly catalogProducts = computed<Product[]>(() => this.productsSig());
   readonly catalogStocks = computed<StockLocation[]>(() => this.stocksSig());
@@ -195,6 +198,7 @@ export class CatalogService {
         { data: rawColors },
         { data: rawModelColors },
         { data: rawLocations },
+        { data: rawUsers },
       ] = await Promise.all([
         supabase.from('categories').select('*'),
         supabase.from('clothing_models').select('*'),
@@ -203,6 +207,7 @@ export class CatalogService {
         supabase.from('colors').select('*'),
         supabase.from('clothing_model_colors').select('*'),
         supabase.from('locations').select('*'),
+        supabase.from('users').select('*'),
       ]);
 
       if (rawCategories) this.categoriesSig.set(rawCategories.map((r) => toCamelCase<Category>(r)));
@@ -212,6 +217,7 @@ export class CatalogService {
       if (rawColors) this.colorsSig.set(rawColors.map((r) => toCamelCase<Color>(r)));
       if (rawModelColors) this.modelColorsSig.set(rawModelColors.map((r) => toCamelCase<ClothingModelColor>(r)));
       if (rawLocations) this.locationsSig.set(rawLocations.map((r) => toCamelCase<Location>(r)));
+      if (rawUsers) this.usersSig.set(rawUsers.map((r) => toCamelCase<User>(r)));
     } catch (err) {
       console.error('Error loading catalog data:', err);
     } finally {
@@ -243,5 +249,6 @@ export class CatalogService {
 
   triggerRefresh(): void {
     this.refreshCounter.set(this.refreshCounter() + 1);
+    this.loadData();
   }
 }
