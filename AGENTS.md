@@ -16,7 +16,7 @@ npm run build          # production build → dist/
 - Vitest (not Jasmine/Karma) for unit tests
 - Tailwind CSS v4 via PostCSS (`@tailwindcss/postcss`)
 - Angular Material (M3 theming) with Material Icons Outlined by default
-- Prettier: 100 print width, single quotes, Angular parser for `.html`
+- Prettier: 100 print width, single quotes, Angular parser for `.html` — config in `package.json` (no `.prettierrc`), no ESLint in the project
 
 ## Architecture
 
@@ -25,13 +25,14 @@ src/app/
   core/          guards, services (providedIn: 'root')
   shared/        reusable UI components (sidebar, search-bar)
   layouts/       route-level layout components
-  pages/         routed feature components (auth, catalog)
+  pages/         routed feature components (auth, catalog, transfer, create-product)
   interfaces/    TypeScript interfaces
   mocks/         hard-coded mock data (no real backend yet)
 ```
 
 - Single project, single app: `src/main.ts` bootstraps `App` with `appConfig`
 - Routes defined in `app.routes.ts`, guards are functional (`CanActivateFn`)
+- Route paths use Spanish slugs: `/catalogo`, `/transferencia`, `/crear-producto`
 
 ## Conventions & gotchas
 
@@ -39,3 +40,5 @@ src/app/
 - Templates are external (`.html` files), as configured in `.vscode/settings.json`
 - `AuthService.logged` is `signal(true)` by default so the app skips login during development
 - Tests use Vitest globals (configured in `tsconfig.spec.json`); no need to import `describe`/`it`/`expect`
+- Mock data arrays in `src/app/mocks/` are mutated at runtime (CreateProduct, TransferService) — stateful across the session
+- Only `src/app/app.spec.ts` exists today; adding tests means creating new `.spec.ts` files
