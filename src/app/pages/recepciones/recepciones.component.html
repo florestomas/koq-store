@@ -1,0 +1,140 @@
+<div class="flex flex-col w-full h-full p-8 gap-6">
+  <!-- Header -->
+  <div class="flex flex-row items-center gap-3">
+    <mat-icon class="text-3xl text-koq">archive</mat-icon>
+    <h1 class="text-4xl text-black font-medium">{{ 'Recepciones Pendientes' | uppercase }}</h1>
+  </div>
+
+  <!-- Success flash -->
+  @if (confirmed()) {
+    <div
+      class="flex items-center gap-2 px-4 py-3 rounded-2xl bg-green-100 text-green-700 text-sm font-medium no-print"
+    >
+      <mat-icon class="text-lg">check_circle</mat-icon>
+      Recepción confirmada correctamente
+    </div>
+  }
+
+  <!-- Error flash -->
+  @if (error(); as err) {
+    <div
+      class="flex items-center gap-2 px-4 py-3 rounded-2xl bg-red-100 text-red-700 text-sm font-medium no-print"
+    >
+      <mat-icon class="text-lg">error</mat-icon>
+      {{ err }}
+    </div>
+  }
+
+  <!-- Pending count -->
+  <div class="flex flex-row items-center gap-2">
+    <p class="text-sm text-zinc-500">
+      <strong class="text-zinc-700">{{ receptionService.pendingTransfers().length }}</strong>
+      {{ receptionService.pendingTransfers().length === 1 ? 'recepcion' : 'recepciones' }} pendiente{{ receptionService.pendingTransfers().length === 1 ? '' : 's' }}
+    </p>
+  </div>
+
+  <!-- Empty state -->
+  @if (receptionService.pendingTransfers().length === 0) {
+    <div class="flex flex-col items-center justify-center flex-1 text-zinc-400">
+      <mat-icon class="text-7xl mb-4 text-green-500">inbox</mat-icon>
+      <p class="text-xl font-medium text-green-600">No tenés recepciones pendientes</p>
+      <p class="text-sm text-zinc-400 mt-1">Todas las transferencias fueron procesadas</p>
+    </div>
+  }
+
+  <!-- Transfer list -->
+  @if (receptionService.pendingTransfers().length > 0) {
+    <div class="flex flex-col gap-3">
+      @for (transfer of receptionService.pendingTransfers(); track transfer.id) {
+        <div
+          class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden transition hover:shadow-md"
+        >
+          <!-- Main row — clickable -->
+          <div
+            class="flex flex-row items-center gap-4 px-6 py-4 cursor-pointer"
+            (click)="toggleExpand(transfer.id)"
+          >
+            <mat-icon
+              class="text-zinc-300 text-lg shrink-0 transition-transform duration-300"
+              [class.rotate-90]="expandedTransferId() === transfer.id"
+            >chevron_right</mat-icon>
+
+            <mat-icon class="text-zinc-400 text-xl shrink-0">location_on</mat-icon>
+
+            <div class="flex flex-col min-w-0 w-32 shrink-0">
+              <span class="text-sm font-semibold text-zinc-800">{{ transfer.originLocationName }}</span>
+              <span class="text-xs text-zinc-400">&rarr; {{ transfer.destinationLocationName }}</span>
+            </div>
+
+            <div class="flex flex-col min-w-0 w-28 shrink-0">
+              <span class="text-sm text-zinc-700">{{ transfer.dateTime | date:'dd/MM/yyyy' }}</span>
+              <span class="text-xs text-zinc-400">{{ transfer.dateTime | date:'HH:mm' }}</span>
+            </div>
+
+            <span class="flex-1 min-w-0"></span>
+
+            <span class="text-sm text-zinc-500 shrink-0">
+              <strong class="text-zinc-700">{{ transfer.itemCount }}</strong>
+              {{ transfer.itemCount === 1 ? 'item' : 'items' }}
+            </span>
+
+            <span
+              class="px-3 py-1 rounded-full text-[11px] font-bold tracking-wider bg-orange-100 text-orange-700 shrink-0"
+            >PENDIENTE</span>
+          </div>
+
+          <!-- Expandable detail -->
+          <div
+            class="expandable-content"
+            [class.expanded]="expandedTransferId() === transfer.id"
+          >
+            <div class="border-t border-gray-100 px-6 py-4">
+              <!-- Detail table -->
+              <table class="w-full text-sm mb-4">
+                <thead>
+                  <tr class="border-b border-gray-100">
+                    <th class="text-left py-2 text-zinc-400 font-medium text-xs uppercase tracking-wider">Modelo</th>
+                    <th class="text-left py-2 text-zinc-400 font-medium text-xs uppercase tracking-wider">Talle</th>
+                    <th class="text-left py-2 text-zinc-400 font-medium text-xs uppercase tracking-wider">Color</th>
+                    <th class="text-right py-2 text-zinc-400 font-medium text-xs uppercase tracking-wider">Cant. enviada</th>
+                    <th class="text-right py-2 text-zinc-400 font-medium text-xs uppercase tracking-wider">Cant. recibida</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (det of transfer.details; track det.detailId) {
+                    <tr class="border-b border-gray-50 last:border-b-0">
+                      <td class="py-2.5 font-medium">{{ det.modelName }}</td>
+                      <td class="py-2.5 text-zinc-500">T. {{ det.size }}</td>
+                      <td class="py-2.5 text-zinc-500">{{ det.colorName }}</td>
+                      <td class="py-2.5 text-right font-semibold">{{ det.quantitySent }}</td>
+                      <td class="py-2.5 text-right">
+                        <input
+                          type="number"
+                          class="w-20 text-right border border-gray-300 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-koq"
+                          [value]="getReceivedQty(transfer.id, det.productId, det.quantitySent)"
+                          (input)="setReceivedQty(transfer.id, det.productId, $any($event.target).value)"
+                          [max]="det.quantitySent"
+                          min="0"
+                        />
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+
+              <!-- Confirm button -->
+              <div class="flex justify-end">
+                <button
+                  (click)="$event.stopPropagation(); confirmReception(transfer.id)"
+                  class="w-full md:w-auto py-3.5 px-10 rounded-full text-sm font-bold tracking-wider text-white bg-koq hover:opacity-90 transition cursor-pointer"
+                >
+                  CONFIRMAR RECEPCIÓN
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

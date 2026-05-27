@@ -3,4 +3,5 @@ export interface TransferDetail {
   idTransfer: string;
   idProduct: string;
   quantity: number;
+  quantityReceived?: number;
 }

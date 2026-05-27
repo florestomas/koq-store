@@ -8,6 +8,7 @@ import { CreateProductComponent } from './pages/create-product/create-product.co
 import { NewSaleComponent } from './pages/new-sale/new-sale.component';
 import { AlertasComponent } from './pages/alertas/alertas.component';
 import { HistorialComponent } from './pages/historial/historial.component';
+import { RecepcionesComponent } from './pages/recepciones/recepciones.component';
 
 export const routes: Routes = [
   {
@@ -25,6 +26,7 @@ export const routes: Routes = [
       { path: 'ventas/nueva', component: NewSaleComponent },
       { path: 'alertas', component: AlertasComponent },
       { path: 'historial', component: HistorialComponent },
+      { path: 'recepciones', component: RecepcionesComponent },
       { path: '', redirectTo: 'catalogo', pathMatch: 'full' },
     ],
   },

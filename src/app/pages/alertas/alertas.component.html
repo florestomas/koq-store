@@ -12,23 +12,79 @@
     <h1>Lista de Reposición — {{ today | date:'dd/MM/yyyy' }}</h1>
   </div>
 
-  <!-- Export / Print button -->
+  <!-- Summary cards strip -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 no-print">
+    <div class="bg-white border border-gray-200 rounded-2xl px-5 py-4 shadow-sm">
+      <p class="text-xs font-semibold text-zinc-400 tracking-wider uppercase mb-1">Total Alertas</p>
+      <p class="text-3xl font-bold text-black">{{ totalCount() }}</p>
+    </div>
+    <div class="bg-white border border-red-200 rounded-2xl px-5 py-4 shadow-sm">
+      <p class="text-xs font-semibold text-zinc-400 tracking-wider uppercase mb-1">Stock Cero</p>
+      <p class="text-3xl font-bold text-red-600">{{ zeroStockCount() }}</p>
+    </div>
+    <div class="bg-white border border-orange-200 rounded-2xl px-5 py-4 shadow-sm">
+      <p class="text-xs font-semibold text-zinc-400 tracking-wider uppercase mb-1">Stock Bajo</p>
+      <p class="text-3xl font-bold text-orange-500">{{ lowStockCount() }}</p>
+    </div>
+    <div class="bg-white border border-yellow-300 rounded-2xl px-5 py-4 shadow-sm">
+      <p class="text-xs font-semibold text-zinc-400 tracking-wider uppercase mb-1">En Reposición</p>
+      <p class="text-3xl font-bold text-yellow-700">0</p>
+    </div>
+  </div>
+
+  <!-- Location filter bar + view toggle -->
+  <div class="no-print">
+    @if (isAdmin()) {
+      <div class="flex flex-row items-center gap-2 mb-4 flex-wrap">
+        <span class="text-xs font-semibold text-zinc-400 tracking-wider uppercase mr-2">Ubicación:</span>
+        <button
+          class="px-4 py-1.5 rounded-full text-xs font-bold tracking-wider transition cursor-pointer"
+          [class.bg-koq]="selectedLocationId() === null"
+          [class.text-white]="selectedLocationId() === null"
+          [class.bg-gray-100]="selectedLocationId() !== null"
+          [class.text-zinc-600]="selectedLocationId() !== null"
+          (click)="setLocationFilter(null)"
+        >Todas</button>
+        @for (loc of locations; track loc.id) {
+          <button
+            class="px-4 py-1.5 rounded-full text-xs font-bold tracking-wider transition cursor-pointer"
+            [class.bg-koq]="selectedLocationId() === loc.id"
+            [class.text-white]="selectedLocationId() === loc.id"
+            [class.bg-gray-100]="selectedLocationId() !== loc.id"
+            [class.text-zinc-600]="selectedLocationId() !== loc.id"
+            (click)="setLocationFilter(loc.id)"
+          >{{ loc.name | uppercase }}</button>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Export / Print button + count + toggle -->
   <div class="flex flex-row items-center justify-between mb-6 no-print">
     <p class="text-sm text-zinc-500">
-      <strong class="text-zinc-700">{{ alertService.alertCount() }}</strong>
-      {{ alertService.alertCount() === 1 ? 'alerta' : 'alertas' }} de stock bajo
+      <strong class="text-zinc-700">{{ totalCount() }}</strong>
+      {{ totalCount() === 1 ? 'alerta' : 'alertas' }} de stock bajo
     </p>
-    <button
-      (click)="print()"
-      class="flex flex-row items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold tracking-wider text-white bg-koq hover:opacity-90 transition cursor-pointer"
-    >
-      <mat-icon class="text-lg">print</mat-icon>
-      EXPORTAR / IMPRIMIR
-    </button>
+    <div class="flex flex-row items-center gap-3">
+      <button
+        (click)="toggleViewMode()"
+        class="flex flex-row items-center gap-2 px-4 py-2.5 rounded-full text-xs font-semibold tracking-wider border border-gray-300 text-zinc-600 hover:bg-gray-50 transition cursor-pointer"
+      >
+        <mat-icon class="text-lg">{{ viewMode() === 'flat' ? 'merge_type' : 'separate_lines' }}</mat-icon>
+        {{ viewMode() === 'flat' ? 'AGRUPAR' : 'VER TODO' }}
+      </button>
+      <button
+        (click)="print()"
+        class="flex flex-row items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold tracking-wider text-white bg-koq hover:opacity-90 transition cursor-pointer"
+      >
+        <mat-icon class="text-lg">print</mat-icon>
+        EXPORTAR / IMPRIMIR
+      </button>
+    </div>
   </div>
 
   <!-- Empty state -->
-  @if (alertService.alerts().length === 0) {
+  @if (totalCount() === 0) {
     <div class="flex flex-col items-center justify-center flex-1 text-zinc-400">
       <mat-icon class="text-7xl mb-4 text-green-500">check_circle</mat-icon>
       <p class="text-xl font-medium text-green-600">Todo el stock está en orden</p>
@@ -37,7 +93,7 @@
   }
 
   <!-- Alerts table -->
-  @if (alertService.alerts().length > 0) {
+  @if (totalCount() > 0) {
     <div class="overflow-x-auto border border-gray-200 rounded-3xl bg-white shadow-sm">
       <table class="w-full text-sm">
         <thead>
@@ -51,19 +107,41 @@
           </tr>
         </thead>
         <tbody>
-          @for (alert of alertService.alerts(); track alert.id) {
-            <tr
-              class="border-b border-gray-100 last:border-b-0"
-              [class.alert-critical]="alert.currentStock === 0"
-              [class.alert-low]="alert.currentStock > 0"
-            >
-              <td class="py-3.5 px-5 font-medium">{{ alert.modelName }}</td>
-              <td class="py-3.5 px-5 text-zinc-600">T. {{ alert.size }}</td>
-              <td class="py-3.5 px-5 text-zinc-600">{{ alert.colorName }}</td>
-              <td class="py-3.5 px-5 text-zinc-600">{{ alert.locationName }}</td>
-              <td class="py-3.5 px-5 text-right font-bold" [class.text-red-600]="alert.currentStock === 0">{{ alert.currentStock }}</td>
-              <td class="py-3.5 px-5 text-right text-zinc-500">{{ alert.minimumStock }}</td>
-            </tr>
+          @if (viewMode() === 'flat') {
+            @for (alert of alertService.alerts(); track alert.id) {
+              <tr
+                class="border-b border-gray-100 last:border-b-0"
+                [class.alert-critical]="alert.currentStock === 0"
+                [class.alert-low]="alert.currentStock > 0"
+              >
+                <td class="py-3.5 px-5 font-medium">{{ alert.modelName }}</td>
+                <td class="py-3.5 px-5 text-zinc-600">T. {{ alert.size }}</td>
+                <td class="py-3.5 px-5 text-zinc-600">{{ alert.colorName }}</td>
+                <td class="py-3.5 px-5 text-zinc-600">{{ alert.locationName }}</td>
+                <td class="py-3.5 px-5 text-right font-bold" [class.text-red-600]="alert.currentStock === 0">{{ alert.currentStock }}</td>
+                <td class="py-3.5 px-5 text-right text-zinc-500">{{ alert.minimumStock }}</td>
+              </tr>
+            }
+          } @else {
+            @for (group of groupedAlerts(); track group.modelId) {
+              <tr class="border-b border-gray-100 bg-gray-50/50">
+                <td colspan="6" class="py-2 px-5 text-xs font-bold text-zinc-400 uppercase tracking-wider">{{ group.modelName }}</td>
+              </tr>
+              @for (alert of group.items; track alert.id) {
+                <tr
+                  class="border-b border-gray-100 last:border-b-0"
+                  [class.alert-critical]="alert.currentStock === 0"
+                  [class.alert-low]="alert.currentStock > 0"
+                >
+                  <td class="py-3.5 px-5"></td>
+                  <td class="py-3.5 px-5 text-zinc-600">T. {{ alert.size }}</td>
+                  <td class="py-3.5 px-5 text-zinc-600">{{ alert.colorName }}</td>
+                  <td class="py-3.5 px-5 text-zinc-600">{{ alert.locationName }}</td>
+                  <td class="py-3.5 px-5 text-right font-bold" [class.text-red-600]="alert.currentStock === 0">{{ alert.currentStock }}</td>
+                  <td class="py-3.5 px-5 text-right text-zinc-500">{{ alert.minimumStock }}</td>
+                </tr>
+              }
+            }
           }
         </tbody>
       </table>

@@ -1,4 +1,4 @@
-import { computed, Injectable, signal, inject } from '@angular/core';
+import { computed, Injectable, signal, inject, WritableSignal } from '@angular/core';
 import { AuthService } from './auth.service';
 import { STOCK_LOCATIONS } from '../../mocks/stock-location.mock';
 import { PRODUCTS } from '../../mocks/products.mock';
@@ -8,10 +8,12 @@ import { LOCATIONS } from '../../mocks/location.mock';
 
 export interface AlertItem {
   id: string;
+  modelId: string;
   modelName: string;
   size: string;
   colorName: string;
   locationName: string;
+  locationId: string;
   currentStock: number;
   minimumStock: number;
 }
@@ -21,17 +23,24 @@ export class AlertService {
   private readonly authService = inject(AuthService);
   private readonly refreshCounter = signal(0);
 
+  readonly selectedLocationId: WritableSignal<string | null> = signal(null);
+
   readonly alerts = computed<AlertItem[]>(() => {
     this.refreshCounter();
     const user = this.authService.currentUser();
     const isAdmin = user?.role === 'admin';
     const userLocationId = user?.idLocation;
+    const filterLocationId = this.selectedLocationId();
 
     let stockLocations = STOCK_LOCATIONS;
 
     if (!isAdmin && userLocationId) {
       stockLocations = stockLocations.filter(
         (s) => s.idLocation === userLocationId,
+      );
+    } else if (isAdmin && filterLocationId) {
+      stockLocations = stockLocations.filter(
+        (s) => s.idLocation === filterLocationId,
       );
     }
 
@@ -55,10 +64,12 @@ export class AlertService {
 
       result.push({
         id: s.id,
+        modelId: model.id,
         modelName: model.name,
         size: product.size,
         colorName: color?.name ?? '',
         locationName: location?.name ?? '',
+        locationId: s.idLocation,
         currentStock: s.currentStock,
         minimumStock: s.minimumStock,
       });
@@ -70,6 +81,14 @@ export class AlertService {
   });
 
   readonly alertCount = computed(() => this.alerts().length);
+
+  readonly zeroStockCount = computed(
+    () => this.alerts().filter((a) => a.currentStock === 0).length,
+  );
+
+  readonly lowStockCount = computed(
+    () => this.alerts().filter((a) => a.currentStock > 0).length,
+  );
 
   refresh(): void {
     this.refreshCounter.update((c) => c + 1);
