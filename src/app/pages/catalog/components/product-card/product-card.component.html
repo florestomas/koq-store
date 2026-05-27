@@ -34,17 +34,23 @@
       }
     </div>
 
-    <button (click)="openEdit()" class="rounded-full border p-1.5 border-zinc-500 text-zinc-500!">
-      <mat-icon>edit</mat-icon>
+    <button
+      (click)="openEdit()"
+      class="rounded-full border p-1.5 border-zinc-500 text-zinc-500 hover:scale-110 hover:shadow-lg hover:border-koq hover:text-koq active:scale-95 transition-all duration-200 cursor-pointer group"
+    >
+      <mat-icon class="group-hover:rotate-12 transition-transform duration-200">edit</mat-icon>
     </button>
     <button
       (click)="cardExpanded.set(!cardExpanded())"
-      class="rounded-full border p-1.5 border-koq text-white! transition"
+      class="rounded-full border p-1.5 border-koq text-white hover:scale-110 hover:shadow-xl active:scale-95 transition-all duration-200 cursor-pointer"
       [class.bg-koq]="item().stockAlerts.length === 0"
       [class.bg-red-400]="item().stockAlerts.length > 0"
       [class.border-red-400]="item().stockAlerts.length > 0"
+      [class.hover:bg-red-500]="item().stockAlerts.length > 0"
+      [class.hover:shadow-red-300/50]="item().stockAlerts.length > 0"
+      [class.hover:shadow-koq/50]="item().stockAlerts.length === 0"
     >
-      <mat-icon>expand_more</mat-icon>
+      <mat-icon class="transition-transform duration-300" [class.rotate-180]="cardExpanded()">expand_more</mat-icon>
     </button>
   </div>
 

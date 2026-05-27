@@ -32,7 +32,7 @@ export const SALES: Sale[] = [
     dateTime: '2024-03-21T16:00:00.000Z',
     idLocation: '4',
     idUser: '4',
-    channel: 'mercadolibre',
+    channel: 'local',
     status: 'cancelled',
     cancelledAt: '2024-03-21T18:00:00.000Z',
   },

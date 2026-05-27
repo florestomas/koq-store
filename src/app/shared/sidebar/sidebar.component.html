@@ -25,13 +25,11 @@
       [iconName]="'point_of_sale'"
       [navName]="'VENTAS'"
     ></app-nav-item>
-    @if (isAdmin()) {
-      <app-nav-item
-        [navLink]="'transferencia'"
-        [iconName]="'local_shipping'"
-        [navName]="'TRANSFERENCIA'"
-      ></app-nav-item>
-    }
+    <app-nav-item
+      [navLink]="'transferencia'"
+      [iconName]="'local_shipping'"
+      [navName]="'TRANSFERENCIA'"
+    ></app-nav-item>
     <app-nav-item
       [navLink]="'recepciones'"
       [iconName]="'archive'"

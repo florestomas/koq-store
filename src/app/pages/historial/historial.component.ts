@@ -24,11 +24,10 @@ export class HistorialComponent {
     .toISOString()
     .split('T')[0];
 
-  readonly channels: ('all' | 'local' | 'whatsapp' | 'mercadolibre')[] = [
+  readonly channels: ('all' | 'local' | 'whatsapp')[] = [
     'all',
     'local',
     'whatsapp',
-    'mercadolibre',
   ];
 
   readonly isAdmin = computed(
@@ -55,7 +54,7 @@ export class HistorialComponent {
     this.salesHistoryService.dateTo.set(value || null);
   }
 
-  setChannel(ch: 'all' | 'local' | 'whatsapp' | 'mercadolibre'): void {
+  setChannel(ch: 'all' | 'local' | 'whatsapp'): void {
     this.salesHistoryService.channel.set(ch);
   }
 
@@ -69,8 +68,7 @@ export class HistorialComponent {
         return 'store';
       case 'whatsapp':
         return 'chat';
-      case 'mercadolibre':
-        return 'sell';
+
       default:
         return 'sell';
     }

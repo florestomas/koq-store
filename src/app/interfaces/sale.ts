@@ -3,7 +3,7 @@ export interface Sale {
   dateTime: string;
   idLocation: string;
   idUser: string;
-  channel: 'local' | 'whatsapp' | 'mercadolibre';
+  channel: 'local' | 'whatsapp';
   discountType?: 'percentage' | 'fixed_amount' | 'none';
   discountValue?: number;
   note?: string;

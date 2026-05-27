@@ -16,7 +16,7 @@
       @if (salesHistoryService.topChannel(); as tc) {
         <div class="flex flex-row items-center gap-2">
           <mat-icon class="text-koq text-xl">{{ getChannelIcon(tc.name) }}</mat-icon>
-          <p class="text-xl font-bold text-zinc-800 capitalize">{{ tc.name === 'mercadolibre' ? 'Mercado Libre' : tc.name }}</p>
+          <p class="text-xl font-bold text-zinc-800 capitalize">{{ tc.name }}</p>
           <span class="text-sm text-zinc-400">({{ tc.count }})</span>
         </div>
       } @else {
@@ -85,7 +85,7 @@
               @case ('all') { TODOS }
               @case ('local') { LOCAL }
               @case ('whatsapp') { WHATSAPP }
-              @case ('mercadolibre') { M. LIBRE }
+
             }
           </button>
         }
@@ -145,7 +145,6 @@
             <mat-icon class="text-lg shrink-0"
               [class.text-green-600]="sale.channel === 'local'"
               [class.text-blue-500]="sale.channel === 'whatsapp'"
-              [class.text-yellow-600]="sale.channel === 'mercadolibre'"
             >{{ getChannelIcon(sale.channel) }}</mat-icon>
 
             <span class="flex-1 min-w-0"></span>

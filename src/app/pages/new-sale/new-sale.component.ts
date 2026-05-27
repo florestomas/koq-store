@@ -10,7 +10,9 @@ import { PRODUCTS } from '../../mocks/products.mock';
 import { STOCK_LOCATIONS } from '../../mocks/stock-location.mock';
 import { COLORS } from '../../mocks/colors.mock';
 import { CLOTHING_MODEL_COLORS } from '../../mocks/clothing-model-colors.mock';
+import { CATEGORIES } from '../../mocks/category.mock';
 import { ClothingModel } from '../../interfaces/clothing-model';
+import { Category } from '../../interfaces/category';
 
 interface VariantCell {
   productId: string | null;
@@ -19,8 +21,16 @@ interface VariantCell {
 }
 
 interface VariantRow {
+  colorId: string;
   colorName: string;
   cells: VariantCell[];
+}
+
+export interface ModelSearchResult {
+  model: ClothingModel;
+  imageUrl: string;
+  categoryName: string;
+  totalStock: number;
 }
 
 @Component({
@@ -36,32 +46,83 @@ export class NewSaleComponent {
 
   readonly searchControl = new FormControl('');
   readonly searchTerm = signal('');
-  readonly showDropdown = signal(false);
+  readonly selectedCategoryId = signal<string | null>(null);
   readonly selectedModel = signal<ClothingModel | null>(null);
   readonly cartItems = signal<CartItem[]>([]);
   readonly discountType = signal<'none' | 'percentage' | 'fixed_amount'>('none');
   readonly discountValue = signal(0);
-  readonly channel = signal<'local' | 'whatsapp' | 'mercadolibre' | null>(null);
+  readonly channel = signal<'local' | 'whatsapp' | null>(null);
+  readonly paymentTransfer = signal(false);
   readonly confirmed = signal(false);
+  readonly error = signal<string | null>(null);
+  readonly variantQuantities = signal<Record<string, number>>({});
 
-  readonly channels: ('local' | 'whatsapp' | 'mercadolibre')[] = [
+  readonly channels: ('local' | 'whatsapp')[] = [
     'local',
     'whatsapp',
-    'mercadolibre',
   ];
-  readonly error = signal<string | null>(null);
 
   readonly userLocationId = computed(
     () => this.authService.currentUser()?.idLocation ?? '1',
   );
   readonly user = computed(() => this.authService.currentUser());
 
-  readonly searchResults = computed(() => {
+  readonly availableModels = computed<ModelSearchResult[]>(() => {
+    const locId = this.userLocationId();
+
+    return CLOTHING_MODELS.filter((m) => m.active)
+      .map((model) => {
+        const modelProducts = PRODUCTS.filter(
+          (p) => p.idClothingModel === model.id && p.active,
+        );
+        const productIds = modelProducts.map((p) => p.id);
+
+        const stocksAtLocation = STOCK_LOCATIONS.filter(
+          (s) => productIds.includes(s.idProduct) && s.idLocation === locId,
+        );
+
+        const totalStock = stocksAtLocation.reduce(
+          (sum, s) => sum + s.currentStock,
+          0,
+        );
+
+        const imageUrl =
+          CLOTHING_MODEL_COLORS.find(
+            (mc) => mc.idClothingModel === model.id,
+          )?.imageUrl ?? '';
+
+        const categoryName =
+          CATEGORIES.find((c) => c.id === model.idCategory)?.name ?? '';
+
+        return { model, imageUrl, categoryName, totalStock };
+      })
+      .filter((r) => r.totalStock > 0);
+  });
+
+  readonly filteredModels = computed<ModelSearchResult[]>(() => {
     const term = this.searchTerm().toLowerCase().trim();
-    if (!term) return [];
-    return CLOTHING_MODELS.filter(
-      (m) => m.active && m.name.toLowerCase().includes(term),
+    const catId = this.selectedCategoryId();
+    let results = this.availableModels();
+
+    if (term) {
+      results = results.filter((r) =>
+        r.model.name.toLowerCase().includes(term),
+      );
+    }
+
+    if (catId) {
+      results = results.filter((r) => r.model.idCategory === catId);
+    }
+
+    return results;
+  });
+
+  readonly categories = computed<Category[]>(() => {
+    const locId = this.userLocationId();
+    const modelIdsWithStock = new Set(
+      this.availableModels().map((r) => r.model.idCategory),
     );
+    return CATEGORIES.filter((c) => modelIdsWithStock.has(c.id));
   });
 
   readonly modelImageUrl = computed(() => {
@@ -79,6 +140,16 @@ export class NewSaleComponent {
     return PRODUCTS.filter(
       (p) => p.idClothingModel === model.id && p.active,
     );
+  });
+
+  readonly modelTotalStock = computed(() => {
+    const products = this.modelProducts();
+    const locId = this.userLocationId();
+    return STOCK_LOCATIONS.filter(
+      (s) =>
+        products.some((p) => p.id === s.idProduct) &&
+        s.idLocation === locId,
+    ).reduce((sum, s) => sum + s.currentStock, 0);
   });
 
   readonly allSizes = computed(() => {
@@ -108,9 +179,16 @@ export class NewSaleComponent {
         return { productId: product.id, size, stock };
       });
 
-      return { colorName, cells };
+      return { colorId, colorName, cells };
     });
   });
+
+  readonly totalAddingUnits = computed(() => {
+    const quantities = this.variantQuantities();
+    return Object.values(quantities).reduce((sum, q) => sum + q, 0);
+  });
+
+  readonly canAddToCart = computed(() => this.totalAddingUnits() > 0);
 
   readonly totalBeforeDiscount = computed(() =>
     this.cartItems().reduce(
@@ -127,8 +205,13 @@ export class NewSaleComponent {
     return value;
   });
 
+  readonly surcharge = computed(() => {
+    if (!this.paymentTransfer()) return 0;
+    return Math.round(this.totalBeforeDiscount() * 0.1);
+  });
+
   readonly total = computed(
-    () => this.totalBeforeDiscount() - this.discountAmount(),
+    () => this.totalBeforeDiscount() - this.discountAmount() + this.surcharge(),
   );
 
   readonly canConfirm = computed(
@@ -140,58 +223,82 @@ export class NewSaleComponent {
       .pipe(debounceTime(300), distinctUntilChanged())
       .subscribe((value) => {
         this.searchTerm.set(value ?? '');
-        this.showDropdown.set(!!value);
+        this.selectedModel.set(null);
+        this.variantQuantities.set({});
       });
   }
 
   selectModel(model: ClothingModel): void {
     this.selectedModel.set(model);
-    this.showDropdown.set(false);
-    this.searchControl.setValue('');
-    this.searchTerm.set('');
+    this.variantQuantities.set({});
+  }
+
+  setSelectedCategory(id: string | null): void {
+    this.selectedCategoryId.set(id);
+    this.selectedModel.set(null);
+    this.variantQuantities.set({});
   }
 
   clearModel(): void {
     this.selectedModel.set(null);
+    this.variantQuantities.set({});
   }
 
-  addToCart(cell: VariantCell): void {
-    if (!cell.productId || cell.stock === 0) return;
+  setVariantQty(productId: string, rawValue: string): void {
+    const value = Math.max(parseInt(rawValue) || 0, 0);
+    this.variantQuantities.update((map) => ({ ...map, [productId]: value }));
+  }
+
+  getVariantQty(productId: string): number {
+    return this.variantQuantities()[productId] ?? 0;
+  }
+
+  addToCart(): void {
     const model = this.selectedModel();
-    if (!model) return;
+    if (!model || !this.canAddToCart()) return;
 
-    const existing = this.cartItems().findIndex(
-      (item) => item.productId === cell.productId,
-    );
+    const quantities = this.variantQuantities();
+    const items: CartItem[] = [];
 
-    if (existing !== -1) {
-      const items = [...this.cartItems()];
-      const current = items[existing];
-      if (current.quantity < cell.stock) {
-        items[existing] = { ...current, quantity: current.quantity + 1 };
-        this.cartItems.set(items);
+    for (const row of this.variantGrid()) {
+      for (const cell of row.cells) {
+        if (!cell.productId) continue;
+        const qty = quantities[cell.productId] ?? 0;
+        if (qty <= 0) continue;
+
+        const product = PRODUCTS.find((p) => p.id === cell.productId);
+        if (!product) continue;
+
+        const existing = this.cartItems().findIndex(
+          (ci) => ci.productId === cell.productId,
+        );
+
+        if (existing !== -1) {
+          const current = [...this.cartItems()];
+          current[existing] = {
+            ...current[existing],
+            quantity: current[existing].quantity + qty,
+          };
+          this.cartItems.set(current);
+        } else {
+          items.push({
+            productId: cell.productId,
+            modelName: model.name,
+            colorName: row.colorName,
+            size: cell.size,
+            quantity: qty,
+            unitPrice: product.salePrice,
+            imageUrl: this.modelImageUrl(),
+          });
+        }
       }
-    } else {
-      const unitPrice =
-        PRODUCTS.find((p) => p.id === cell.productId)?.salePrice ?? 0;
-      const colorName =
-        this.variantGrid().find((r) =>
-          r.cells.some((c) => c.productId === cell.productId),
-        )?.colorName ?? '';
-
-      this.cartItems.update((items) => [
-        ...items,
-        {
-          productId: cell.productId!,
-          modelName: model.name,
-          colorName,
-          size: cell.size,
-          quantity: 1,
-          unitPrice,
-          imageUrl: this.modelImageUrl(),
-        },
-      ]);
     }
+
+    if (items.length > 0) {
+      this.cartItems.update((prev) => [...prev, ...items]);
+    }
+
+    this.variantQuantities.set({});
   }
 
   changeQuantity(index: number, delta: number): void {
@@ -238,8 +345,12 @@ export class NewSaleComponent {
     if (modes[nextIndex] === 'none') this.discountValue.set(0);
   }
 
-  selectChannel(ch: 'local' | 'whatsapp' | 'mercadolibre'): void {
+  selectChannel(ch: 'local' | 'whatsapp'): void {
     this.channel.set(ch);
+  }
+
+  togglePaymentTransfer(): void {
+    this.paymentTransfer.update((v) => !v);
   }
 
   parseNumber(value: string): number {
@@ -269,9 +380,14 @@ export class NewSaleComponent {
       this.confirmed.set(true);
       this.error.set(null);
       this.cartItems.set([]);
+      this.selectedModel.set(null);
+      this.variantQuantities.set({});
       this.channel.set(null);
+      this.paymentTransfer.set(false);
       this.discountType.set('none');
       this.discountValue.set(0);
+      this.searchControl.setValue('');
+      this.searchTerm.set('');
       setTimeout(() => this.confirmed.set(false), 3000);
     } else {
       this.error.set('Error al procesar la venta. Intente nuevamente.');

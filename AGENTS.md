@@ -54,7 +54,7 @@ src/app/
 - `operadorGuard` on `/transferencia` and `/crear-producto`: blocks `operator` role, redirects to `/catalogo`
 
 ### Layer 2 — UI & service enforcement
-- **Sidebar**: `CREAR PRODUCTO` and `TRANSFERENCIA` nav items hidden for operators
+- **Sidebar**: `CREAR PRODUCTO` nav item hidden for operators
 - **Catalog**: `setLocationFilter()` is a no-op for operators; `filteredItems` computed forces `idLocation` to operator's own location
 - **Alerts**: service filters by `idLocation` for operators; location filter bar hidden
 - **History**: service filters by `idLocation` for operators; location `<select>` hidden

@@ -35,7 +35,11 @@ export interface SelectableModel {
 
 @Injectable({ providedIn: 'root' })
 export class TransferService {
-  readonly originId = signal('1');
+  readonly originId = computed(() => {
+    const user = this.authService.currentUser();
+    if (user?.role === 'operator') return user.idLocation;
+    return '1';
+  });
   readonly destinationId = signal<string | null>(null);
   readonly items = signal<TransferItem[]>([]);
   readonly searchTerm = signal('');

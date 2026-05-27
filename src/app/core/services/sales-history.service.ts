@@ -22,7 +22,7 @@ export interface SaleRow {
   id: string;
   dateTime: string;
   operatorName: string;
-  channel: 'local' | 'whatsapp' | 'mercadolibre';
+  channel: 'local' | 'whatsapp';
   totalBeforeDiscount: number;
   discountType?: 'percentage' | 'fixed_amount' | 'none';
   discountValue?: number;
@@ -46,7 +46,7 @@ export class SalesHistoryService {
 
   readonly dateFrom = signal<string | null>(null);
   readonly dateTo = signal<string | null>(null);
-  readonly channel = signal<'all' | 'local' | 'whatsapp' | 'mercadolibre'>('all');
+  readonly channel = signal<'all' | 'local' | 'whatsapp'>('all');
   readonly locationId = signal<string | null>(null);
   private readonly refreshCounter = signal(0);
 

@@ -22,7 +22,7 @@ export const routes: Routes = [
     canActivate: [authGuard],
     children: [
       { path: 'catalogo', component: CatalogComponent },
-      { path: 'transferencia', component: TransferenciaComponent, canActivate: [operadorGuard] },
+      { path: 'transferencia', component: TransferenciaComponent },
       { path: 'crear-producto', component: CreateProductComponent, canActivate: [operadorGuard] },
       { path: 'ventas/nueva', component: NewSaleComponent },
       { path: 'alertas', component: AlertasComponent },

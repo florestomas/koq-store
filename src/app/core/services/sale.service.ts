@@ -17,7 +17,7 @@ export interface ConfirmSaleData {
   items: CartItem[];
   idLocation: string;
   idUser: string;
-  channel: 'local' | 'whatsapp' | 'mercadolibre';
+  channel: 'local' | 'whatsapp';
   discountType?: 'percentage' | 'fixed_amount';
   discountValue?: number;
 }
