@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { DatePipe, UpperCasePipe } from '@angular/common';
 import { MatIcon } from '@angular/material/icon';
 import { ReceptionService } from '../../core/services/reception.service';
+import { DetailRow } from '../../core/services/reception.service';
 
 @Component({
   selector: 'app-recepciones',
@@ -13,38 +14,71 @@ import { ReceptionService } from '../../core/services/reception.service';
 export class RecepcionesComponent {
   readonly receptionService = inject(ReceptionService);
 
-  readonly expandedTransferId = signal<string | null>(null);
+  readonly selectedTransferId = signal<string | null>(null);
   readonly receivedQty = signal<Record<string, number>>({});
   readonly confirmed = signal(false);
   readonly error = signal<string | null>(null);
 
-  toggleExpand(transferId: string): void {
-    this.expandedTransferId.update((id) =>
-      id === transferId ? null : transferId,
+  readonly selectedTransfer = computed(() => {
+    const id = this.selectedTransferId();
+    if (!id) return null;
+    return (
+      this.receptionService.pendingTransfers().find((t) => t.id === id) ??
+      null
     );
+  });
+
+  readonly hoursUntilOld = 24;
+
+  selectTransfer(id: string): void {
+    this.selectedTransferId.set(id);
+    this.error.set(null);
+    this.confirmed.set(false);
   }
 
-  setReceivedQty(transferId: string, productId: string, rawValue: string): void {
-    const maxQty = this.receptionService
-      .pendingTransfers()
-      .find((t) => t.id === transferId)
-      ?.details.find((d) => d.productId === productId)?.quantitySent ?? 0;
+  isTransferOld(dateTime: string): boolean {
+    const now = Date.now();
+    const transferTime = new Date(dateTime).getTime();
+    return now - transferTime > this.hoursUntilOld * 60 * 60 * 1000;
+  }
 
-    const value = Math.min(Math.max(parseInt(rawValue) || 0, 0), maxQty);
+  formatTransferCode(id: string): string {
+    return `TRF-${id.padStart(4, '0')}`;
+  }
+
+  setReceivedQty(productId: string, rawValue: string): void {
+    const transfer = this.selectedTransfer();
+    if (!transfer) return;
+
+    const detail = transfer.details.find(
+      (d) => d.productId === productId,
+    );
+    if (!detail) return;
+
+    const value = Math.max(parseInt(rawValue) || 0, 0);
 
     this.receivedQty.update((map) => ({
       ...map,
-      [`${transferId}:${productId}`]: value,
+      [`${transfer.id}:${productId}`]: value,
     }));
   }
 
-  getReceivedQty(transferId: string, productId: string, defaultQty: number): number {
+  getReceivedQty(productId: string, defaultQty: number): number {
+    const transferId = this.selectedTransferId();
+    if (!transferId) return defaultQty;
     return (
       this.receivedQty()[`${transferId}:${productId}`] ?? defaultQty
     );
   }
 
-  confirmReception(transferId: string): void {
+  hasDiscrepancy(detail: DetailRow): boolean {
+    return this.getReceivedQty(detail.productId, detail.quantitySent) !== detail.quantitySent;
+  }
+
+  confirmCurrentReception(): void {
+    const transfer = this.selectedTransfer();
+    if (!transfer) return;
+
     if (
       !window.confirm(
         '¿Estás seguro de que querés confirmar esta recepción?',
@@ -52,26 +86,24 @@ export class RecepcionesComponent {
     )
       return;
 
-    const transfer = this.receptionService
-      .pendingTransfers()
-      .find((t) => t.id === transferId);
-    if (!transfer) return;
-
     const receivedMap: Record<string, number> = {};
     for (const detail of transfer.details) {
       receivedMap[detail.productId] = this.getReceivedQty(
-        transferId,
         detail.productId,
         detail.quantitySent,
       );
     }
 
-    const ok = this.receptionService.confirmReception(transferId, receivedMap);
+    const ok = this.receptionService.confirmReception(
+      transfer.id,
+      receivedMap,
+    );
 
     if (ok) {
       this.confirmed.set(true);
       this.error.set(null);
-      this.expandedTransferId.set(null);
+      this.selectedTransferId.set(null);
+      this.receivedQty.set({});
       setTimeout(() => this.confirmed.set(false), 3000);
     } else {
       this.error.set('Error al confirmar la recepción. Intente nuevamente.');

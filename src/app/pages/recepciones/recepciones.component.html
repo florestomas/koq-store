@@ -1,6 +1,6 @@
 <div class="flex flex-col w-full h-full p-8 gap-6">
   <!-- Header -->
-  <div class="flex flex-row items-center gap-3">
+  <div class="flex flex-row items-center gap-3 shrink-0">
     <mat-icon class="text-3xl text-koq">archive</mat-icon>
     <h1 class="text-4xl text-black font-medium">{{ 'Recepciones Pendientes' | uppercase }}</h1>
   </div>
@@ -8,7 +8,7 @@
   <!-- Success flash -->
   @if (confirmed()) {
     <div
-      class="flex items-center gap-2 px-4 py-3 rounded-2xl bg-green-100 text-green-700 text-sm font-medium no-print"
+      class="flex items-center gap-2 px-4 py-3 rounded-2xl bg-green-100 text-green-700 text-sm font-medium shrink-0"
     >
       <mat-icon class="text-lg">check_circle</mat-icon>
       Recepción confirmada correctamente
@@ -18,123 +18,156 @@
   <!-- Error flash -->
   @if (error(); as err) {
     <div
-      class="flex items-center gap-2 px-4 py-3 rounded-2xl bg-red-100 text-red-700 text-sm font-medium no-print"
+      class="flex items-center gap-2 px-4 py-3 rounded-2xl bg-red-100 text-red-700 text-sm font-medium shrink-0"
     >
       <mat-icon class="text-lg">error</mat-icon>
       {{ err }}
     </div>
   }
 
-  <!-- Pending count -->
-  <div class="flex flex-row items-center gap-2">
-    <p class="text-sm text-zinc-500">
-      <strong class="text-zinc-700">{{ receptionService.pendingTransfers().length }}</strong>
-      {{ receptionService.pendingTransfers().length === 1 ? 'recepcion' : 'recepciones' }} pendiente{{ receptionService.pendingTransfers().length === 1 ? '' : 's' }}
-    </p>
-  </div>
-
-  <!-- Empty state -->
+  <!-- Two-panel body -->
   @if (receptionService.pendingTransfers().length === 0) {
-    <div class="flex flex-col items-center justify-center flex-1 text-zinc-400">
+    <div class="flex flex-col items-center justify-center flex-1 text-zinc-400 min-h-0">
       <mat-icon class="text-7xl mb-4 text-green-500">inbox</mat-icon>
       <p class="text-xl font-medium text-green-600">No tenés recepciones pendientes</p>
       <p class="text-sm text-zinc-400 mt-1">Todas las transferencias fueron procesadas</p>
     </div>
-  }
-
-  <!-- Transfer list -->
-  @if (receptionService.pendingTransfers().length > 0) {
-    <div class="flex flex-col gap-3">
-      @for (transfer of receptionService.pendingTransfers(); track transfer.id) {
-        <div
-          class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden transition hover:shadow-md"
-        >
-          <!-- Main row — clickable -->
+  } @else {
+    <div class="flex flex-col md:flex-row gap-6 flex-1 min-h-0">
+      <!-- Left panel — Inbox list -->
+      <div class="w-full md:w-[35%] flex flex-col gap-3 overflow-y-auto min-h-0">
+        @for (transfer of receptionService.pendingTransfers(); track transfer.id) {
           <div
-            class="flex flex-row items-center gap-4 px-6 py-4 cursor-pointer"
-            (click)="toggleExpand(transfer.id)"
+            class="flex flex-col gap-1 px-5 py-4 border rounded-2xl cursor-pointer transition shrink-0"
+            [class.bg-koq-light]="selectedTransferId() === transfer.id"
+            [class.bg-white]="selectedTransferId() !== transfer.id"
+            [class.border-koq]="selectedTransferId() === transfer.id"
+            [class.border-gray-200]="selectedTransferId() !== transfer.id"
+            [class.shadow-sm]="selectedTransferId() !== transfer.id"
+            [class.shadow-md]="selectedTransferId() === transfer.id"
+            (click)="selectTransfer(transfer.id)"
           >
-            <mat-icon
-              class="text-zinc-300 text-lg shrink-0 transition-transform duration-300"
-              [class.rotate-90]="expandedTransferId() === transfer.id"
-            >chevron_right</mat-icon>
-
-            <mat-icon class="text-zinc-400 text-xl shrink-0">location_on</mat-icon>
-
-            <div class="flex flex-col min-w-0 w-32 shrink-0">
-              <span class="text-sm font-semibold text-zinc-800">{{ transfer.originLocationName }}</span>
-              <span class="text-xs text-zinc-400">&rarr; {{ transfer.destinationLocationName }}</span>
+            <!-- Code row -->
+            <div class="flex flex-row items-center justify-between">
+              <span class="text-sm font-bold text-zinc-800">{{ formatTransferCode(transfer.id) }}</span>
+              <span
+                class="px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider shrink-0"
+                [class.bg-amber-100]="!isTransferOld(transfer.dateTime)"
+                [class.text-amber-700]="!isTransferOld(transfer.dateTime)"
+                [class.bg-gray-200]="isTransferOld(transfer.dateTime)"
+                [class.text-gray-600]="isTransferOld(transfer.dateTime)"
+              >{{ isTransferOld(transfer.dateTime) ? 'RETRASADO' : 'EN CAMINO' }}</span>
             </div>
-
-            <div class="flex flex-col min-w-0 w-28 shrink-0">
-              <span class="text-sm text-zinc-700">{{ transfer.dateTime | date:'dd/MM/yyyy' }}</span>
-              <span class="text-xs text-zinc-400">{{ transfer.dateTime | date:'HH:mm' }}</span>
+            <!-- Date/time + origin -->
+            <div class="flex flex-row items-center gap-2 text-xs text-zinc-400">
+              <mat-icon class="text-sm text-zinc-300">schedule</mat-icon>
+              <span>{{ transfer.dateTime | date:'dd/MM/yyyy HH:mm' }}</span>
             </div>
+            <div class="flex flex-row items-center gap-2 text-xs text-zinc-500">
+              <mat-icon class="text-sm text-zinc-300">location_on</mat-icon>
+              <span>{{ transfer.originLocationName }}</span>
+            </div>
+            <!-- SKUs count -->
+            <div class="flex flex-row items-center gap-1 mt-1">
+              <span class="text-xs text-zinc-500">
+                <strong class="text-zinc-700">{{ transfer.itemCount }}</strong>
+                {{ transfer.itemCount === 1 ? 'SKU' : 'SKUs' }}
+              </span>
+            </div>
+          </div>
+        }
+      </div>
 
-            <span class="flex-1 min-w-0"></span>
-
-            <span class="text-sm text-zinc-500 shrink-0">
-              <strong class="text-zinc-700">{{ transfer.itemCount }}</strong>
-              {{ transfer.itemCount === 1 ? 'item' : 'items' }}
-            </span>
-
-            <span
-              class="px-3 py-1 rounded-full text-[11px] font-bold tracking-wider bg-orange-100 text-orange-700 shrink-0"
-            >PENDIENTE</span>
+      <!-- Right panel — Detail -->
+      <div class="w-full md:w-[65%] flex flex-col gap-4 min-h-0">
+        @if (selectedTransfer(); as transfer) {
+          <!-- Detail header -->
+          <div class="flex flex-row items-center justify-between shrink-0">
+            <div class="flex flex-col">
+              <span class="text-xl font-bold text-zinc-800">{{ formatTransferCode(transfer.id) }}</span>
+              <span class="text-sm text-zinc-500">
+                Items desde <strong>{{ transfer.originLocationName }}</strong> con destino a <strong>{{ transfer.destinationLocationName }}</strong>
+              </span>
+            </div>
+            <button
+              (click)="confirmCurrentReception()"
+              class="py-3 px-8 rounded-full text-sm font-bold tracking-wider text-white bg-zinc-900 hover:bg-zinc-800 transition cursor-pointer shrink-0"
+            >
+              CONFIRMAR RECEPCIÓN
+            </button>
           </div>
 
-          <!-- Expandable detail -->
-          <div
-            class="expandable-content"
-            [class.expanded]="expandedTransferId() === transfer.id"
-          >
-            <div class="border-t border-gray-100 px-6 py-4">
-              <!-- Detail table -->
-              <table class="w-full text-sm mb-4">
-                <thead>
-                  <tr class="border-b border-gray-100">
-                    <th class="text-left py-2 text-zinc-400 font-medium text-xs uppercase tracking-wider">Modelo</th>
-                    <th class="text-left py-2 text-zinc-400 font-medium text-xs uppercase tracking-wider">Talle</th>
-                    <th class="text-left py-2 text-zinc-400 font-medium text-xs uppercase tracking-wider">Color</th>
-                    <th class="text-right py-2 text-zinc-400 font-medium text-xs uppercase tracking-wider">Cant. enviada</th>
-                    <th class="text-right py-2 text-zinc-400 font-medium text-xs uppercase tracking-wider">Cant. recibida</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (det of transfer.details; track det.detailId) {
-                    <tr class="border-b border-gray-50 last:border-b-0">
-                      <td class="py-2.5 font-medium">{{ det.modelName }}</td>
-                      <td class="py-2.5 text-zinc-500">T. {{ det.size }}</td>
-                      <td class="py-2.5 text-zinc-500">{{ det.colorName }}</td>
-                      <td class="py-2.5 text-right font-semibold">{{ det.quantitySent }}</td>
-                      <td class="py-2.5 text-right">
-                        <input
-                          type="number"
-                          class="w-20 text-right border border-gray-300 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-koq"
-                          [value]="getReceivedQty(transfer.id, det.productId, det.quantitySent)"
-                          (input)="setReceivedQty(transfer.id, det.productId, $any($event.target).value)"
-                          [max]="det.quantitySent"
-                          min="0"
-                        />
-                      </td>
-                    </tr>
+          <!-- Item grid -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 overflow-y-auto min-h-0">
+            @for (det of transfer.details; track det.detailId) {
+              <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm flex flex-col">
+                <!-- Image -->
+                <div class="h-36 bg-gray-100 overflow-hidden">
+                  @if (det.imageUrl) {
+                    <img
+                      [src]="det.imageUrl"
+                      [alt]="det.modelName"
+                      class="w-full h-full object-cover"
+                    />
+                  } @else {
+                    <div class="w-full h-full flex items-center justify-center text-zinc-300">
+                      <mat-icon class="text-5xl">image</mat-icon>
+                    </div>
                   }
-                </tbody>
-              </table>
-
-              <!-- Confirm button -->
-              <div class="flex justify-end">
-                <button
-                  (click)="$event.stopPropagation(); confirmReception(transfer.id)"
-                  class="w-full md:w-auto py-3.5 px-10 rounded-full text-sm font-bold tracking-wider text-white bg-koq hover:opacity-90 transition cursor-pointer"
-                >
-                  CONFIRMAR RECEPCIÓN
-                </button>
+                </div>
+                <!-- Info -->
+                <div class="p-4 flex flex-col gap-2 flex-1">
+                  <!-- Model name + badge -->
+                  <div class="flex flex-row items-start justify-between gap-2">
+                    <span class="text-sm font-semibold text-zinc-800 truncate max-w-[65%]" [title]="det.modelName">{{ det.modelName }}</span>
+                    @if (det.stockStatus === 'critical') {
+                      <span class="shrink-0 px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700">CRÍTICO</span>
+                    } @else if (det.stockStatus === 'low') {
+                      <span class="shrink-0 px-2 py-0.5 rounded text-[10px] font-bold bg-orange-100 text-orange-700">BAJO</span>
+                    }
+                  </div>
+                  <!-- SKU subtitle -->
+                  <span class="text-xs text-zinc-400">{{ det.productSku }}</span>
+                  <!-- Spacer -->
+                  <div class="flex-1"></div>
+                  <!-- Expected quantity -->
+                  <div class="flex flex-row items-center justify-between text-xs text-zinc-500">
+                    <span>Cant. esperada</span>
+                    <span class="font-semibold text-zinc-700">{{ det.quantitySent }}</span>
+                  </div>
+                  <!-- Received input -->
+                  <div class="flex flex-col gap-1">
+                    <label class="text-xs text-zinc-400">Recibida</label>
+                    <input
+                      type="number"
+                      class="w-full border rounded-lg px-3 py-2 text-sm text-right outline-none transition"
+                      [class.border-red-400]="hasDiscrepancy(det)"
+                      [class.border-gray-300]="!hasDiscrepancy(det)"
+                      [class.focus:border-koq]="!hasDiscrepancy(det)"
+                      [class.focus:border-red-500]="hasDiscrepancy(det)"
+                      [value]="getReceivedQty(det.productId, det.quantitySent)"
+                      (input)="setReceivedQty(det.productId, $any($event.target).value)"
+                      min="0"
+                    />
+                    @if (hasDiscrepancy(det)) {
+                      <span class="text-[11px] text-red-600 font-medium flex items-center gap-1">
+                        <mat-icon class="text-sm">warning</mat-icon>
+                        DISCREPANCY DETECTED
+                      </span>
+                    }
+                  </div>
+                </div>
               </div>
-            </div>
+            }
           </div>
-        </div>
-      }
+        } @else {
+          <!-- No selection prompt -->
+          <div class="flex flex-col items-center justify-center flex-1 text-zinc-400">
+            <mat-icon class="text-6xl mb-3">touch_app</mat-icon>
+            <p class="text-base font-medium text-zinc-500">Seleccioná una recepción de la lista</p>
+          </div>
+        }
+      </div>
     </div>
   }
 </div>

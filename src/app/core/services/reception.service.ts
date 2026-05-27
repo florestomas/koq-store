@@ -7,15 +7,20 @@ import { CLOTHING_MODELS } from '../../mocks/clothing-models.mock';
 import { COLORS } from '../../mocks/colors.mock';
 import { LOCATIONS } from '../../mocks/location.mock';
 import { STOCK_LOCATIONS } from '../../mocks/stock-location.mock';
-import { Transfer } from '../../interfaces/transfer';
+import { CLOTHING_MODEL_COLORS } from '../../mocks/clothing-model-colors.mock';
 
 export interface DetailRow {
   detailId: string;
   productId: string;
+  modelId: string;
   modelName: string;
   size: string;
+  colorId: string;
   colorName: string;
   quantitySent: number;
+  imageUrl: string;
+  stockStatus: 'critical' | 'low' | 'ok';
+  productSku: string;
 }
 
 export interface ReceptionRow {
@@ -23,6 +28,8 @@ export interface ReceptionRow {
   dateTime: string;
   originLocationName: string;
   destinationLocationName: string;
+  originLocationId: string;
+  destinationLocationId: string;
   itemCount: number;
   details: DetailRow[];
 }
@@ -70,13 +77,40 @@ export class ReceptionService {
           ? COLORS.find((c) => c.id === product.idColor)
           : undefined;
 
+        const modelColor = product
+          ? CLOTHING_MODEL_COLORS.find(
+              (mc) =>
+                mc.idClothingModel === product.idClothingModel &&
+                mc.idColor === product.idColor,
+            )
+          : undefined;
+
+        const destStock = STOCK_LOCATIONS.find(
+          (s) =>
+            s.idProduct === d.idProduct &&
+            s.idLocation === t.idDestination,
+        );
+        const currentStock = destStock?.currentStock ?? 0;
+        const minStock = destStock?.minimumStock ?? 1;
+        const stockStatus: 'critical' | 'low' | 'ok' =
+          currentStock === 0
+            ? 'critical'
+            : currentStock <= minStock
+              ? 'low'
+              : 'ok';
+
         return {
           detailId: d.id,
           productId: d.idProduct,
+          modelId: model?.id ?? '',
           modelName: model?.name ?? 'Producto',
           size: product?.size ?? '',
+          colorId: color?.id ?? '',
           colorName: color?.name ?? '',
+          imageUrl: modelColor?.imageUrl ?? '',
           quantitySent: d.quantity,
+          stockStatus,
+          productSku: `T. ${product?.size ?? ''} · ${color?.name ?? ''}`,
         };
       });
 
@@ -85,6 +119,8 @@ export class ReceptionService {
         dateTime: t.dateTime,
         originLocationName: origin?.name ?? 'Desconocido',
         destinationLocationName: destination?.name ?? 'Desconocido',
+        originLocationId: t.idOrigin,
+        destinationLocationId: t.idDestination,
         itemCount: details.length,
         details,
       };
