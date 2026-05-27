@@ -1,7 +1,6 @@
-import { computed, inject, Injectable, Signal, signal, WritableSignal } from '@angular/core';
-import { USERS } from '../../mocks/users.mock';
+import { computed, Injectable, Signal, signal, WritableSignal } from '@angular/core';
+import { getSupabase } from './supabase.service';
 import { User } from '../../interfaces/user';
-import { Observable, of } from 'rxjs';
 
 export enum ESTADO {
   SUCCESS = 1,
@@ -12,22 +11,60 @@ export enum ESTADO {
   providedIn: 'root',
 })
 export class AuthService {
-  /* true para no tener q ingresar siempre q lo queramos probar XD */
-  logged: WritableSignal<boolean> = signal(true);
-  currentUser: WritableSignal<User | null> = signal(USERS[0]);
+  logged: WritableSignal<boolean> = signal(false);
+  currentUser: WritableSignal<User | null> = signal(null);
   isAdmin: Signal<boolean> = computed(() => this.currentUser()?.role === 'admin');
   isOperator: Signal<boolean> = computed(() => this.currentUser()?.role === 'operator');
 
-  login(user: string, password?: string): Observable<ESTADO> {
-    let userLogIn = USERS.find((users) => users.user == user);
+  private initPromise: Promise<void>;
 
-    if (userLogIn?.user != user) return of(ESTADO.FAIL);
-    if (userLogIn?.password != password) return of(ESTADO.FAIL);
+  constructor() {
+    this.initPromise = this.initialize();
+  }
 
+  private async initialize(): Promise<void> {
+    const {
+      data: { session },
+    } = await getSupabase().auth.getSession();
+
+    if (session?.user?.email) {
+      await this.setUserFromEmail(session.user.email);
+    }
+  }
+
+  async waitForInit(): Promise<void> {
+    await this.initPromise;
+  }
+
+  async login(email: string, password: string): Promise<ESTADO> {
+    const { error } = await getSupabase().auth.signInWithPassword({ email, password });
+
+    if (error) {
+      console.error('Login error:', error.message);
+      return ESTADO.FAIL;
+    }
+
+    await this.setUserFromEmail(email);
     this.logged.set(true);
-    this.currentUser.set(userLogIn);
-    console.log('this.logged.set true');
+    return ESTADO.SUCCESS;
+  }
 
-    return of(ESTADO.SUCCESS);
+  async logout(): Promise<void> {
+    await getSupabase().auth.signOut();
+    this.logged.set(false);
+    this.currentUser.set(null);
+  }
+
+  private async setUserFromEmail(email: string): Promise<void> {
+    const { data } = await getSupabase()
+      .from('users')
+      .select('*')
+      .eq('email', email)
+      .single();
+
+    if (data) {
+      this.currentUser.set(data);
+      this.logged.set(true);
+    }
   }
 }

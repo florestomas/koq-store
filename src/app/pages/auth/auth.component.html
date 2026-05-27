@@ -35,10 +35,10 @@
             <circle cx="12" cy="7" r="4" />
           </svg>
           <input
-            formControlName="user"
+            formControlName="email"
             class="w-full focus:outline-0"
-            placeholder="Usuario"
-            type="user"
+            placeholder="Email"
+            type="email"
           />
         </div>
         <div class="flex flex-row w-full border border-gray-300/60 rounded-2xl py-2 px-3 gap-1">
@@ -66,8 +66,7 @@
         </div>
 
         <button
-          type="button"
-          (click)="onSubmit()"
+          type="submit"
           class="border border-gray-300/60 rounded-2xl p-1 bg-koq text-white w-full"
           [disabled]="isLoading()"
         >
