@@ -36,7 +36,21 @@ export class AuthService {
     await this.initPromise;
   }
 
-  async login(email: string, password: string): Promise<ESTADO> {
+  async login(usernameOrEmail: string, password: string): Promise<ESTADO> {
+    const isEmail = usernameOrEmail.includes('@');
+    let email = usernameOrEmail;
+
+    if (!isEmail) {
+      const { data } = await getSupabase()
+        .from('users')
+        .select('email')
+        .eq('user', usernameOrEmail)
+        .single();
+
+      if (!data) return ESTADO.FAIL;
+      email = data.email;
+    }
+
     const { error } = await getSupabase().auth.signInWithPassword({ email, password });
 
     if (error) {

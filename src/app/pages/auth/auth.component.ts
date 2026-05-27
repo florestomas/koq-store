@@ -11,7 +11,7 @@ import { Router } from '@angular/router';
 })
 export class AuthComponent {
   logInForm = new FormGroup({
-    email: new FormControl<string>('', [Validators.required, Validators.email]),
+    user: new FormControl<string>('', Validators.required),
     password: new FormControl<string>('', Validators.required),
   });
   private router = inject(Router);
@@ -24,7 +24,7 @@ export class AuthComponent {
     this.showLogInError.set(false);
 
     const estado = await this.authService.login(
-      this.logInForm.value.email ?? '',
+      this.logInForm.value.user ?? '',
       this.logInForm.value.password ?? '',
     );
 
