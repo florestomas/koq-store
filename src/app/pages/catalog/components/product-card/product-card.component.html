@@ -34,6 +34,14 @@
       }
     </div>
 
+    @if (authService.isAdmin()) {
+      <button
+        (click)="deleteModel()"
+        class="rounded-full border p-1.5 border-zinc-500 text-zinc-500 hover:scale-110 hover:shadow-lg hover:border-red-500 hover:text-red-500 active:scale-95 transition-all duration-200 cursor-pointer group"
+      >
+        <mat-icon class="group-hover:scale-110 transition-transform duration-200">delete</mat-icon>
+      </button>
+    }
     <button
       (click)="openEdit()"
       class="rounded-full border p-1.5 border-zinc-500 text-zinc-500 hover:scale-110 hover:shadow-lg hover:border-koq hover:text-koq active:scale-95 transition-all duration-200 cursor-pointer group"

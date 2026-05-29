@@ -1,5 +1,5 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
-import { getSupabase } from './supabase.service';
+import { deleteProductImage, getSupabase } from './supabase.service';
 import { AuthService } from './auth.service';
 import { toCamelCase } from '../utils/supabase-utils';
 import { CatalogItem, StockAlert, ProductRef, StockRef } from '../../interfaces/catalog-item';
@@ -247,8 +247,49 @@ export class CatalogService {
     return this.locationsSig();
   }
 
-  triggerRefresh(): void {
+  async hardDeleteModel(modelId: string): Promise<void> {
+    const supabase = getSupabase();
+    const models = this.modelsSig();
+    const products = this.productsSig();
+    const modelColors = this.modelColorsSig();
+    const stocks = this.stocksSig();
+
+    const model = models.find((m) => m.id === modelId);
+    if (!model) return;
+
+    const productIds = products
+      .filter((p) => p.idClothingModel === modelId)
+      .map((p) => p.id);
+
+    const mcList = modelColors.filter((mc) => mc.idClothingModel === modelId);
+    for (const mc of mcList) {
+      if (mc.imageUrl && !mc.imageUrl.includes('placehold.co')) {
+        await deleteProductImage(mc.imageUrl).catch(() => {});
+      }
+    }
+
+    if (productIds.length > 0) {
+      await supabase.from('transfer_details').delete().in('id_product', productIds);
+      await supabase.from('sale_details').delete().in('id_product', productIds);
+      await supabase.from('stock_movements').delete().in('id_product', productIds);
+      await supabase.from('stock_locations').delete().in('id_product', productIds);
+      await supabase.from('products').delete().eq('id_clothing_model', modelId);
+    }
+
+    if (mcList.length > 0) {
+      await supabase
+        .from('clothing_model_colors')
+        .delete()
+        .eq('id_clothing_model', modelId);
+    }
+
+    await supabase.from('clothing_models').delete().eq('id', modelId);
+
+    this.triggerRefresh();
+  }
+
+  triggerRefresh(): Promise<void> {
     this.refreshCounter.set(this.refreshCounter() + 1);
-    this.loadData();
+    return this.loadData();
   }
 }

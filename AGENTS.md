@@ -22,7 +22,7 @@ npm run build          # production build → dist/
 ```
 src/app/
   core/          guards, services, utils (providedIn: 'root' or module-level singletons)
-  shared/        reusable UI components (sidebar, search-bar, product-edit-modal)
+  shared/        reusable UI components (sidebar, search-bar, product-edit-modal, filter-modal, variant-picker-modal)
   layouts/       route-level layout components
   pages/         routed feature components (auth, catalog, transfer, create-product, new-sale, alertas, historial, recepciones)
   interfaces/    TypeScript interfaces
@@ -39,7 +39,7 @@ src/app/
 
 - Components use `ChangeDetectionStrategy.OnPush` by default
 - Templates are external (`.html` files), as configured in `.vscode/settings.json`
-- `AuthService.logged` is `signal(true)` by default so the app skips login during development
+- `AuthService.logged` is `signal(false)` initially; auth is restored from the cached Supabase session in `initialize()` (constructor), so users auto-login if they have an active session in localStorage
 - `authGuard` calls `auth.waitForInit()` (async) before checking auth state
 - Tests use Vitest globals (configured in `tsconfig.spec.json`); no need to import `describe`/`it`/`expect`
 - Spec files: `app.spec.ts`, `new-sale.spec.ts`, `alertas.spec.ts`, `historial.spec.ts`, `recepciones.spec.ts`
@@ -64,34 +64,46 @@ src/app/
 - **Sales**: `new-sale` component reads stock and writes sale using the user's `idLocation`
 
 ### Supabase RLS policies (reference for backend activation)
+
+Policies below use `auth.role() = 'authenticated'` — grants access to any logged-in user.
+App-level RBAC (route guards, service enforcement, UI hiding) handles the actual admin/operator split.
+For per-role RLS (future), a Supabase Auth Hook must inject `role` and `id_location` into JWT claims.
+
 ```sql
--- stock_locations: operators see only their location
-CREATE POLICY "operator_select_own_location" ON stock_locations
-  FOR SELECT USING (
-    auth.jwt() ->> 'role' = 'operator'
-    AND id_location = (auth.jwt() ->> 'id_location')::int
-  );
+CREATE POLICY "authenticated_all" ON clothing_models FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "authenticated_all" ON products FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "authenticated_all" ON stock_locations FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "authenticated_all" ON sales FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "authenticated_all" ON transfers FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "authenticated_all" ON transfer_details FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "authenticated_all" ON sale_details FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "authenticated_all" ON stock_movements FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "authenticated_all" ON clothing_model_colors FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "authenticated_all" ON colors FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "authenticated_all" ON categories FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "authenticated_all" ON locations FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "authenticated_all" ON users FOR ALL USING (auth.role() = 'authenticated');
+```
 
--- stock_locations: only admins can write
-CREATE POLICY "admin_write_stock" ON stock_locations
-  FOR INSERT WITH CHECK ((auth.jwt() ->> 'role') = 'admin');
-CREATE POLICY "admin_update_stock" ON stock_locations
-  FOR UPDATE USING ((auth.jwt() ->> 'role') = 'admin');
+## Supabase Storage — product images
 
--- sales: operators select/insert only their location
-CREATE POLICY "operator_sales_scope" ON sales
+Images are uploaded to the `product-images` bucket. Upload/delete helpers live in `supabase.service.ts`.
+
+**One-time bucket setup** (Supabase Dashboard → Storage → New Bucket):
+
+1. Bucket name: `product-images`
+2. Make it **public** (uncheck "Make bucket private")
+3. Storage policy — allow public SELECT and authenticated INSERT/DELETE:
+
+```sql
+-- Allow public read access to product images
+CREATE POLICY "public_read_product_images" ON storage.objects
+  FOR SELECT USING (bucket_id = 'product-images');
+
+-- Allow authenticated users to upload/delete images
+CREATE POLICY "authenticated_manage_product_images" ON storage.objects
   FOR ALL USING (
-    auth.jwt() ->> 'role' = 'operator'
-    AND id_location = (auth.jwt() ->> 'id_location')::int
+    bucket_id = 'product-images'
+    AND auth.role() = 'authenticated'
   );
-
--- transfers: admins only
-CREATE POLICY "admin_transfers" ON transfers
-  FOR ALL USING ((auth.jwt() ->> 'role') = 'admin');
-
--- products / clothing_models / colors / categories: admins only
-CREATE POLICY "admin_write_catalog" ON clothing_models
-  FOR INSERT WITH CHECK ((auth.jwt() ->> 'role') = 'admin');
-CREATE POLICY "admin_write_products" ON products
-  FOR INSERT WITH CHECK ((auth.jwt() ->> 'role') = 'admin');
 ```

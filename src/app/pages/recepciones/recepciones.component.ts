@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { DatePipe, UpperCasePipe } from '@angular/common';
 import { MatIcon } from '@angular/material/icon';
 import { ReceptionService } from '../../core/services/reception.service';
+import { AuthService } from '../../core/services/auth.service';
 import { DetailRow } from '../../core/services/reception.service';
 
 @Component({
@@ -13,6 +14,7 @@ import { DetailRow } from '../../core/services/reception.service';
 })
 export class RecepcionesComponent {
   readonly receptionService = inject(ReceptionService);
+  readonly authService = inject(AuthService);
 
   readonly selectedTransferId = signal<string | null>(null);
   readonly receivedQty = signal<Record<string, number>>({});
@@ -107,6 +109,14 @@ export class RecepcionesComponent {
       setTimeout(() => this.confirmed.set(false), 3000);
     } else {
       this.error.set('Error al confirmar la recepción. Intente nuevamente.');
+    }
+  }
+
+  async deleteTransfer(transferId: string): Promise<void> {
+    if (!window.confirm('¿Eliminar esta recepción definitivamente?')) return;
+    await this.receptionService.hardDeleteTransfer(transferId);
+    if (this.selectedTransferId() === transferId) {
+      this.selectedTransferId.set(null);
     }
   }
 }

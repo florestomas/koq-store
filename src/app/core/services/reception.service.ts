@@ -188,4 +188,18 @@ export class ReceptionService {
     this.refreshCounter.update((c) => c + 1);
     this.loadTransfers();
   }
+
+  async hardDeleteTransfer(transferId: string): Promise<void> {
+    const supabase = getSupabase();
+    const productIds = this.transferDetailsSig()
+      .filter((d) => d.idTransfer === transferId)
+      .map((d) => d.idProduct);
+
+    if (productIds.length > 0) {
+      await supabase.from('stock_movements').delete().in('id_product', productIds);
+    }
+    await supabase.from('transfer_details').delete().eq('id_transfer', transferId);
+    await supabase.from('transfers').delete().eq('id', transferId);
+    this.refresh();
+  }
 }

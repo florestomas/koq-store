@@ -24,7 +24,12 @@ export class ProductCardComponent {
   readonly selectedLocationId = signal<string | null>('1');
   private readonly dialog = inject(MatDialog);
   private readonly catalogService = inject(CatalogService);
-  private readonly authService = inject(AuthService);
+  protected readonly authService = inject(AuthService);
+
+  async deleteModel(): Promise<void> {
+    if (!window.confirm('¿Eliminar este producto definitivamente? Esta acción no se puede deshacer.')) return;
+    await this.catalogService.hardDeleteModel(this.item().modelId);
+  }
 
   openEdit(): void {
     const data: ProductEditModalData = {
