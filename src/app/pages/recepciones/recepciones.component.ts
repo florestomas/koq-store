@@ -20,6 +20,7 @@ export class RecepcionesComponent {
   readonly receivedQty = signal<Record<string, number>>({});
   readonly confirmed = signal(false);
   readonly error = signal<string | null>(null);
+  readonly note = signal('');
 
   readonly selectedTransfer = computed(() => {
     const id = this.selectedTransferId();
@@ -99,6 +100,7 @@ export class RecepcionesComponent {
     const ok = await this.receptionService.confirmReception(
       transfer.id,
       receivedMap,
+      this.note(),
     );
 
     if (ok) {
@@ -106,6 +108,7 @@ export class RecepcionesComponent {
       this.error.set(null);
       this.selectedTransferId.set(null);
       this.receivedQty.set({});
+      this.note.set('');
       setTimeout(() => this.confirmed.set(false), 3000);
     } else {
       this.error.set('Error al confirmar la recepción. Intente nuevamente.');

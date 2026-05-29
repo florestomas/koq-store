@@ -7,7 +7,7 @@ export interface LocationStock {
 
 export interface ColorSizeRow {
   colorName: string;
-  sizes: { size: string; stock: number }[];
+  sizes: { size: string; stock: number; minStock: number }[];
 }
 
 export interface StockAlert {
@@ -25,6 +25,7 @@ export interface StockRef {
   idProduct: string;
   idLocation: string;
   currentStock: number;
+  minimumStock: number;
 }
 
 export interface CatalogItem {

@@ -4,6 +4,12 @@
   >
     <span>0</span>
   </div>
+} @else if (stock() <= minStock()) {
+  <div
+    class="flex justify-center size-10 text-center items-center rounded-full border-2 border-amber-300 bg-amber-50 text-amber-600 text-xs"
+  >
+    <span>{{ stock() }}</span>
+  </div>
 } @else {
   <div
     class="flex justify-center size-10 text-center items-center rounded-full border border-koq bg-white"

@@ -479,6 +479,23 @@ export class ProductEditModalComponent {
 
   async removeColor(colorId: string): Promise<void> {
     const modelId = this.data.item.modelId;
+
+    const hasStock = this.allStocks().some((s) => {
+      const product = this.allProducts().find((p) => p.id === s.idProduct);
+      return (
+        product &&
+        product.idClothingModel === modelId &&
+        product.idColor === colorId &&
+        product.active &&
+        s.currentStock > 0
+      );
+    });
+
+    if (hasStock) {
+      alert('No se puede eliminar el color porque tiene stock en alguna ubicación.');
+      return;
+    }
+
     const supabase = getSupabase();
 
     const productIds = this.allProducts()
@@ -556,6 +573,23 @@ export class ProductEditModalComponent {
 
   async removeSize(size: string): Promise<void> {
     const modelId = this.data.item.modelId;
+
+    const hasStock = this.allStocks().some((s) => {
+      const product = this.allProducts().find((p) => p.id === s.idProduct);
+      return (
+        product &&
+        product.idClothingModel === modelId &&
+        product.size === size &&
+        product.active &&
+        s.currentStock > 0
+      );
+    });
+
+    if (hasStock) {
+      alert('No se puede eliminar el talle porque tiene stock en alguna ubicación.');
+      return;
+    }
+
     const supabase = getSupabase();
 
     const productIds = this.allProducts()

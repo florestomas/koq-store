@@ -42,6 +42,15 @@ export class ReceptionService {
 
   readonly pendingTransfers = computed<ReceptionRow[]>(() => {
     this.refreshCounter();
+    return this.buildReceptionRows('pending');
+  });
+
+  readonly confirmedTransfers = computed<ReceptionRow[]>(() => {
+    this.refreshCounter();
+    return this.buildReceptionRows('confirmed');
+  });
+
+  private buildReceptionRows(status: 'pending' | 'confirmed'): ReceptionRow[] {
     const user = this.authService.currentUser();
     const isAdmin = user?.role === 'admin';
     const userLocationId = user?.idLocation;
@@ -55,7 +64,7 @@ export class ReceptionService {
     const allTransfers = this.transfersSig();
     const allTransferDetails = this.transferDetailsSig();
 
-    let transfers = allTransfers.filter((t) => t.status === 'pending');
+    let transfers = allTransfers.filter((t) => t.status === status);
 
     if (!isAdmin && userLocationId) {
       transfers = transfers.filter(
@@ -65,7 +74,7 @@ export class ReceptionService {
 
     transfers.sort(
       (a, b) =>
-        new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime(),
+        new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime(),
     );
 
     return transfers.map((t) => {
@@ -133,7 +142,7 @@ export class ReceptionService {
         details,
       };
     });
-  });
+  }
 
   readonly pendingCount = computed(() => this.pendingTransfers().length);
 
@@ -158,6 +167,7 @@ export class ReceptionService {
   async confirmReception(
     transferId: string,
     receivedMap: Record<string, number>,
+    note?: string,
   ): Promise<boolean> {
     const user = this.authService.currentUser();
     if (!user) return false;
@@ -180,6 +190,13 @@ export class ReceptionService {
     if (error) {
       console.error('Error confirming reception:', error);
       return false;
+    }
+
+    if (note) {
+      await getSupabase()
+        .from('transfers')
+        .update({ note })
+        .eq('id', transferId);
     }
 
     this.refresh();

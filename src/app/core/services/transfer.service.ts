@@ -2,6 +2,7 @@ import { computed, inject, Injectable, signal } from '@angular/core';
 import { AuthService } from './auth.service';
 import { CatalogService } from './catalog.service';
 import { StockMovementService } from './stock-movement.service';
+import { ReceptionService } from './reception.service';
 import { getSupabase } from './supabase.service';
 
 export interface TransferItem {
@@ -41,6 +42,7 @@ export class TransferService {
   private readonly authService = inject(AuthService);
   private readonly catalogService = inject(CatalogService);
   private readonly stockMovementService = inject(StockMovementService);
+  private readonly receptionService = inject(ReceptionService);
 
   readonly totalItems = computed(() => this.items().length);
   readonly totalQuantity = computed(() =>
@@ -339,6 +341,7 @@ export class TransferService {
 
     this.items.set([]);
     this.catalogService.triggerRefresh();
+    this.receptionService.refresh();
     return true;
   }
 

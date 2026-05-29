@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { DatePipe, UpperCasePipe } from '@angular/common';
 import { MatIcon } from '@angular/material/icon';
 import { AlertService } from '../../core/services/alert.service';
@@ -26,10 +26,6 @@ export class AlertasComponent {
   readonly lowStockCount = this.alertService.lowStockCount;
   readonly totalCount = this.alertService.alertCount;
 
-  readonly viewMode = signal<'flat' | 'grouped'>(
-    (localStorage.getItem('alertas-view-mode') as 'flat' | 'grouped') ?? 'flat',
-  );
-
   readonly groupedAlerts = computed(() => {
     const alerts = this.alertService.alerts();
     const map = new Map<string, { modelId: string; modelName: string; items: typeof alerts }>();
@@ -52,14 +48,6 @@ export class AlertasComponent {
 
   setLocationFilter(id: string | null): void {
     this.selectedLocationId.set(id);
-  }
-
-  toggleViewMode(): void {
-    this.viewMode.update((mode) => {
-      const next = mode === 'flat' ? 'grouped' : 'flat';
-      localStorage.setItem('alertas-view-mode', next);
-      return next;
-    });
   }
 
   print(): void {

@@ -9,4 +9,5 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 })
 export class StockBadgeComponent {
   readonly stock = input<number>(0);
+  readonly minStock = input<number>(0);
 }
