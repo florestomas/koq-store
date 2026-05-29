@@ -1,5 +1,6 @@
 import { computed, Injectable, Signal, signal, WritableSignal } from '@angular/core';
 import { getSupabase } from './supabase.service';
+import { toCamelCase } from '../utils/supabase-utils';
 import { User } from '../../interfaces/user';
 
 export enum ESTADO {
@@ -77,7 +78,7 @@ export class AuthService {
       .single();
 
     if (data) {
-      this.currentUser.set(data);
+      this.currentUser.set(toCamelCase<User>(data));
       this.logged.set(true);
     }
   }

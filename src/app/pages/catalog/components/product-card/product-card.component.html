@@ -41,13 +41,13 @@
       >
         <mat-icon class="group-hover:scale-110 transition-transform duration-200">delete</mat-icon>
       </button>
+      <button
+        (click)="openEdit()"
+        class="rounded-full border p-1.5 border-zinc-500 text-zinc-500 hover:scale-110 hover:shadow-lg hover:border-koq hover:text-koq active:scale-95 transition-all duration-200 cursor-pointer group"
+      >
+        <mat-icon class="group-hover:rotate-12 transition-transform duration-200">edit</mat-icon>
+      </button>
     }
-    <button
-      (click)="openEdit()"
-      class="rounded-full border p-1.5 border-zinc-500 text-zinc-500 hover:scale-110 hover:shadow-lg hover:border-koq hover:text-koq active:scale-95 transition-all duration-200 cursor-pointer group"
-    >
-      <mat-icon class="group-hover:rotate-12 transition-transform duration-200">edit</mat-icon>
-    </button>
     <button
       (click)="cardExpanded.set(!cardExpanded())"
       class="rounded-full border p-1.5 border-koq text-white hover:scale-110 hover:shadow-xl active:scale-95 transition-all duration-200 cursor-pointer"
@@ -91,6 +91,7 @@
         }
       }
     </div>
+    @if (authService.isAdmin()) {
     <div class="flex-1 flex flex-col justify-center">
       <span class="flex items-center gap-x-1.5 text-xs font-medium tracking-wider"
         ><mat-icon>store</mat-icon>STOCK POR UBICACION</span
@@ -132,5 +133,6 @@
         </button>
       </div>
     </div>
+    }
   </div>
 </div>

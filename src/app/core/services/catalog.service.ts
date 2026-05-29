@@ -73,7 +73,7 @@ export class CatalogService {
       models = models.filter((m) => m.idCategory === catId);
     }
 
-    const items: CatalogItem[] = models.map((model) => {
+    let items = models.map((model) => {
       const modelProducts = allProducts.filter((p) => p.idClothingModel === model.id && p.active);
       const productIds = modelProducts.map((p) => p.id);
 
@@ -145,13 +145,17 @@ export class CatalogService {
         size: p.size,
       }));
 
-      const allStocks: StockRef[] = allStocksList.filter((s) =>
-        productIds.includes(s.idProduct),
-      ).map((s) => ({
-        idProduct: s.idProduct,
-        idLocation: s.idLocation,
-        currentStock: s.currentStock,
-      }));
+      const allStocks: StockRef[] = allStocksList
+        .filter(
+          (s) =>
+            productIds.includes(s.idProduct) &&
+            (isAdmin ? true : s.idLocation === locId),
+        )
+        .map((s) => ({
+          idProduct: s.idProduct,
+          idLocation: s.idLocation,
+          currentStock: s.currentStock,
+        }));
 
       return {
         modelId: model.id,
@@ -166,6 +170,12 @@ export class CatalogService {
         allStocks,
       };
     });
+
+    if (!isAdmin) {
+      items = items
+        .filter((item) => item.totalStock > 0)
+        .map((item) => ({ ...item, stockAlerts: [] }));
+    }
 
     if (stockF === 'low') {
       return items.filter((item) => item.stockAlerts.length > 0);

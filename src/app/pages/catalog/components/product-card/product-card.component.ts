@@ -21,10 +21,12 @@ import {
 export class ProductCardComponent {
   readonly item = input.required<CatalogItem>();
   readonly cardExpanded = signal(false);
-  readonly selectedLocationId = signal<string | null>('1');
+  protected readonly authService = inject(AuthService);
+  readonly selectedLocationId = signal<string | null>(
+    this.authService.isAdmin() ? '1' : (this.authService.currentUser()?.idLocation ?? null),
+  );
   private readonly dialog = inject(MatDialog);
   private readonly catalogService = inject(CatalogService);
-  protected readonly authService = inject(AuthService);
 
   async deleteModel(): Promise<void> {
     if (!window.confirm('¿Eliminar este producto definitivamente? Esta acción no se puede deshacer.')) return;
