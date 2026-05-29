@@ -57,6 +57,7 @@
               class="border border-gray-300 rounded-full px-3 py-1.5 text-sm w-36 text-center outline-none focus:border-koq bg-white uppercase"
               [value]="newColorName()"
               (input)="newColorName.set($any($event.target).value.toUpperCase())"
+              (keydown.enter)="$event.preventDefault(); addColor()"
               list="colorList"
             />
             <datalist id="colorList">
@@ -83,7 +84,7 @@
         <div class="flex flex-col gap-2">
           <label class="text-xs font-semibold text-zinc-500">TALLES Y PRECIOS</label>
           <div class="flex flex-col gap-2">
-            @for (size of selectedSizes(); track size) {
+            @for (size of sortedSizes(); track size) {
               <div class="flex flex-row items-center gap-3">
                 <span class="w-16 px-3 py-2 rounded-full bg-koq/10 text-koq text-sm font-medium text-center">{{
                   size
@@ -119,6 +120,7 @@
           class="border border-gray-300 rounded-full px-3 py-1.5 text-sm w-24 text-center outline-none focus:border-koq bg-white"
           [value]="newSizeInput()"
           (input)="newSizeInput.set($any($event.target).value)"
+          (keydown.enter)="$event.preventDefault(); addSize()"
         />
         <button
           (click)="addSize()"
@@ -135,7 +137,7 @@
               <thead>
                 <tr class="border-b border-gray-200 bg-gray-50">
                   <th class="text-left py-3 px-4 text-zinc-500 font-medium">COLOR</th>
-                  @for (size of selectedSizes(); track size) {
+                  @for (size of sortedSizes(); track size) {
                     <th class="text-center py-3 px-4 text-zinc-500 font-medium">T. {{ size }}</th>
                   }
                 </tr>
@@ -144,16 +146,28 @@
                 @for (colorId of selectedColors(); track colorId) {
                   <tr class="border-b border-gray-100">
                     <td class="py-2 px-4 font-medium">{{ getColorName(colorId) | uppercase }}</td>
-                    @for (size of selectedSizes(); track size) {
+            @for (size of sortedSizes(); track size) {
                       <td class="py-2 px-4 text-center">
-                        <input
-                          type="number"
-                          min="0"
-                          class="w-16 text-center border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:border-koq bg-white"
-                          [value]="getStock(colorId, size)"
-                          (input)="setStock(colorId, size, $any($event.target).value)"
-                          placeholder="0"
-                        />
+                        <div class="flex flex-col items-center gap-0.5">
+                          <span class="text-[9px] text-zinc-400 font-medium leading-none">Stock</span>
+                          <input
+                            type="number"
+                            min="0"
+                            class="w-16 text-center border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:border-koq bg-white"
+                            [value]="getStock(colorId, size)"
+                            (input)="setStock(colorId, size, $any($event.target).value)"
+                            placeholder="0"
+                          />
+                          <span class="text-[9px] text-zinc-400 font-medium leading-none">Mín</span>
+                          <input
+                            type="number"
+                            min="0"
+                            class="w-16 text-center border border-dashed border-zinc-300 rounded-lg px-2 py-1 text-xs outline-none focus:border-koq bg-white text-zinc-500"
+                            [value]="getMinStock(colorId, size)"
+                            (input)="setMinStock(colorId, size, $any($event.target).value)"
+                            placeholder="1"
+                          />
+                        </div>
                       </td>
                     }
                   </tr>

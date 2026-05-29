@@ -24,6 +24,10 @@ export class CreateProductComponent {
 
   readonly selectedColors = signal<string[]>([]);
   readonly selectedSizes = signal<string[]>([]);
+
+  readonly sortedSizes = computed(() =>
+    [...this.selectedSizes()].sort((a, b) => parseInt(a) - parseInt(b)),
+  );
   readonly newSizeInput = signal('');
   readonly newColorName = signal('');
   readonly selectedImage = signal<File | null>(null);
@@ -52,6 +56,7 @@ export class CreateProductComponent {
   });
 
   readonly stockValues = signal<Record<string, Record<string, number>>>({});
+  readonly minStockValues = signal<Record<string, Record<string, number>>>({});
 
   readonly pricesBySize = signal<Record<string, number>>({});
 
@@ -71,10 +76,6 @@ export class CreateProductComponent {
     return this.pricesBySize()[size] ?? 0;
   }
 
-  getColorName(colorId: string): string {
-    return this.COLORS.find((c) => c.id === colorId)?.name ?? colorId;
-  }
-
   setStock(colorId: string, size: string, value: string): void {
     const qty = parseInt(value) || 0;
     this.stockValues.update((st) => {
@@ -87,6 +88,24 @@ export class CreateProductComponent {
 
   getStock(colorId: string, size: string): number {
     return this.stockValues()[colorId]?.[size] ?? 0;
+  }
+
+  setMinStock(colorId: string, size: string, value: string): void {
+    const qty = parseInt(value) || 0;
+    this.minStockValues.update((st) => {
+      const next = { ...st };
+      if (!next[colorId]) next[colorId] = {};
+      next[colorId] = { ...next[colorId], [size]: qty };
+      return next;
+    });
+  }
+
+  getMinStock(colorId: string, size: string): number {
+    return this.minStockValues()[colorId]?.[size] ?? 1;
+  }
+
+  getColorName(colorId: string): string {
+    return this.COLORS.find((c) => c.id === colorId)?.name ?? colorId;
   }
 
   async addColor(): Promise<void> {
@@ -167,6 +186,7 @@ export class CreateProductComponent {
       const modelId = crypto.randomUUID();
       const pricesRec = this.pricesBySize();
       const stockRec = this.stockValues();
+      const minStockRec = this.minStockValues();
 
       let imageUrl = `https://placehold.co/400x400?text=Nuevo+Producto`;
       const imageFile = this.selectedImage();
@@ -182,7 +202,6 @@ export class CreateProductComponent {
         id: modelId,
         name: this.form.controls.name.value,
         id_category: this.form.controls.categoryId.value,
-        description: null,
         created_at: new Date().toISOString(),
         active: true,
       });
@@ -235,7 +254,7 @@ export class CreateProductComponent {
               id_product: productId,
               id_location: '1',
               current_stock: qty,
-              minimum_stock: 1,
+              minimum_stock: minStockRec[colorId]?.[size] ?? 1,
             });
 
           if (stockError) {

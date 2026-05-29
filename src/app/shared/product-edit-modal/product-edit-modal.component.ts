@@ -57,7 +57,6 @@ export class ProductEditModalComponent {
 
   readonly form = new FormGroup({
     name: new FormControl(this.model()?.name ?? '', { nonNullable: true }),
-    description: new FormControl(this.model()?.description ?? ''),
     categoryId: new FormControl(this.model()?.idCategory ?? '', { nonNullable: true }),
   });
 
@@ -112,7 +111,7 @@ export class ProductEditModalComponent {
         .eq('id', pid);
     }
     this.pricesVersion.update((v) => v + 1);
-    this.catalogService.triggerRefresh();
+    await this.catalogService.triggerRefresh();
   }
 
   readonly modelColors = computed(() => {
@@ -160,7 +159,7 @@ export class ProductEditModalComponent {
     if (!info || info.inUse) return;
 
     await getSupabase().from('colors').delete().eq('id', colorId);
-    this.catalogService.triggerRefresh();
+    await this.catalogService.triggerRefresh();
   }
 
   readonly availableColors = computed(() => {
@@ -227,14 +226,15 @@ export class ProductEditModalComponent {
   async setMinStockForLocation(locationId: string, value: string): Promise<void> {
     const newMin = parseInt(value) || 0;
     const entries = this.getLocationStockEntry(locationId);
-    const perProduct = Math.max(1, Math.floor(newMin / this.uniqueSizes().length));
+    if (entries.length === 0) return;
+    const perProduct = Math.max(1, Math.floor(newMin / entries.length));
     for (const entry of entries) {
       await getSupabase()
         .from('stock_locations')
         .update({ minimum_stock: perProduct })
         .eq('id', entry.id);
     }
-    this.catalogService.triggerRefresh();
+    await this.catalogService.triggerRefresh();
   }
 
   async setCurrentStockForLocation(locationId: string, value: string): Promise<void> {
@@ -251,7 +251,7 @@ export class ProductEditModalComponent {
         .eq('id', entry.id);
       if (remainder > 0) remainder--;
     }
-    this.catalogService.triggerRefresh();
+    await this.catalogService.triggerRefresh();
   }
 
   getStockForColorSizeInLocation(
@@ -274,6 +274,28 @@ export class ProductEditModalComponent {
           s.idLocation === locationId && productIds.includes(s.idProduct),
       )
       .reduce((sum, s) => sum + s.currentStock, 0);
+  }
+
+  getMinStockForColorSizeInLocation(
+    colorId: string,
+    size: string,
+    locationId: string,
+  ): number {
+    const productIds = this.allProducts()
+      .filter(
+        (p) =>
+          p.idClothingModel === this.data.item.modelId &&
+          p.active &&
+          p.idColor === colorId &&
+          p.size === size,
+      )
+      .map((p) => p.id);
+    return this.allStocks()
+      .filter(
+        (s) =>
+          s.idLocation === locationId && productIds.includes(s.idProduct),
+      )
+      .reduce((sum, s) => sum + s.minimumStock, 0);
   }
 
   async setCellCurrentStock(
@@ -312,7 +334,36 @@ export class ProductEditModalComponent {
         minimum_stock: 1,
       });
     }
-    this.catalogService.triggerRefresh();
+    await this.catalogService.triggerRefresh();
+  }
+
+  async setCellMinStock(
+    locationId: string,
+    colorId: string,
+    size: string,
+    value: string,
+  ): Promise<void> {
+    const newMin = Math.max(0, parseInt(value) || 0);
+    const productIds = this.allProducts()
+      .filter(
+        (p) =>
+          p.idClothingModel === this.data.item.modelId &&
+          p.active &&
+          p.idColor === colorId &&
+          p.size === size,
+      )
+      .map((p) => p.id);
+    const supabase = getSupabase();
+    const entries = this.allStocks().filter(
+      (s) => productIds.includes(s.idProduct) && s.idLocation === locationId,
+    );
+    for (const entry of entries) {
+      await supabase
+        .from('stock_locations')
+        .update({ minimum_stock: newMin })
+        .eq('id', entry.id);
+    }
+    await this.catalogService.triggerRefresh();
   }
 
   async onImageSelected(event: Event): Promise<void> {
@@ -337,7 +388,7 @@ export class ProductEditModalComponent {
       }
 
       this.displayImageUrl.set(url);
-      this.catalogService.triggerRefresh();
+      await this.catalogService.triggerRefresh();
     } catch (err) {
       console.error('Error uploading image:', err);
     } finally {
@@ -420,7 +471,7 @@ export class ProductEditModalComponent {
 
       this.newColorName.set('');
       this.variantsVersion.update((v) => v + 1);
-      this.catalogService.triggerRefresh();
+      await this.catalogService.triggerRefresh();
     } finally {
       this.isAddingColor.set(false);
     }
@@ -459,7 +510,7 @@ export class ProductEditModalComponent {
     }
 
     this.variantsVersion.update((v) => v + 1);
-    this.catalogService.triggerRefresh();
+    await this.catalogService.triggerRefresh();
   }
 
   async addSize(): Promise<void> {
@@ -497,7 +548,7 @@ export class ProductEditModalComponent {
 
       this.newSizeInput.set('');
       this.variantsVersion.update((v) => v + 1);
-      this.catalogService.triggerRefresh();
+      await this.catalogService.triggerRefresh();
     } finally {
       this.isAddingSize.set(false);
     }
@@ -523,7 +574,7 @@ export class ProductEditModalComponent {
     }
 
     this.variantsVersion.update((v) => v + 1);
-    this.catalogService.triggerRefresh();
+    await this.catalogService.triggerRefresh();
   }
 
   private getModelProductIds(): string[] {
@@ -547,7 +598,6 @@ export class ProductEditModalComponent {
       .from('clothing_models')
       .update({
         name: this.form.controls.name.value,
-        description: this.form.controls.description.value || undefined,
         id_category: this.form.controls.categoryId.value,
       })
       .eq('id', modelId);
@@ -557,7 +607,7 @@ export class ProductEditModalComponent {
       return;
     }
 
-    this.catalogService.triggerRefresh();
+    await this.catalogService.triggerRefresh();
     this.dialogRef.close();
   }
 
