@@ -30,11 +30,7 @@
       [iconName]="'local_shipping'"
       [navName]="'TRANSFERENCIA'"
     ></app-nav-item>
-    <app-nav-item
-      [navLink]="'recepciones'"
-      [iconName]="'archive'"
-      [navName]="'RECEPCION'"
-    ></app-nav-item>
+    <app-nav-item [navLink]="'recepciones'" [iconName]="'archive'" [navName]="'RECEPCION'" [badge]="receptionCount()" [badgeColor]="'amber'"></app-nav-item>
     <app-nav-item [navLink]="'alertas'" [iconName]="'warning'" [navName]="'ALERTAS'" [badge]="alertCount()"></app-nav-item>
     <app-nav-item
       [navLink]="'historial'"

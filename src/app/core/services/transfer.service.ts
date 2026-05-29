@@ -33,7 +33,7 @@ export class TransferService {
     if (user?.role === 'operator') return user.idLocation;
     return '1';
   });
-  readonly destinationId = signal<string | null>(null);
+  readonly destinationId = signal<string>('');
   readonly items = signal<TransferItem[]>([]);
   readonly searchTerm = signal('');
   readonly categoryFilterId = signal<string | null>(null);
@@ -285,8 +285,7 @@ export class TransferService {
         id_origin: this.originId(),
         id_destination: destId,
         id_user_origin: user.id,
-        status: 'confirmed',
-        confirmed_at: new Date().toISOString(),
+        status: 'pending',
       });
 
     if (transferError) {
@@ -328,42 +327,10 @@ export class TransferService {
           .eq('id', originStock.id);
       }
 
-      const { data: destStocks } = await supabase
-        .from('stock_locations')
-        .select('*')
-        .eq('id_product', item.productId)
-        .eq('id_location', destId);
-
-      if (destStocks && destStocks.length > 0) {
-        const destStock = destStocks[0];
-        await supabase
-          .from('stock_locations')
-          .update({
-            current_stock: destStock.current_stock + item.quantity,
-          })
-          .eq('id', destStock.id);
-      } else {
-        await supabase.from('stock_locations').insert({
-          id: crypto.randomUUID(),
-          id_product: item.productId,
-          id_location: destId,
-          current_stock: item.quantity,
-          minimum_stock: 1,
-        });
-      }
-
       await this.stockMovementService.logMovement(
         'out',
         item.productId,
         this.originId(),
-        item.quantity,
-        'transfer',
-        transferId,
-      );
-      await this.stockMovementService.logMovement(
-        'in',
-        item.productId,
-        destId,
         item.quantity,
         'transfer',
         transferId,

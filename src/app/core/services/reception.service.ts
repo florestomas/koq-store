@@ -135,6 +135,8 @@ export class ReceptionService {
     });
   });
 
+  readonly pendingCount = computed(() => this.pendingTransfers().length);
+
   constructor() {
     this.authService.waitForInit().then(() => this.loadTransfers());
   }

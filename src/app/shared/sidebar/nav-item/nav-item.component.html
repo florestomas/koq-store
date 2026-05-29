@@ -4,9 +4,11 @@
 >
   <mat-icon class="material-icons-outlined">{{ iconName }}</mat-icon>
   <span>{{ navName }}</span>
-  @if (badge !== null) {
+  @if (badge && badge > 0) {
     <span
-      class="min-w-5 h-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center leading-none"
+      class="min-w-5 h-5 px-1.5 rounded-full text-white text-[10px] font-bold flex items-center justify-center leading-none"
+      [class.bg-red-500]="badgeColor === 'red'"
+      [class.bg-amber-500]="badgeColor === 'amber'"
     >
       {{ badge }}
     </span>

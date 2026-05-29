@@ -169,15 +169,27 @@
           <span class="text-zinc-500">Total unidades</span>
           <span class="font-bold">{{ transferService.totalQuantity() }}</span>
         </div>
+        @if (!transferService.destinationId()) {
+          <div class="flex items-center gap-2 px-4 py-2 rounded-2xl bg-amber-50 text-amber-700 text-xs font-medium">
+            <mat-icon class="text-sm">info</mat-icon>
+            Seleccioná un local de destino para habilitar la confirmación
+          </div>
+        }
+        @if (error(); as err) {
+          <div class="flex items-center gap-2 px-4 py-2 rounded-2xl bg-red-50 text-red-700 text-xs font-medium">
+            <mat-icon class="text-sm">error</mat-icon>
+            {{ err }}
+          </div>
+        }
         <button
           (click)="confirmTransfer()"
           class="mt-3 w-full py-3.5 rounded-full text-sm font-bold tracking-wider text-white transition disabled:opacity-40 disabled:cursor-not-allowed"
-          [class.bg-koq]="transferService.destinationId() && transferService.items().length > 0"
-          [class.hover:opacity-90]="transferService.destinationId() && transferService.items().length > 0"
-          [class.bg-gray-300]="!transferService.destinationId() || transferService.items().length === 0"
-          [disabled]="!transferService.destinationId() || transferService.items().length === 0"
+          [class.bg-koq]="transferService.destinationId() && transferService.items().length > 0 && !isConfirming()"
+          [class.hover:opacity-90]="transferService.destinationId() && transferService.items().length > 0 && !isConfirming()"
+          [class.bg-gray-300]="!transferService.destinationId() || transferService.items().length === 0 || isConfirming()"
+          [disabled]="!transferService.destinationId() || transferService.items().length === 0 || isConfirming()"
         >
-          CONFIRMAR TRANSFERENCIA
+          {{ isConfirming() ? 'CONFIRMANDO...' : 'CONFIRMAR TRANSFERENCIA' }}
         </button>
       </div>
     }
