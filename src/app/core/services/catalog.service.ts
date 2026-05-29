@@ -210,14 +210,14 @@ export class CatalogService {
         supabase.from('users').select('*'),
       ]);
 
-      if (rawCategories) this.categoriesSig.set(rawCategories.map((r) => toCamelCase<Category>(r)));
-      if (rawModels) this.modelsSig.set(rawModels.map((r) => toCamelCase<ClothingModel>(r)));
-      if (rawProducts) this.productsSig.set(rawProducts.map((r) => toCamelCase<Product>(r)));
-      if (rawStocks) this.stocksSig.set(rawStocks.map((r) => toCamelCase<StockLocation>(r)));
-      if (rawColors) this.colorsSig.set(rawColors.map((r) => toCamelCase<Color>(r)));
-      if (rawModelColors) this.modelColorsSig.set(rawModelColors.map((r) => toCamelCase<ClothingModelColor>(r)));
-      if (rawLocations) this.locationsSig.set(rawLocations.map((r) => toCamelCase<Location>(r)));
-      if (rawUsers) this.usersSig.set(rawUsers.map((r) => toCamelCase<User>(r)));
+      if (rawCategories) this.categoriesSig.set(rawCategories.map((r: Record<string, unknown>) => toCamelCase<Category>(r)));
+      if (rawModels) this.modelsSig.set(rawModels.map((r: Record<string, unknown>) => toCamelCase<ClothingModel>(r)));
+      if (rawProducts) this.productsSig.set(rawProducts.map((r: Record<string, unknown>) => toCamelCase<Product>(r)));
+      if (rawStocks) this.stocksSig.set(rawStocks.map((r: Record<string, unknown>) => toCamelCase<StockLocation>(r)));
+      if (rawColors) this.colorsSig.set(rawColors.map((r: Record<string, unknown>) => toCamelCase<Color>(r)));
+      if (rawModelColors) this.modelColorsSig.set(rawModelColors.map((r: Record<string, unknown>) => toCamelCase<ClothingModelColor>(r)));
+      if (rawLocations) this.locationsSig.set(rawLocations.map((r: Record<string, unknown>) => toCamelCase<Location>(r)));
+      if (rawUsers) this.usersSig.set(rawUsers.map((r: Record<string, unknown>) => toCamelCase<User>(r)));
     } catch (err) {
       console.error('Error loading catalog data:', err);
     } finally {

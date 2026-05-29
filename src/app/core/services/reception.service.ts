@@ -146,8 +146,8 @@ export class ReceptionService {
         supabase.from('transfers').select('*'),
         supabase.from('transfer_details').select('*'),
       ]);
-      if (transfers) this.transfersSig.set(transfers.map((r) => toCamelCase<Transfer>(r)));
-      if (details) this.transferDetailsSig.set(details.map((r) => toCamelCase<TransferDetail>(r)));
+      if (transfers) this.transfersSig.set(transfers.map((r : Record<string, unknown>) => toCamelCase<Transfer>(r)));
+      if (details) this.transferDetailsSig.set(details.map((r : Record<string, unknown>) => toCamelCase<TransferDetail>(r)));
     } catch (err) {
       console.error('Error loading transfers:', err);
     }
