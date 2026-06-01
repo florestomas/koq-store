@@ -1,5 +1,13 @@
-<div class="flex flex-1/12 flex-col h-full items-start justify-start bg-white">
-  <div class="flex flex-row w-full justify-between p-6 cursor-pointer" routerLink="">
+<div
+  class="flex flex-col h-full items-start justify-start bg-white max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-50 max-md:shadow-2xl max-md:transition-transform max-md:duration-300 max-md:w-72"
+  [class.max-md:-translate-x-full]="!open"
+>
+  <!-- Mobile close button -->
+  <button (click)="close.emit()" class="absolute top-4 right-4 md:hidden text-zinc-400 hover:text-zinc-700 transition cursor-pointer">
+    <mat-icon>close</mat-icon>
+  </button>
+
+  <div class="flex flex-row w-full justify-between p-6 cursor-pointer" routerLink="" (click)="close.emit()">
     <div class="flex flex-col">
       <h1 class="text-2xl text-koq">Koq Store</h1>
       <h2 class="text-sm text-gray-900/60">INVENTARIO</h2>
@@ -12,34 +20,40 @@
       [navLink]="'catalogo'"
       [iconName]="'inventory_2'"
       [navName]="'CATALOGO'"
+      (click)="close.emit()"
     ></app-nav-item>
     @if (isAdmin()) {
       <app-nav-item
         [navLink]="'crear-producto'"
         [iconName]="'add_box'"
         [navName]="'CREAR PRODUCTO'"
+        (click)="close.emit()"
       ></app-nav-item>
     }
     <app-nav-item
       [navLink]="'ventas/nueva'"
       [iconName]="'point_of_sale'"
       [navName]="'VENTAS'"
+      (click)="close.emit()"
     ></app-nav-item>
     <app-nav-item
       [navLink]="'transferencia'"
       [iconName]="'local_shipping'"
       [navName]="'TRANSFERENCIA'"
+      (click)="close.emit()"
     ></app-nav-item>
     <app-nav-item
       [navLink]="'recepciones'"
       [iconName]="'archive'"
       [navName]="'RECEPCION'"
+      (click)="close.emit()"
     ></app-nav-item>
-    <app-nav-item [navLink]="'alertas'" [iconName]="'warning'" [navName]="'ALERTAS'" [badge]="alertCount()"></app-nav-item>
+    <app-nav-item [navLink]="'alertas'" [iconName]="'warning'" [navName]="'ALERTAS'" [badge]="alertCount()" (click)="close.emit()"></app-nav-item>
     <app-nav-item
       [navLink]="'historial'"
       [iconName]="'history'"
       [navName]="'HISTORIAL'"
+      (click)="close.emit()"
     ></app-nav-item>
   </nav>
 
@@ -55,6 +69,7 @@
       [navLink]="'auth'"
       [iconName]="'logout'"
       [navName]="'CERRAR SESION'"
+      (click)="close.emit()"
     ></app-nav-item>
   </div>
 </div>

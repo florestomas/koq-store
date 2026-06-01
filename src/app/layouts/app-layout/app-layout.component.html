@@ -1,11 +1,22 @@
 <div class="flex flex-row h-screen w-full overflow-hidden">
-  <app-sidebar></app-sidebar>
-  <!--  <img
-      class=" w-full object-cover hidden md:block"
-      alt="placeholder koq"
-      src="https://placehold.co/600/ad65af/FFF?text=KoqStore"
-  /> -->
-  <main class="flex-1 overflow-y-auto">
+  <!-- Mobile hamburger -->
+  <button
+    (click)="sidebarOpen.set(true)"
+    class="fixed top-4 left-4 z-30 md:hidden bg-white rounded-full size-10 flex items-center justify-center shadow-md border border-gray-200 hover:bg-gray-50 transition cursor-pointer"
+  >
+    <mat-icon class="text-zinc-600">menu</mat-icon>
+  </button>
+
+  <!-- Backdrop -->
+  @if (sidebarOpen()) {
+    <div
+      (click)="sidebarOpen.set(false)"
+      class="fixed inset-0 bg-black/40 z-40 md:hidden"
+    ></div>
+  }
+
+  <app-sidebar [open]="sidebarOpen()" (close)="sidebarOpen.set(false)"></app-sidebar>
+  <main class="flex-1 overflow-y-auto pt-16 md:pt-0">
     <router-outlet></router-outlet>
   </main>
 </div>

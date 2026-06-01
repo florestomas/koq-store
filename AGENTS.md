@@ -3,90 +3,57 @@
 ## Commands
 
 ```bash
-npm start              # dev server (http://localhost:4200)
-npm test               # run unit tests (Vitest)
-npm test -- --include src/app/app.spec.ts  # run a single test file
+npm start              # dev server → http://localhost:4200 (file polling every 2s)
+npm test               # Vitest via Angular CLI (`@angular/build:unit-test`)
+npm test -- --include src/app/app.spec.ts  # single spec file
 npm run build          # production build → dist/
 ```
 
+No `vitest.config` — Angular build system manages Vitest under the hood.
+
 ## Tech stack
 
-- Angular 21 (standalone components — no NgModules)
-- Vitest (not Jasmine/Karma) for unit tests
-- Tailwind CSS v4 via PostCSS (`@tailwindcss/postcss`)
-- Angular Material (M3 theming) with Material Icons Outlined by default
-- Prettier: 100 print width, single quotes, Angular parser for `.html` — config in `package.json` (no `.prettierrc`), no ESLint in the project
+- Angular 21, standalone components (no NgModules), app bootstrapped in `src/main.ts`
+- Vitest (not Jasmine/Karma), globals enabled via `tsconfig.spec.json` — no `describe`/`it`/`expect` imports needed
+- Tailwind CSS v4 via `@tailwindcss/postcss` (`.postcssrc.json`)
+- Angular Material M3 theming (`material-theme.scss`), Material Icons Outlined as default icon set
+- Prettier config in `package.json`: 100 print width, single quotes, Angular parser for `.html` — **no ESLint**
+- Package manager pinned: `npm@11.8.0`
 
 ## Architecture
 
 ```
 src/app/
-  core/          guards, services (providedIn: 'root')
-  shared/        reusable UI components (sidebar, search-bar)
-  layouts/       route-level layout components
-  pages/         routed feature components (auth, catalog, transfer, create-product)
-  interfaces/    TypeScript interfaces
-  mocks/         unused — kept as reference, all services now hit Supabase directly
+  core/          guards, services (providedIn: 'root'), utils
+  shared/        reusable UI: sidebar, search-bar, modals
+  layouts/       app-layout (route shell with sidebar)
+  pages/         routed feature components (auth, catalog, transfer, create-product, new-sale, alertas, historial, recepciones)
+  interfaces/    TypeScript interfaces (14 files)
+  mocks/         unused — all services hit Supabase directly
 ```
 
-- Single project, single app: `src/main.ts` bootstraps `App` with `appConfig`
-- Routes defined in `app.routes.ts`, guards are functional (`CanActivateFn`)
-- Route paths use Spanish slugs: `/catalogo`, `/transferencia`, `/crear-producto`, `/ventas/nueva`, `/alertas`, `/historial`, `/recepciones`
+- Routes in `app.routes.ts`, functional guards (`CanActivateFn`)
+- Route paths: Spanish slugs (`/catalogo`, `/transferencia`, `/crear-producto`, `/ventas/nueva`, `/alertas`, `/historial`, `/recepciones`)
+- Components use `ChangeDetectionStrategy.OnPush`, external templates (`.html` files)
+- Supabase client in `supabase.service.ts` — URL + anon key **hardcoded** (no env vars)
 
-## Conventions & gotchas
+## Conventions
 
-- Components use `ChangeDetectionStrategy.OnPush` by default
-- Templates are external (`.html` files), as configured in `.vscode/settings.json`
-- `AuthService.logged` is `signal(true)` by default so the app skips login during development
-- Tests use Vitest globals (configured in `tsconfig.spec.json`); no need to import `describe`/`it`/`expect`
-- Spec files: `app.spec.ts`, `new-sale.spec.ts`, `alertas.spec.ts`, `historial.spec.ts`, `recepciones.spec.ts`
-- Expandable detail panels use CSS `grid-template-rows` transition (0fr → 1fr) with `overflow: hidden` for smooth animation
-- Print views use `@media print` + `.no-print` class (native `window.print()`)
-- All confirmation dialogs use `window.confirm()` (no Material dialog pattern yet)
+- `AuthService.logged` defaults to `signal(false)` — set to `true` in tests or during development to skip login
+- Tests use Vitest globals; existing spec files: `app`, `new-sale`, `alertas`, `historial`, `recepciones`
+- Expandable panels use CSS `grid-template-rows: 0fr → 1fr` + `overflow: hidden` for animation
+- Print views: `@media print` + `.no-print` class, triggered via `window.print()`
+- All confirmation dialogs use `window.confirm()` (no Material dialog pattern)
 
-## Role-Based Access Control (RBAC)
+## RBAC
 
-### Layer 1 — Route guards
-- `authGuard` on the entire layout: blocks unauthenticated users
-- `operadorGuard` on `/transferencia` and `/crear-producto`: blocks `operator` role, redirects to `/catalogo`
+- **Route guards**: `authGuard` on layout, `operadorGuard` on `/transferencia` and `/crear-producto` (redirects operators to `/catalogo`)
+- **UI enforcement**: sidebar hides CREAR PRODUCTO for operators; catalog/alertas/history/receptions/sales services filter by operator's `idLocation`
+- **Supabase RLS**: not yet active — SQL policies in AGENTS.md commit history for reference when backend goes live
 
-### Layer 2 — UI & service enforcement
-- **Sidebar**: `CREAR PRODUCTO` nav item hidden for operators
-- **Catalog**: `setLocationFilter()` is a no-op for operators; `filteredItems` computed forces `idLocation` to operator's own location
-- **Alerts**: service filters by `idLocation` for operators; location filter bar hidden
-- **History**: service filters by `idLocation` for operators; location `<select>` hidden
-- **Receptions**: service filters pending transfers by `idDestination` for operators
-- **Sales**: `new-sale` component reads stock and writes sale using the user's `idLocation`
+## Diffs from default Angular
 
-### Supabase RLS policies (to implement when backend is active)
-```sql
--- stock_locations: operators see only their location
-CREATE POLICY "operator_select_own_location" ON stock_locations
-  FOR SELECT USING (
-    auth.jwt() ->> 'role' = 'operator'
-    AND id_location = (auth.jwt() ->> 'id_location')::int
-  );
-
--- stock_locations: only admins can write
-CREATE POLICY "admin_write_stock" ON stock_locations
-  FOR INSERT WITH CHECK ((auth.jwt() ->> 'role') = 'admin');
-CREATE POLICY "admin_update_stock" ON stock_locations
-  FOR UPDATE USING ((auth.jwt() ->> 'role') = 'admin');
-
--- sales: operators select/insert only their location
-CREATE POLICY "operator_sales_scope" ON sales
-  FOR ALL USING (
-    auth.jwt() ->> 'role' = 'operator'
-    AND id_location = (auth.jwt() ->> 'id_location')::int
-  );
-
--- transfers: admins only
-CREATE POLICY "admin_transfers" ON transfers
-  FOR ALL USING ((auth.jwt() ->> 'role') = 'admin');
-
--- products / clothing_models / colors / categories: admins only
-CREATE POLICY "admin_write_catalog" ON clothing_models
-  FOR INSERT WITH CHECK ((auth.jwt() ->> 'role') = 'admin');
-CREATE POLICY "admin_write_products" ON products
-  FOR INSERT WITH CHECK ((auth.jwt() ->> 'role') = 'admin');
-```
+- `ng serve` has `"poll": 2000` in `angular.json` (useful for WSL/network mounts)
+- `.vscode/launch.json` debug config for `ng test` points to port `9876` (Karma-era URL) — **stale for Vitest**
+- Angular CLI MCP server available via `.vscode/mcp.json` (`npx @angular/cli mcp`)
+- No CI/CD workflows in repository

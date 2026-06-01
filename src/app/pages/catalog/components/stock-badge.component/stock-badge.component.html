@@ -1,12 +1,12 @@
 @if (stock() === 0) {
   <div
-    class="flex justify-center size-10 text-center items-center rounded-full border-2 border-dashed border-red-300 bg-red-50 text-red-400 text-xs"
+    class="flex justify-center size-7 md:size-10 text-center items-center rounded-full border-2 border-dashed border-red-300 bg-red-50 text-red-400 text-[10px] md:text-xs"
   >
     <span>0</span>
   </div>
 } @else {
   <div
-    class="flex justify-center size-10 text-center items-center rounded-full border border-koq bg-white"
+    class="flex justify-center size-7 md:size-10 text-center items-center rounded-full border border-koq bg-white text-[10px] md:text-xs"
   >
     <span>{{ stock() }}</span>
   </div>

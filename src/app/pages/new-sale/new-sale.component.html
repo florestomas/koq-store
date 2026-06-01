@@ -1,10 +1,10 @@
-<div class="flex flex-col md:flex-row w-full h-full gap-6 p-8">
+<div class="flex flex-col md:flex-row w-full h-full gap-4 md:gap-6 p-4 md:p-8">
   <!-- Left column — Search + Variant selector -->
   <div class="flex-1 flex flex-col gap-4 min-w-0">
     <!-- Header -->
     <div class="flex flex-row items-center gap-3">
-      <mat-icon class="text-3xl text-koq">point_of_sale</mat-icon>
-      <h1 class="text-4xl text-black font-medium">{{ 'Nueva Venta' | uppercase }}</h1>
+      <mat-icon class="text-2xl md:text-3xl text-koq">point_of_sale</mat-icon>
+      <h1 class="text-2xl md:text-4xl text-black font-medium">{{ 'Nueva Venta' | uppercase }}</h1>
     </div>
 
     <!-- Success flash -->
@@ -40,10 +40,10 @@
     </div>
 
     <!-- Category tabs -->
-    <nav class="flex flex-row border-b border-gray-300">
+    <nav class="flex flex-row border-b border-gray-300 overflow-x-auto">
       <button
         (click)="setSelectedCategory(null)"
-        class="py-3 px-6 text-zinc-500 font-medium tracking-widest text-xs border-b-4 border-transparent hover:border-b-4 hover:text-koq hover:border-koq transition cursor-pointer"
+        class="py-3 px-4 md:px-6 whitespace-nowrap text-zinc-500 font-medium tracking-widest text-xs border-b-4 border-transparent hover:border-b-4 hover:text-koq hover:border-koq transition cursor-pointer"
         [class.text-koq]="selectedCategoryId() === null"
         [class.border-koq]="selectedCategoryId() === null"
         [class.border-b-4]="selectedCategoryId() === null"
@@ -53,7 +53,7 @@
       @for (cat of categories(); track cat.id) {
         <button
           (click)="setSelectedCategory(cat.id)"
-          class="py-3 px-6 text-zinc-500 font-medium tracking-widest text-xs border-b-4 border-transparent hover:border-b-4 hover:text-koq hover:border-koq transition cursor-pointer"
+          class="py-3 px-4 md:px-6 whitespace-nowrap text-zinc-500 font-medium tracking-widest text-xs border-b-4 border-transparent hover:border-b-4 hover:text-koq hover:border-koq transition cursor-pointer"
           [class.text-koq]="selectedCategoryId() === cat.id"
           [class.border-koq]="selectedCategoryId() === cat.id"
           [class.border-b-4]="selectedCategoryId() === cat.id"
@@ -188,7 +188,7 @@
   </div>
 
   <!-- Right column — Cart Summary -->
-  <div class="flex-1 flex flex-col bg-white border border-gray-200 rounded-3xl p-6 shadow-sm min-w-0 h-full md:max-h-[calc(100vh-8rem)]">
+  <div class="flex-1 flex flex-col bg-white border border-gray-200 rounded-3xl p-4 md:p-6 shadow-sm min-w-0 h-full max-h-none md:max-h-[calc(100vh-8rem)]">
     <div class="flex flex-row items-center gap-2 mb-4 shrink-0">
       <mat-icon class="text-koq">shopping_cart</mat-icon>
       <h2 class="text-lg font-bold">Resumen de venta</h2>

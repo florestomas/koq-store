@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, inject, Input, Output } from '@angular/core';
 import { NavItemComponent } from './nav-item/nav-item.component';
 import { MatIcon } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
@@ -17,4 +17,7 @@ export class SidebarComponent {
   readonly authService = inject(AuthService);
   readonly alertCount = this.alertService.alertCount;
   readonly isAdmin = this.authService.isAdmin;
+
+  @Input() open = false;
+  @Output() close = new EventEmitter<void>();
 }

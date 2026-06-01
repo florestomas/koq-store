@@ -1,15 +1,15 @@
-<div class="flex flex-col w-full h-full p-8 gap-6">
+<div class="flex flex-col w-full h-full p-4 md:p-8 gap-4 md:gap-6">
   <!-- Header -->
   <div class="flex flex-row items-center gap-3">
-    <mat-icon class="text-3xl text-koq">history</mat-icon>
-    <h1 class="text-4xl text-black font-medium">{{ 'Historial' | uppercase }}</h1>
+    <mat-icon class="text-2xl md:text-3xl text-koq">history</mat-icon>
+    <h1 class="text-2xl md:text-4xl text-black font-medium">{{ 'Historial' | uppercase }}</h1>
   </div>
 
   <!-- Tabs -->
-  <nav class="flex flex-row border-b border-gray-300">
+  <nav class="flex flex-row border-b border-gray-300 overflow-x-auto">
     <button
       (click)="activeTab.set('ventas')"
-      class="py-3 px-8 text-zinc-500 font-medium tracking-widest text-sm border-b-4 border-transparent hover:border-b-4 hover:text-koq hover:border-koq transition cursor-pointer"
+      class="py-3 px-4 md:px-8 whitespace-nowrap text-zinc-500 font-medium tracking-widest text-sm border-b-4 border-transparent hover:border-b-4 hover:text-koq hover:border-koq transition cursor-pointer"
       [class.text-koq]="activeTab() === 'ventas'"
       [class.border-koq]="activeTab() === 'ventas'"
       [class.border-b-4]="activeTab() === 'ventas'"
@@ -18,7 +18,7 @@
     </button>
     <button
       (click)="activeTab.set('transferencias')"
-      class="py-3 px-8 text-zinc-500 font-medium tracking-widest text-sm border-b-4 border-transparent hover:border-b-4 hover:text-koq hover:border-koq transition cursor-pointer"
+      class="py-3 px-4 md:px-8 whitespace-nowrap text-zinc-500 font-medium tracking-widest text-sm border-b-4 border-transparent hover:border-b-4 hover:text-koq hover:border-koq transition cursor-pointer"
       [class.text-koq]="activeTab() === 'transferencias'"
       [class.border-koq]="activeTab() === 'transferencias'"
       [class.border-b-4]="activeTab() === 'transferencias'"
@@ -27,7 +27,7 @@
     </button>
     <button
       (click)="activeTab.set('movimientos')"
-      class="py-3 px-8 text-zinc-500 font-medium tracking-widest text-sm border-b-4 border-transparent hover:border-b-4 hover:text-koq hover:border-koq transition cursor-pointer"
+      class="py-3 px-4 md:px-8 whitespace-nowrap text-zinc-500 font-medium tracking-widest text-sm border-b-4 border-transparent hover:border-b-4 hover:text-koq hover:border-koq transition cursor-pointer"
       [class.text-koq]="activeTab() === 'movimientos'"
       [class.border-koq]="activeTab() === 'movimientos'"
       [class.border-b-4]="activeTab() === 'movimientos'"
@@ -154,35 +154,35 @@
             [class.opacity-60]="sale.status === 'cancelled'"
           >
             <div
-              class="flex flex-row items-center gap-4 px-6 py-4"
+              class="flex flex-row items-center gap-2 md:gap-4 px-4 md:px-6 py-3 md:py-4"
               (click)="toggleExpand(sale.id)"
             >
               <mat-icon class="text-zinc-300 text-lg shrink-0 transition-transform duration-300"
                 [class.rotate-90]="expandedSaleId() === sale.id"
               >chevron_right</mat-icon>
-              <div class="flex flex-col min-w-0 w-28 shrink-0">
-                <span class="text-sm font-semibold text-zinc-800">{{ sale.dateTime | date:'dd/MM/yyyy' }}</span>
-                <span class="text-xs text-zinc-400">{{ sale.dateTime | date:'HH:mm' }}</span>
+              <div class="flex flex-col min-w-0 w-20 md:w-28 shrink-0">
+                <span class="text-xs md:text-sm font-semibold text-zinc-800">{{ sale.dateTime | date:'dd/MM/yyyy' }}</span>
+                <span class="text-[10px] md:text-xs text-zinc-400">{{ sale.dateTime | date:'HH:mm' }}</span>
               </div>
-              <span class="text-sm text-zinc-600 min-w-28 shrink-0">{{ sale.operatorName }}</span>
-              <mat-icon class="text-lg shrink-0"
+              <span class="text-xs md:text-sm text-zinc-600 min-w-0 md:min-w-28 shrink-0 truncate max-w-20 md:max-w-none">{{ sale.operatorName }}</span>
+              <mat-icon class="text-base md:text-lg shrink-0"
                 [class.text-green-600]="sale.channel === 'local'"
                 [class.text-blue-500]="sale.channel === 'whatsapp'"
               >{{ getChannelIcon(sale.channel) }}</mat-icon>
               <span class="flex-1 min-w-0"></span>
-              <span class="text-base font-bold text-zinc-800 shrink-0">$ {{ sale.totalAmount | number:'1.0-0' }}</span>
+              <span class="text-sm md:text-base font-bold text-zinc-800 shrink-0">$ {{ sale.totalAmount | number:'1.0-0' }}</span>
               @if (sale.status === 'active') {
-                <span class="px-3 py-1 rounded-full text-[11px] font-bold tracking-wider bg-green-100 text-green-700 shrink-0">ACTIVA</span>
+                <span class="px-2 md:px-3 py-1 rounded-full text-[10px] md:text-[11px] font-bold tracking-wider bg-green-100 text-green-700 shrink-0">ACTIVA</span>
               } @else {
-                <span class="px-3 py-1 rounded-full text-[11px] font-bold tracking-wider bg-red-100 text-red-600 line-through shrink-0">ANULADA</span>
+                <span class="px-2 md:px-3 py-1 rounded-full text-[10px] md:text-[11px] font-bold tracking-wider bg-red-100 text-red-600 line-through shrink-0">ANULADA</span>
               }
             </div>
             <div
               class="expandable-content"
               [class.expanded]="expandedSaleId() === sale.id"
             >
-              <div class="border-t border-gray-100 px-6 py-4">
-                <table class="w-full text-sm mb-3">
+              <div class="border-t border-gray-100 px-4 md:px-6 py-4 overflow-x-auto">
+                <table class="w-full text-xs md:text-sm mb-3">
                   <thead>
                     <tr class="border-b border-gray-100">
                       <th class="text-left py-2 text-zinc-400 font-medium text-xs uppercase tracking-wider">Modelo</th>
@@ -196,12 +196,12 @@
                   <tbody>
                     @for (det of sale.details; track $index) {
                       <tr class="border-b border-gray-50 last:border-b-0">
-                        <td class="py-2 font-medium">{{ det.modelName }}</td>
-                        <td class="py-2 text-zinc-500">T. {{ det.size }}</td>
-                        <td class="py-2 text-zinc-500">{{ det.colorName }}</td>
-                        <td class="py-2 text-right">{{ det.quantity }}</td>
-                        <td class="py-2 text-right">$ {{ det.unitPrice | number:'1.0-0' }}</td>
-                        <td class="py-2 text-right font-semibold">$ {{ det.quantity * det.unitPrice | number:'1.0-0' }}</td>
+                        <td class="py-2 font-medium whitespace-nowrap">{{ det.modelName }}</td>
+                        <td class="py-2 text-zinc-500 whitespace-nowrap">T. {{ det.size }}</td>
+                        <td class="py-2 text-zinc-500 whitespace-nowrap">{{ det.colorName }}</td>
+                        <td class="py-2 text-right whitespace-nowrap">{{ det.quantity }}</td>
+                        <td class="py-2 text-right whitespace-nowrap">$ {{ det.unitPrice | number:'1.0-0' }}</td>
+                        <td class="py-2 text-right font-semibold whitespace-nowrap">$ {{ det.quantity * det.unitPrice | number:'1.0-0' }}</td>
                       </tr>
                     }
                   </tbody>
@@ -326,24 +326,24 @@
         @for (trf of transferHistoryService.filteredTransfers(); track trf.id) {
           <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden cursor-pointer transition hover:shadow-md">
             <div
-              class="flex flex-row items-center gap-4 px-6 py-4"
+              class="flex flex-row items-center gap-2 md:gap-4 px-4 md:px-6 py-3 md:py-4 flex-wrap"
               (click)="toggleTransferExpand(trf.id)"
             >
               <mat-icon class="text-zinc-300 text-lg shrink-0 transition-transform duration-300"
                 [class.rotate-90]="expandedTransferId() === trf.id"
               >chevron_right</mat-icon>
-              <div class="flex flex-col min-w-0 w-28 shrink-0">
-                <span class="text-sm font-semibold text-zinc-800">{{ trf.dateTime | date:'dd/MM/yyyy' }}</span>
-                <span class="text-xs text-zinc-400">{{ trf.dateTime | date:'HH:mm' }}</span>
+              <div class="flex flex-col min-w-0 w-20 md:w-28 shrink-0">
+                <span class="text-xs md:text-sm font-semibold text-zinc-800">{{ trf.dateTime | date:'dd/MM/yyyy' }}</span>
+                <span class="text-[10px] md:text-xs text-zinc-400">{{ trf.dateTime | date:'HH:mm' }}</span>
               </div>
-              <div class="flex flex-row items-center gap-1.5 text-sm shrink-0">
-                <span class="font-medium text-zinc-700">{{ trf.originName }}</span>
-                <mat-icon class="text-zinc-300 text-base">arrow_forward</mat-icon>
-                <span class="font-medium text-zinc-700">{{ trf.destinationName }}</span>
+              <div class="flex flex-row items-center gap-1.5 text-xs md:text-sm shrink-0">
+                <span class="font-medium text-zinc-700 truncate max-w-16 md:max-w-none">{{ trf.originName }}</span>
+                <mat-icon class="text-zinc-300 text-sm md:text-base">arrow_forward</mat-icon>
+                <span class="font-medium text-zinc-700 truncate max-w-16 md:max-w-none">{{ trf.destinationName }}</span>
               </div>
-              <span class="text-xs text-zinc-400 shrink-0">{{ trf.itemCount }} {{ trf.itemCount === 1 ? 'SKU' : 'SKUs' }}</span>
+              <span class="text-[10px] md:text-xs text-zinc-400 shrink-0">{{ trf.itemCount }} {{ trf.itemCount === 1 ? 'SKU' : 'SKUs' }}</span>
               <span class="flex-1 min-w-0"></span>
-              <span class="px-3 py-1 rounded-full text-[11px] font-bold tracking-wider shrink-0" [class]="getStatusClass(trf.status)">
+              <span class="px-2 md:px-3 py-1 rounded-full text-[10px] md:text-[11px] font-bold tracking-wider shrink-0" [class]="getStatusClass(trf.status)">
                 {{ getStatusLabel(trf.status) }}
               </span>
             </div>
