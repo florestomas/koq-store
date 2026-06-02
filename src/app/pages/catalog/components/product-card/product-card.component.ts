@@ -84,7 +84,13 @@ export class ProductCardComponent {
     return [...sizes].sort((a, b) => parseInt(a) - parseInt(b));
   });
 
-  readonly mainAlert = computed(() => this.item().stockAlerts[0] ?? null);
+  readonly alertLabels = computed(() =>
+    this.item().stockAlerts.map((a) => ({
+      label: a.type === 'out' ? `Agotado en ${a.locationName}` : `Bajo en ${a.locationName}`,
+      type: a.type,
+      locationName: a.locationName,
+    })),
+  );
 
   getStockForSize(row: ColorSizeRow, size: string): number {
     return row.sizes.find((s) => s.size === size)?.stock ?? 0;

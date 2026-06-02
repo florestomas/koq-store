@@ -27,9 +27,14 @@
           <span class="text-xs md:text-lg text-zinc-500 items-baseline">Ud.</span>
         </span>
       </div>
-      @if (mainAlert(); as alert) {
-        <span class="text-[10px] md:text-xs text-koq px-1.5 md:px-2 py-0.5 md:py-1 w-full rounded-full bg-koq/10 whitespace-nowrap">
-          {{ alert.type === 'out' ? 'AGOTADO' : 'BAJO' }}
+      @for (alert of alertLabels(); track alert.locationName) {
+        <span class="text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 md:py-1 w-full rounded-full whitespace-nowrap mt-0.5"
+          [class.bg-red-100]="alert.type === 'out'"
+          [class.text-red-600]="alert.type === 'out'"
+          [class.bg-amber-100]="alert.type === 'low'"
+          [class.text-amber-700]="alert.type === 'low'"
+        >
+          {{ alert.label }}
         </span>
       }
     </div>
