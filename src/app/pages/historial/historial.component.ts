@@ -33,12 +33,6 @@ export class HistorialComponent {
     .toISOString()
     .split('T')[0];
 
-  readonly channels: ('all' | 'local' | 'whatsapp')[] = [
-    'all',
-    'local',
-    'whatsapp',
-  ];
-
   readonly statusFilters: ('all' | 'pending' | 'confirmed' | 'cancelled')[] = [
     'all',
     'pending',
@@ -98,10 +92,6 @@ export class HistorialComponent {
 
   setMovementDateTo(value: string): void {
     this.stockMovementService.dateTo.set(value || null);
-  }
-
-  setChannel(ch: 'all' | 'local' | 'whatsapp'): void {
-    this.salesHistoryService.channel.set(ch);
   }
 
   setSaleLocation(value: string): void {
