@@ -24,12 +24,16 @@ export class AuthService {
   }
 
   private async initialize(): Promise<void> {
-    const {
-      data: { session },
-    } = await getSupabase().auth.getSession();
+    try {
+      const {
+        data: { session },
+      } = await getSupabase().auth.getSession();
 
-    if (session?.user?.email) {
-      await this.setUserFromEmail(session.user.email);
+      if (session?.user?.email) {
+        await this.setUserFromEmail(session.user.email);
+      }
+    } catch (err) {
+      console.error('Auth initialization failed:', err);
     }
   }
 
@@ -41,33 +45,43 @@ export class AuthService {
     const isEmail = usernameOrEmail.includes('@');
     let email = usernameOrEmail;
 
-    if (!isEmail) {
-      const { data } = await getSupabase()
-        .from('users')
-        .select('email')
-        .eq('user', usernameOrEmail)
-        .single();
+    try {
+      if (!isEmail) {
+        const { data } = await getSupabase()
+          .from('users')
+          .select('email')
+          .eq('user', usernameOrEmail)
+          .single();
 
-      if (!data) return ESTADO.FAIL;
-      email = data.email;
-    }
+        if (!data) return ESTADO.FAIL;
+        email = data.email;
+      }
 
-    const { error } = await getSupabase().auth.signInWithPassword({ email, password });
+      const { error } = await getSupabase().auth.signInWithPassword({ email, password });
 
-    if (error) {
-      console.error('Login error:', error.message);
+      if (error) {
+        console.error('Login error:', error.message);
+        return ESTADO.FAIL;
+      }
+
+      await this.setUserFromEmail(email);
+      this.logged.set(true);
+      return ESTADO.SUCCESS;
+    } catch (err) {
+      console.error('Login error:', err);
       return ESTADO.FAIL;
     }
-
-    await this.setUserFromEmail(email);
-    this.logged.set(true);
-    return ESTADO.SUCCESS;
   }
 
   async logout(): Promise<void> {
-    await getSupabase().auth.signOut();
-    this.logged.set(false);
-    this.currentUser.set(null);
+    try {
+      await getSupabase().auth.signOut();
+    } catch (err) {
+      console.error('Logout error:', err);
+    } finally {
+      this.logged.set(false);
+      this.currentUser.set(null);
+    }
   }
 
   private async setUserFromEmail(email: string): Promise<void> {

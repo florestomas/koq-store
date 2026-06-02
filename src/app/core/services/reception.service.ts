@@ -172,35 +172,40 @@ export class ReceptionService {
     const user = this.authService.currentUser();
     if (!user) return false;
 
-    const details = this.transferDetailsSig().filter(
-      (d) => d.idTransfer === transferId,
-    );
+    try {
+      const details = this.transferDetailsSig().filter(
+        (d) => d.idTransfer === transferId,
+      );
 
-    const p_items = details.map((d) => ({
-      id_product: d.idProduct,
-      quantity_received: receivedMap[d.idProduct] ?? d.quantity,
-    }));
+      const p_items = details.map((d) => ({
+        id_product: d.idProduct,
+        quantity_received: receivedMap[d.idProduct] ?? d.quantity,
+      }));
 
-    const { error } = await getSupabase().rpc('confirmar_recepcion', {
-      p_id_transfer: transferId,
-      p_id_user_destination: user.id,
-      p_items,
-    });
+      const { error } = await getSupabase().rpc('confirmar_recepcion', {
+        p_id_transfer: transferId,
+        p_id_user_destination: user.id,
+        p_items,
+      });
 
-    if (error) {
-      console.error('Error confirming reception:', error);
+      if (error) {
+        console.error('Error confirming reception:', error);
+        return false;
+      }
+
+      if (note) {
+        await getSupabase()
+          .from('transfers')
+          .update({ note })
+          .eq('id', transferId);
+      }
+
+      this.refresh();
+      return true;
+    } catch (err) {
+      console.error('Error confirming reception:', err);
       return false;
     }
-
-    if (note) {
-      await getSupabase()
-        .from('transfers')
-        .update({ note })
-        .eq('id', transferId);
-    }
-
-    this.refresh();
-    return true;
   }
 
   refresh(): void {
@@ -215,7 +220,33 @@ export class ReceptionService {
       .map((d) => d.idProduct);
 
     if (productIds.length > 0) {
-      await supabase.from('stock_movements').delete().in('id_product', productIds);
+      await supabase
+        .from('stock_movements')
+        .delete()
+        .eq('reference_type', 'transfer')
+        .in('id_product', productIds);
+
+      const { data: stockRows } = await supabase
+        .from('stock_locations')
+        .select('*')
+        .in('id_product', productIds);
+
+      if (stockRows) {
+        const transferData = this.transfersSig().find((t) => t.id === transferId);
+        const originId = transferData?.idOrigin;
+
+        for (const detail of this.transferDetailsSig().filter((d) => d.idTransfer === transferId)) {
+          const stock = stockRows.find(
+            (s: Record<string, unknown>) => s['id_product'] === detail.idProduct && s['id_location'] === originId,
+          );
+          if (stock) {
+            await supabase
+              .from('stock_locations')
+              .update({ current_stock: (stock as Record<string, number>)['current_stock'] + detail.quantity })
+              .eq('id', (stock as Record<string, unknown>)['id']);
+          }
+        }
+      }
     }
     await supabase.from('transfer_details').delete().eq('id_transfer', transferId);
     await supabase.from('transfers').delete().eq('id', transferId);

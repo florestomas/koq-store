@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { UpperCasePipe, DecimalPipe } from '@angular/common';
 import { MatIcon } from '@angular/material/icon';
@@ -235,22 +235,26 @@ export class NewSaleComponent {
     return Math.round(this.totalBeforeDiscount() * 0.1);
   });
 
-  readonly total = computed(
-    () => this.totalBeforeDiscount() - this.discountAmount() + this.surcharge(),
+  readonly total = computed(() =>
+    Math.max(0, this.totalBeforeDiscount() - this.discountAmount() + this.surcharge()),
   );
 
   readonly canConfirm = computed(
     () => this.channel() !== null && this.cartItems().length > 0,
   );
 
+  private readonly destroyRef = inject(DestroyRef);
+
   constructor() {
-    this.searchControl.valueChanges
+    const sub = this.searchControl.valueChanges
       .pipe(debounceTime(300), distinctUntilChanged())
       .subscribe((value) => {
         this.searchTerm.set(value ?? '');
         this.selectedModel.set(null);
         this.variantQuantities.set({});
       });
+
+    this.destroyRef.onDestroy(() => sub.unsubscribe());
   }
 
   selectModel(model: ClothingModel): void {
@@ -347,7 +351,12 @@ export class NewSaleComponent {
             s.idProduct === item.productId &&
             s.idLocation === this.userLocationId(),
         )?.currentStock ?? 0;
-      if (item.quantity < availableStock) {
+      const cartQty =
+        items.reduce(
+          (sum, ci) => (ci.productId === item.productId ? sum + ci.quantity : sum),
+          0,
+        );
+      if (cartQty < availableStock) {
         items[index] = { ...item, quantity: item.quantity + delta };
       }
     }
@@ -389,6 +398,8 @@ export class NewSaleComponent {
     const items = this.cartItems();
     const user = this.user();
     if (!channel || items.length === 0 || !user) return;
+
+    if (!window.confirm('¿Confirmar esta venta?')) return;
 
     const ok = await this.saleService.confirmSale({
       items,

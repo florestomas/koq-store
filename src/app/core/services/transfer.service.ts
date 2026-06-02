@@ -279,70 +279,87 @@ export class TransferService {
     const supabase = getSupabase();
     const transferId = crypto.randomUUID();
 
-    const { error: transferError } = await supabase
-      .from('transfers')
-      .insert({
-        id: transferId,
-        date_time: new Date().toISOString(),
-        id_origin: this.originId(),
-        id_destination: destId,
-        id_user_origin: user.id,
-        status: 'pending',
-      });
-
-    if (transferError) {
-      console.error('Error creating transfer:', transferError);
-      return false;
-    }
-
-    for (const item of currentItems) {
-      const { error: detailError } = await supabase
-        .from('transfer_details')
+    try {
+      const { error: transferError } = await supabase
+        .from('transfers')
         .insert({
-          id: crypto.randomUUID(),
-          id_transfer: transferId,
-          id_product: item.productId,
-          quantity: item.quantity,
+          id: transferId,
+          date_time: new Date().toISOString(),
+          id_origin: this.originId(),
+          id_destination: destId,
+          id_user_origin: user.id,
+          status: 'pending',
         });
 
-      if (detailError) {
-        console.error('Error creating transfer detail:', detailError);
+      if (transferError) {
+        console.error('Error creating transfer:', transferError);
         return false;
       }
 
-      const { data: originStocks } = await supabase
-        .from('stock_locations')
-        .select('*')
-        .eq('id_product', item.productId)
-        .eq('id_location', this.originId());
+      for (const item of currentItems) {
+        const { error: detailError } = await supabase
+          .from('transfer_details')
+          .insert({
+            id: crypto.randomUUID(),
+            id_transfer: transferId,
+            id_product: item.productId,
+            quantity: item.quantity,
+          });
 
-      if (originStocks && originStocks.length > 0) {
-        const originStock = originStocks[0];
-        await supabase
+        if (detailError) {
+          console.error('Error creating transfer detail:', detailError);
+          await supabase.from('transfer_details').delete().eq('id_transfer', transferId);
+          await supabase.from('transfers').delete().eq('id', transferId);
+          return false;
+        }
+
+        const { data: originStocks } = await supabase
           .from('stock_locations')
-          .update({
-            current_stock: Math.max(
-              0,
-              originStock.current_stock - item.quantity,
-            ),
-          })
-          .eq('id', originStock.id);
+          .select('*')
+          .eq('id_product', item.productId)
+          .eq('id_location', this.originId());
+
+        if (originStocks && originStocks.length > 0) {
+          const originStock = originStocks[0];
+          const { error: stockError } = await supabase
+            .from('stock_locations')
+            .update({
+              current_stock: Math.max(
+                0,
+                originStock.current_stock - item.quantity,
+              ),
+            })
+            .eq('id', originStock.id);
+
+          if (stockError) {
+            console.error('Error updating stock:', stockError);
+            await supabase.from('transfer_details').delete().eq('id_transfer', transferId);
+            await supabase.from('transfers').delete().eq('id', transferId);
+            return false;
+          }
+        }
+
+        await this.stockMovementService.logMovement(
+          'out',
+          item.productId,
+          this.originId(),
+          item.quantity,
+          'transfer',
+          transferId,
+        );
       }
 
-      await this.stockMovementService.logMovement(
-        'out',
-        item.productId,
-        this.originId(),
-        item.quantity,
-        'transfer',
-        transferId,
-      );
+      this.items.set([]);
+      this.destinationId.set('');
+      this.catalogService.triggerRefresh();
+      this.receptionService.refresh();
+      return true;
+    } catch (err) {
+      console.error('Error in confirmTransfer:', err);
+      await supabase.from('transfer_details').delete().eq('id_transfer', transferId);
+      await supabase.from('transfers').delete().eq('id', transferId);
+      return false;
     }
-
-    this.items.set([]);
-    this.catalogService.triggerRefresh();
-    this.receptionService.refresh();
-    return true;
   }
 
   getLocations() {

@@ -1,5 +1,5 @@
 import { UpperCasePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatIcon } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
@@ -29,10 +29,13 @@ export class TransferenciaComponent {
   readonly error = signal<string | null>(null);
   readonly isConfirming = signal(false);
 
+  private readonly destroyRef = inject(DestroyRef);
+
   constructor() {
-    this.searchControl.valueChanges.subscribe((v) =>
+    const sub = this.searchControl.valueChanges.subscribe((v) =>
       this.transferService.searchTerm.set(v ?? ''),
     );
+    this.destroyRef.onDestroy(() => sub.unsubscribe());
   }
 
   openVariantPicker(model: SelectableModel): void {
@@ -56,6 +59,9 @@ export class TransferenciaComponent {
 
   async confirmTransfer(): Promise<void> {
     if (this.isConfirming()) return;
+
+    if (!window.confirm('¿Confirmar esta transferencia?')) return;
+
     this.error.set(null);
     this.isConfirming.set(true);
     try {

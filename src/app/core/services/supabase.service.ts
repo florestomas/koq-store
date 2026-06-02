@@ -36,5 +36,6 @@ export async function deleteProductImage(imageUrl: string): Promise<void> {
   const path = parts.length > 1 ? parts[1] : null;
   if (!path) return;
 
-  await getSupabase().storage.from(STORAGE_BUCKET).remove([path]);
+  const { error } = await getSupabase().storage.from(STORAGE_BUCKET).remove([path]);
+  if (error) console.error('Error deleting image:', error.message);
 }

@@ -1,5 +1,5 @@
+import { ChangeDetectionStrategy, Component, DestroyRef, inject } from '@angular/core';
 import { UpperCasePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
 import { ProductCardComponent } from './components/product-card/product-card.component';
@@ -23,6 +23,13 @@ export class CatalogComponent {
   protected readonly catalogService = inject(CatalogService);
   protected readonly authService = inject(AuthService);
   private readonly dialog = inject(MatDialog);
+
+  constructor() {
+    inject(DestroyRef).onDestroy(() => {
+      this.catalogService.setSearchTerm('');
+      this.catalogService.setSelectedCategory(null);
+    });
+  }
 
   openFilters(): void {
     const data: FilterModalData = {
