@@ -144,6 +144,8 @@ export class ReceptionService {
     });
   }
 
+  readonly pendingCount = computed(() => this.pendingTransfers().length);
+
   constructor() {
     this.authService.waitForInit().then(() => this.loadTransfers());
   }
@@ -155,8 +157,8 @@ export class ReceptionService {
         supabase.from('transfers').select('*'),
         supabase.from('transfer_details').select('*'),
       ]);
-      if (transfers) this.transfersSig.set(transfers.map((r) => toCamelCase<Transfer>(r)));
-      if (details) this.transferDetailsSig.set(details.map((r) => toCamelCase<TransferDetail>(r)));
+      if (transfers) this.transfersSig.set(transfers.map((r: Record<string, unknown>) => toCamelCase<Transfer>(r)));
+      if (details) this.transferDetailsSig.set(details.map((r: Record<string, unknown>) => toCamelCase<TransferDetail>(r)));
     } catch (err) {
       console.error('Error loading transfers:', err);
     }
@@ -204,5 +206,19 @@ export class ReceptionService {
   refresh(): void {
     this.refreshCounter.update((c) => c + 1);
     this.loadTransfers();
+  }
+
+  async hardDeleteTransfer(transferId: string): Promise<void> {
+    const supabase = getSupabase();
+    const productIds = this.transferDetailsSig()
+      .filter((d) => d.idTransfer === transferId)
+      .map((d) => d.idProduct);
+
+    if (productIds.length > 0) {
+      await supabase.from('stock_movements').delete().in('id_product', productIds);
+    }
+    await supabase.from('transfer_details').delete().eq('id_transfer', transferId);
+    await supabase.from('transfers').delete().eq('id', transferId);
+    this.refresh();
   }
 }

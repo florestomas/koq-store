@@ -50,6 +50,16 @@
             <!-- Code row -->
             <div class="flex flex-row items-center justify-between">
               <span class="text-sm font-bold text-zinc-800">{{ formatTransferCode(transfer.id) }}</span>
+              <div class="flex flex-row items-center gap-2">
+                @if (authService.isAdmin()) {
+                  <button
+                    (click)="deleteTransfer(transfer.id); $event.stopPropagation()"
+                    class="text-zinc-400 hover:text-red-500 transition"
+                    title="Eliminar recepción"
+                  >
+                    <mat-icon class="text-base">delete</mat-icon>
+                  </button>
+                }
               <span
                 class="px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider shrink-0"
                 [class.bg-amber-100]="!isTransferOld(transfer.dateTime)"
@@ -57,6 +67,7 @@
                 [class.bg-gray-200]="isTransferOld(transfer.dateTime)"
                 [class.text-gray-600]="isTransferOld(transfer.dateTime)"
               >{{ isTransferOld(transfer.dateTime) ? 'RETRASADO' : 'EN CAMINO' }}</span>
+            </div>
             </div>
             <!-- Date/time + origin -->
             <div class="flex flex-row items-center gap-2 text-xs text-zinc-400">

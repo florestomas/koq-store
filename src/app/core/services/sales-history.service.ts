@@ -225,8 +225,8 @@ export class SalesHistoryService {
         supabase.from('sales').select('*'),
         supabase.from('sale_details').select('*'),
       ]);
-      if (sales) this.salesSig.set(sales.map((r) => toCamelCase<Sale>(r)));
-      if (details) this.saleDetailsSig.set(details.map((r) => toCamelCase<SaleDetail>(r)));
+      if (sales) this.salesSig.set(sales.map((r: Record<string, unknown>) => toCamelCase<Sale>(r)));
+      if (details) this.saleDetailsSig.set(details.map((r: Record<string, unknown>) => toCamelCase<SaleDetail>(r)));
     } catch (err) {
       console.error('Error loading sales:', err);
     }

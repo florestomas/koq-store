@@ -3,6 +3,7 @@ import { NavItemComponent } from './nav-item/nav-item.component';
 import { MatIcon } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
 import { AlertService } from '../../core/services/alert.service';
+import { ReceptionService } from '../../core/services/reception.service';
 import { AuthService } from '../../core/services/auth.service';
 
 @Component({
@@ -14,8 +15,10 @@ import { AuthService } from '../../core/services/auth.service';
 })
 export class SidebarComponent {
   private readonly alertService = inject(AlertService);
+  private readonly receptionService = inject(ReceptionService);
   readonly authService = inject(AuthService);
   readonly alertCount = this.alertService.alertCount;
+  readonly receptionCount = this.receptionService.pendingCount;
   readonly isAdmin = this.authService.isAdmin;
 
   @Input() open = false;

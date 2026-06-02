@@ -26,6 +26,8 @@ export class TransferenciaComponent {
 
   readonly searchControl = new FormControl('');
   readonly confirmed = signal(false);
+  readonly error = signal<string | null>(null);
+  readonly isConfirming = signal(false);
 
   constructor() {
     this.searchControl.valueChanges.subscribe((v) =>
@@ -53,10 +55,19 @@ export class TransferenciaComponent {
   }
 
   async confirmTransfer(): Promise<void> {
-    const ok = await this.transferService.confirmTransfer();
-    if (ok) {
-      this.confirmed.set(true);
-      setTimeout(() => this.confirmed.set(false), 3000);
+    if (this.isConfirming()) return;
+    this.error.set(null);
+    this.isConfirming.set(true);
+    try {
+      const ok = await this.transferService.confirmTransfer();
+      if (ok) {
+        this.confirmed.set(true);
+        setTimeout(() => this.confirmed.set(false), 3000);
+      } else {
+        this.error.set('Error al confirmar la transferencia. Verificá destino y stock.');
+      }
+    } finally {
+      this.isConfirming.set(false);
     }
   }
 

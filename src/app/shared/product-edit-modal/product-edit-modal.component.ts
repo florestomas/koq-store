@@ -3,14 +3,14 @@ import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
-import { UpperCasePipe } from '@angular/common';
+import { DecimalPipe, UpperCasePipe } from '@angular/common';
 import { CatalogItem } from '../../interfaces/catalog-item';
 import { Category } from '../../interfaces/category';
 import { Location } from '../../interfaces/location';
 import { CatalogService } from '../../core/services/catalog.service';
-import { getSupabase } from '../../core/services/supabase.service';
+import { getSupabase, uploadProductImage } from '../../core/services/supabase.service';
 
-type TabName = 'basic' | 'stock' | 'variants';
+type TabName = 'basic' | 'stock' | 'variants' | 'prices';
 
 export interface ProductEditModalData {
   item: CatalogItem;
@@ -21,7 +21,7 @@ export interface ProductEditModalData {
 
 @Component({
   selector: 'app-product-edit-modal',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatIcon, UpperCasePipe],
+  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatIcon, UpperCasePipe, DecimalPipe],
   templateUrl: './product-edit-modal.component.html',
   styleUrl: './product-edit-modal.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -33,10 +33,16 @@ export class ProductEditModalComponent {
 
   readonly activeTab = signal<TabName>('basic');
 
+  readonly isUploading = signal(false);
+  readonly isAddingColor = signal(false);
+  readonly isAddingSize = signal(false);
+  readonly displayImageUrl = signal(this.data.item.imageUrl);
+
   readonly tabs: { key: TabName; label: string }[] = [
     { key: 'basic', label: 'Datos básicos' },
     { key: 'stock', label: 'Stock' },
     { key: 'variants', label: 'Variantes' },
+    { key: 'prices', label: 'Precios' },
   ];
 
   private readonly allModels = computed(() => this.catalogService.catalogModels());
@@ -51,8 +57,15 @@ export class ProductEditModalComponent {
 
   readonly form = new FormGroup({
     name: new FormControl(this.model()?.name ?? '', { nonNullable: true }),
-    description: new FormControl(this.model()?.description ?? ''),
     categoryId: new FormControl(this.model()?.idCategory ?? '', { nonNullable: true }),
+  });
+
+  readonly duplicateName = computed(() => {
+    const name = this.form.controls.name.value.trim().toLowerCase();
+    if (!name) return false;
+    return this.allModels().some(
+      (m) => m.id !== this.data.item.modelId && m.name.toLowerCase() === name && m.active,
+    );
   });
 
   readonly newSizeInput = signal('');
@@ -60,6 +73,46 @@ export class ProductEditModalComponent {
   readonly newColorName = signal('');
 
   private readonly variantsVersion = signal(0);
+
+  private readonly pricesVersion = signal(0);
+
+  readonly sizePrices = computed(() => {
+    const _ = this.pricesVersion();
+    const prods = this.allProducts().filter(
+      (p) => p.idClothingModel === this.data.item.modelId && p.active,
+    );
+    const sizes = [...new Set(prods.map((p) => p.size))].sort(
+      (a, b) => parseInt(a) - parseInt(b),
+    );
+    return sizes.map((size) => {
+      const firstProd = prods.find((p) => p.size === size);
+      return {
+        size,
+        salePrice: firstProd?.salePrice ?? 0,
+        costPrice: firstProd?.costPrice ?? 0,
+      };
+    });
+  });
+
+  async updateSizePrice(size: string, value: string): Promise<void> {
+    const newPrice = Math.max(0, parseInt(value) || 0);
+    const productIds = this.allProducts()
+      .filter(
+        (p) =>
+          p.idClothingModel === this.data.item.modelId && p.size === size && p.active,
+      )
+      .map((p) => p.id);
+
+    const supabase = getSupabase();
+    for (const pid of productIds) {
+      await supabase
+        .from('products')
+        .update({ sale_price: newPrice, cost_price: newPrice })
+        .eq('id', pid);
+    }
+    this.pricesVersion.update((v) => v + 1);
+    await this.catalogService.triggerRefresh();
+  }
 
   readonly modelColors = computed(() => {
     const _v = this.variantsVersion();
@@ -78,9 +131,43 @@ export class ProductEditModalComponent {
     }));
   });
 
+  private readonly usedColorIds = computed(() => {
+    return new Set(
+      this.allProducts()
+        .filter((p) => p.active)
+        .map((p) => p.idColor),
+    );
+  });
+
+  readonly systemColorsWithCount = computed(() => {
+    const used = this.usedColorIds();
+    const productCount = new Map<string, number>();
+    for (const p of this.allProducts().filter((p) => p.active)) {
+      productCount.set(p.idColor, (productCount.get(p.idColor) ?? 0) + 1);
+    }
+    return this.allColors().map((c) => ({
+      id: c.id,
+      name: c.name,
+      inUse: used.has(c.id),
+      productCount: productCount.get(c.id) ?? 0,
+    }));
+  });
+
+  async deleteUnusedColor(colorId: string): Promise<void> {
+    if (!window.confirm('¿Eliminar este color definitivamente? Solo se pueden eliminar colores sin productos activos.')) return;
+    const info = this.systemColorsWithCount().find((c) => c.id === colorId);
+    if (!info || info.inUse) return;
+
+    await getSupabase().from('colors').delete().eq('id', colorId);
+    await this.catalogService.triggerRefresh();
+  }
+
   readonly availableColors = computed(() => {
     const mc = this.modelColors();
-    return this.allColors().filter((c) => !mc.some((m) => m.id === c.id));
+    const used = this.usedColorIds();
+    return this.allColors().filter(
+      (c) => used.has(c.id) && !mc.some((m) => m.id === c.id),
+    );
   });
 
   readonly uniqueSizes = computed(() => {
@@ -139,14 +226,15 @@ export class ProductEditModalComponent {
   async setMinStockForLocation(locationId: string, value: string): Promise<void> {
     const newMin = parseInt(value) || 0;
     const entries = this.getLocationStockEntry(locationId);
-    const perProduct = Math.max(1, Math.floor(newMin / this.uniqueSizes().length));
+    if (entries.length === 0) return;
+    const perProduct = Math.max(1, Math.floor(newMin / entries.length));
     for (const entry of entries) {
       await getSupabase()
         .from('stock_locations')
         .update({ minimum_stock: perProduct })
         .eq('id', entry.id);
     }
-    this.catalogService.triggerRefresh();
+    await this.catalogService.triggerRefresh();
   }
 
   async setCurrentStockForLocation(locationId: string, value: string): Promise<void> {
@@ -163,7 +251,7 @@ export class ProductEditModalComponent {
         .eq('id', entry.id);
       if (remainder > 0) remainder--;
     }
-    this.catalogService.triggerRefresh();
+    await this.catalogService.triggerRefresh();
   }
 
   getStockForColorSizeInLocation(
@@ -186,6 +274,28 @@ export class ProductEditModalComponent {
           s.idLocation === locationId && productIds.includes(s.idProduct),
       )
       .reduce((sum, s) => sum + s.currentStock, 0);
+  }
+
+  getMinStockForColorSizeInLocation(
+    colorId: string,
+    size: string,
+    locationId: string,
+  ): number {
+    const productIds = this.allProducts()
+      .filter(
+        (p) =>
+          p.idClothingModel === this.data.item.modelId &&
+          p.active &&
+          p.idColor === colorId &&
+          p.size === size,
+      )
+      .map((p) => p.id);
+    return this.allStocks()
+      .filter(
+        (s) =>
+          s.idLocation === locationId && productIds.includes(s.idProduct),
+      )
+      .reduce((sum, s) => sum + s.minimumStock, 0);
   }
 
   async setCellCurrentStock(
@@ -224,81 +334,147 @@ export class ProductEditModalComponent {
         minimum_stock: 1,
       });
     }
-    this.catalogService.triggerRefresh();
+    await this.catalogService.triggerRefresh();
+  }
+
+  async setCellMinStock(
+    locationId: string,
+    colorId: string,
+    size: string,
+    value: string,
+  ): Promise<void> {
+    const newMin = Math.max(0, parseInt(value) || 0);
+    const productIds = this.allProducts()
+      .filter(
+        (p) =>
+          p.idClothingModel === this.data.item.modelId &&
+          p.active &&
+          p.idColor === colorId &&
+          p.size === size,
+      )
+      .map((p) => p.id);
+    const supabase = getSupabase();
+    const entries = this.allStocks().filter(
+      (s) => productIds.includes(s.idProduct) && s.idLocation === locationId,
+    );
+    for (const entry of entries) {
+      await supabase
+        .from('stock_locations')
+        .update({ minimum_stock: newMin })
+        .eq('id', entry.id);
+    }
+    await this.catalogService.triggerRefresh();
+  }
+
+  async onImageSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    this.isUploading.set(true);
+    try {
+      const modelId = this.data.item.modelId;
+      const storagePath = `${modelId}/${Date.now()}`;
+      const url = await uploadProductImage(file, storagePath);
+
+      const modelColors = this.allModelColors().filter(
+        (mc) => mc.idClothingModel === modelId,
+      );
+      for (const mc of modelColors) {
+        await getSupabase()
+          .from('clothing_model_colors')
+          .update({ image_url: url })
+          .eq('id', mc.id);
+      }
+
+      this.displayImageUrl.set(url);
+      await this.catalogService.triggerRefresh();
+    } catch (err) {
+      console.error('Error uploading image:', err);
+    } finally {
+      this.isUploading.set(false);
+      input.value = '';
+    }
   }
 
   async addColor(): Promise<void> {
     const name = this.newColorName().trim();
     if (!name) return;
+    if (this.isAddingColor()) return;
 
-    const supabase = getSupabase();
-    const modelId = this.data.item.modelId;
+    this.isAddingColor.set(true);
+    try {
+      const supabase = getSupabase();
+      const modelId = this.data.item.modelId;
 
-    let colorId = this.allColors().find(
-      (c) => c.name.toLowerCase() === name.toLowerCase(),
-    )?.id;
-    if (!colorId) {
-      colorId = crypto.randomUUID();
-      const { error } = await supabase.from('colors').insert({
-        id: colorId,
-        name,
-      });
-      if (error) {
-        console.error('Error creating color:', error);
+      let colorId = this.allColors().find(
+        (c) => c.name.toLowerCase() === name.toLowerCase(),
+      )?.id;
+      if (!colorId) {
+        colorId = crypto.randomUUID();
+        const { error } = await supabase.from('colors').insert({
+          id: colorId,
+          name: name.toUpperCase(),
+        });
+        if (error) {
+          console.error('Error creating color:', error);
+          return;
+        }
+      }
+
+      if (
+        this.allModelColors().some(
+          (mc) =>
+            mc.idClothingModel === modelId && mc.idColor === colorId,
+        )
+      ) {
+        this.newColorName.set('');
         return;
       }
-    }
 
-    if (
-      this.allModelColors().some(
-        (mc) =>
-          mc.idClothingModel === modelId && mc.idColor === colorId,
-      )
-    ) {
-      this.newColorName.set('');
-      return;
-    }
+      const existingProduct = this.allProducts().find(
+        (p) => p.idClothingModel === modelId && p.active,
+      );
+      const costPrice = existingProduct?.costPrice ?? 0;
+      const salePrice = existingProduct?.salePrice ?? 0;
 
-    const existingProduct = this.allProducts().find(
-      (p) => p.idClothingModel === modelId && p.active,
-    );
-    const costPrice = existingProduct?.costPrice ?? 0;
-    const salePrice = existingProduct?.salePrice ?? 0;
-
-    const { error: mcError } = await supabase
-      .from('clothing_model_colors')
-      .insert({
-        id: crypto.randomUUID(),
-        id_clothing_model: modelId,
-        id_color: colorId,
-        image_url: `https://placehold.co/400x400?text=${encodeURIComponent(name)}`,
-      });
-    if (mcError) {
-      console.error('Error linking color to model:', mcError);
-      return;
-    }
-
-    for (const size of this.uniqueSizes()) {
-      const { error: prodError } = await supabase
-        .from('products')
+      const { error: mcError } = await supabase
+        .from('clothing_model_colors')
         .insert({
           id: crypto.randomUUID(),
           id_clothing_model: modelId,
-          size,
           id_color: colorId,
-          cost_price: costPrice,
-          sale_price: salePrice,
-          active: true,
+          image_url: `https://placehold.co/400x400?text=${encodeURIComponent(name.toUpperCase())}`,
         });
-      if (prodError) {
-        console.error('Error creating product:', prodError);
+      if (mcError) {
+        console.error('Error linking color to model:', mcError);
         return;
       }
-    }
 
-    this.newColorName.set('');
-    this.variantsVersion.update((v) => v + 1);
-    this.catalogService.triggerRefresh();
+      for (const size of this.uniqueSizes()) {
+        const { error: prodError } = await supabase
+          .from('products')
+          .insert({
+            id: crypto.randomUUID(),
+            id_clothing_model: modelId,
+            size,
+            id_color: colorId,
+            cost_price: costPrice,
+            sale_price: salePrice,
+            active: true,
+          });
+        if (prodError) {
+          console.error('Error creating product:', prodError);
+          return;
+        }
+      }
+
+      this.newColorName.set('');
+      this.variantsVersion.update((v) => v + 1);
+      await this.catalogService.triggerRefresh();
+    } finally {
+      this.isAddingColor.set(false);
+    }
   }
 
   async removeColor(colorId: string): Promise<void> {
@@ -351,42 +527,48 @@ export class ProductEditModalComponent {
     }
 
     this.variantsVersion.update((v) => v + 1);
-    this.catalogService.triggerRefresh();
+    await this.catalogService.triggerRefresh();
   }
 
   async addSize(): Promise<void> {
     const size = this.newSizeInput().trim();
     if (!size) return;
+    if (this.isAddingSize()) return;
 
-    const modelId = this.data.item.modelId;
-    const existingProduct = this.allProducts().find(
-      (p) => p.idClothingModel === modelId && p.active,
-    );
-    const costPrice = existingProduct?.costPrice ?? 0;
-    const salePrice = existingProduct?.salePrice ?? 0;
-    const supabase = getSupabase();
+    this.isAddingSize.set(true);
+    try {
+      const modelId = this.data.item.modelId;
+      const existingProduct = this.allProducts().find(
+        (p) => p.idClothingModel === modelId && p.active,
+      );
+      const costPrice = existingProduct?.costPrice ?? 0;
+      const salePrice = existingProduct?.salePrice ?? 0;
+      const supabase = getSupabase();
 
-    for (const color of this.modelColors()) {
-      const { error: prodError } = await supabase
-        .from('products')
-        .insert({
-          id: crypto.randomUUID(),
-          id_clothing_model: modelId,
-          size,
-          id_color: color.id,
-          cost_price: costPrice,
-          sale_price: salePrice,
-          active: true,
-        });
-      if (prodError) {
-        console.error('Error creating product for size:', prodError);
-        return;
+      for (const color of this.modelColors()) {
+        const { error: prodError } = await supabase
+          .from('products')
+          .insert({
+            id: crypto.randomUUID(),
+            id_clothing_model: modelId,
+            size,
+            id_color: color.id,
+            cost_price: costPrice,
+            sale_price: salePrice,
+            active: true,
+          });
+        if (prodError) {
+          console.error('Error creating product for size:', prodError);
+          return;
+        }
       }
-    }
 
-    this.newSizeInput.set('');
-    this.variantsVersion.update((v) => v + 1);
-    this.catalogService.triggerRefresh();
+      this.newSizeInput.set('');
+      this.variantsVersion.update((v) => v + 1);
+      await this.catalogService.triggerRefresh();
+    } finally {
+      this.isAddingSize.set(false);
+    }
   }
 
   async removeSize(size: string): Promise<void> {
@@ -426,7 +608,7 @@ export class ProductEditModalComponent {
     }
 
     this.variantsVersion.update((v) => v + 1);
-    this.catalogService.triggerRefresh();
+    await this.catalogService.triggerRefresh();
   }
 
   private getModelProductIds(): string[] {
@@ -442,6 +624,7 @@ export class ProductEditModalComponent {
   }
 
   async save(): Promise<void> {
+    if (this.duplicateName()) return;
     const modelId = this.data.item.modelId;
     const supabase = getSupabase();
 
@@ -449,7 +632,6 @@ export class ProductEditModalComponent {
       .from('clothing_models')
       .update({
         name: this.form.controls.name.value,
-        description: this.form.controls.description.value || undefined,
         id_category: this.form.controls.categoryId.value,
       })
       .eq('id', modelId);
@@ -459,11 +641,18 @@ export class ProductEditModalComponent {
       return;
     }
 
-    this.catalogService.triggerRefresh();
+    await this.catalogService.triggerRefresh();
     this.dialogRef.close();
   }
 
   close(): void {
+    this.dialogRef.close();
+  }
+
+  async deleteProduct(): Promise<void> {
+    if (!window.confirm('¿Estás seguro de eliminar este producto? Esta acción no se puede deshacer.')) return;
+
+    await this.catalogService.hardDeleteModel(this.data.item.modelId);
     this.dialogRef.close();
   }
 }

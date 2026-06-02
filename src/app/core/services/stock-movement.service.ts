@@ -124,7 +124,7 @@ export class StockMovementService {
   private async loadMovements(): Promise<void> {
     try {
       const { data } = await getSupabase().from('stock_movements').select('*');
-      if (data) this.movementsSig.set(data.map((r) => toCamelCase<StockMovement>(r)));
+      if (data) this.movementsSig.set(data.map((r: Record<string, unknown>) => toCamelCase<StockMovement>(r)));
     } catch (err) {
       console.error('Error loading stock movements:', err);
     }

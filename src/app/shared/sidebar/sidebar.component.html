@@ -48,12 +48,7 @@
       [navName]="'TRANSFERENCIA'"
       (click)="close.emit()"
     ></app-nav-item>
-    <app-nav-item
-      [navLink]="'recepciones'"
-      [iconName]="'archive'"
-      [navName]="'RECEPCION'"
-      (click)="close.emit()"
-    ></app-nav-item>
+    <app-nav-item [navLink]="'recepciones'" [iconName]="'archive'" [navName]="'RECEPCION'" [badge]="receptionCount()" [badgeColor]="'amber'" (click)="close.emit()"></app-nav-item>
     <app-nav-item [navLink]="'alertas'" [iconName]="'warning'" [navName]="'ALERTAS'" [badge]="alertCount()" (click)="close.emit()"></app-nav-item>
     <app-nav-item
       [navLink]="'historial'"

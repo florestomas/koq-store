@@ -1,5 +1,5 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
-import { getSupabase } from './supabase.service';
+import { deleteProductImage, getSupabase } from './supabase.service';
 import { AuthService } from './auth.service';
 import { toCamelCase } from '../utils/supabase-utils';
 import { CatalogItem, StockAlert, ProductRef, StockRef } from '../../interfaces/catalog-item';
@@ -73,7 +73,7 @@ export class CatalogService {
       models = models.filter((m) => m.idCategory === catId);
     }
 
-    const items: CatalogItem[] = models.map((model) => {
+    let items: CatalogItem[] = models.map((model) => {
       const modelProducts = allProducts.filter((p) => p.idClothingModel === model.id && p.active);
       const productIds = modelProducts.map((p) => p.id);
 
@@ -148,14 +148,18 @@ export class CatalogService {
         size: p.size,
       }));
 
-      const allStocks: StockRef[] = allStocksList.filter((s) =>
-        productIds.includes(s.idProduct),
-      ).map((s) => ({
-        idProduct: s.idProduct,
-        idLocation: s.idLocation,
-        currentStock: s.currentStock,
-        minimumStock: s.minimumStock,
-      }));
+      const allStocks: StockRef[] = allStocksList
+        .filter(
+          (s) =>
+            productIds.includes(s.idProduct) &&
+            (isAdmin ? true : s.idLocation === locId),
+        )
+        .map((s) => ({
+          idProduct: s.idProduct,
+          idLocation: s.idLocation,
+          currentStock: s.currentStock,
+          minimumStock: s.minimumStock,
+        }));
 
       return {
         modelId: model.id,
@@ -170,6 +174,12 @@ export class CatalogService {
         allStocks,
       };
     });
+
+    if (!isAdmin) {
+      items = items
+        .filter((item) => item.totalStock > 0)
+        .map((item) => ({ ...item, stockAlerts: [] }));
+    }
 
     if (stockF === 'low') {
       return items.filter((item) => item.stockAlerts.length > 0);
@@ -214,14 +224,14 @@ export class CatalogService {
         supabase.from('users').select('*'),
       ]);
 
-      if (rawCategories) this.categoriesSig.set(rawCategories.map((r) => toCamelCase<Category>(r)));
-      if (rawModels) this.modelsSig.set(rawModels.map((r) => toCamelCase<ClothingModel>(r)));
-      if (rawProducts) this.productsSig.set(rawProducts.map((r) => toCamelCase<Product>(r)));
-      if (rawStocks) this.stocksSig.set(rawStocks.map((r) => toCamelCase<StockLocation>(r)));
-      if (rawColors) this.colorsSig.set(rawColors.map((r) => toCamelCase<Color>(r)));
-      if (rawModelColors) this.modelColorsSig.set(rawModelColors.map((r) => toCamelCase<ClothingModelColor>(r)));
-      if (rawLocations) this.locationsSig.set(rawLocations.map((r) => toCamelCase<Location>(r)));
-      if (rawUsers) this.usersSig.set(rawUsers.map((r) => toCamelCase<User>(r)));
+      if (rawCategories) this.categoriesSig.set(rawCategories.map((r: Record<string, unknown>) => toCamelCase<Category>(r)));
+      if (rawModels) this.modelsSig.set(rawModels.map((r: Record<string, unknown>) => toCamelCase<ClothingModel>(r)));
+      if (rawProducts) this.productsSig.set(rawProducts.map((r: Record<string, unknown>) => toCamelCase<Product>(r)));
+      if (rawStocks) this.stocksSig.set(rawStocks.map((r: Record<string, unknown>) => toCamelCase<StockLocation>(r)));
+      if (rawColors) this.colorsSig.set(rawColors.map((r: Record<string, unknown>) => toCamelCase<Color>(r)));
+      if (rawModelColors) this.modelColorsSig.set(rawModelColors.map((r: Record<string, unknown>) => toCamelCase<ClothingModelColor>(r)));
+      if (rawLocations) this.locationsSig.set(rawLocations.map((r: Record<string, unknown>) => toCamelCase<Location>(r)));
+      if (rawUsers) this.usersSig.set(rawUsers.map((r: Record<string, unknown>) => toCamelCase<User>(r)));
     } catch (err) {
       console.error('Error loading catalog data:', err);
     } finally {
@@ -251,8 +261,49 @@ export class CatalogService {
     return this.locationsSig();
   }
 
-  triggerRefresh(): void {
+  async hardDeleteModel(modelId: string): Promise<void> {
+    const supabase = getSupabase();
+    const models = this.modelsSig();
+    const products = this.productsSig();
+    const modelColors = this.modelColorsSig();
+    const stocks = this.stocksSig();
+
+    const model = models.find((m) => m.id === modelId);
+    if (!model) return;
+
+    const productIds = products
+      .filter((p) => p.idClothingModel === modelId)
+      .map((p) => p.id);
+
+    const mcList = modelColors.filter((mc) => mc.idClothingModel === modelId);
+    for (const mc of mcList) {
+      if (mc.imageUrl && !mc.imageUrl.includes('placehold.co')) {
+        await deleteProductImage(mc.imageUrl).catch(() => {});
+      }
+    }
+
+    if (productIds.length > 0) {
+      await supabase.from('transfer_details').delete().in('id_product', productIds);
+      await supabase.from('sale_details').delete().in('id_product', productIds);
+      await supabase.from('stock_movements').delete().in('id_product', productIds);
+      await supabase.from('stock_locations').delete().in('id_product', productIds);
+      await supabase.from('products').delete().eq('id_clothing_model', modelId);
+    }
+
+    if (mcList.length > 0) {
+      await supabase
+        .from('clothing_model_colors')
+        .delete()
+        .eq('id_clothing_model', modelId);
+    }
+
+    await supabase.from('clothing_models').delete().eq('id', modelId);
+
+    this.triggerRefresh();
+  }
+
+  triggerRefresh(): Promise<void> {
     this.refreshCounter.set(this.refreshCounter() + 1);
-    this.loadData();
+    return this.loadData();
   }
 }
