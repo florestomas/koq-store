@@ -21,6 +21,10 @@ export class SidebarComponent {
   readonly receptionCount = this.receptionService.pendingCount;
   readonly isAdmin = this.authService.isAdmin;
 
+  toggleAdminMode(): void {
+    this.authService.adminOverride.update((v) => !v);
+  }
+
   @Input() open = false;
   @Output() close = new EventEmitter<void>();
 }

@@ -14,7 +14,8 @@ export enum ESTADO {
 export class AuthService {
   logged: WritableSignal<boolean> = signal(false);
   currentUser: WritableSignal<User | null> = signal(null);
-  isAdmin: Signal<boolean> = computed(() => this.currentUser()?.role === 'admin');
+  adminOverride: WritableSignal<boolean> = signal(true);
+  isAdmin: Signal<boolean> = computed(() => this.adminOverride() && this.currentUser()?.role === 'admin');
   isOperator: Signal<boolean> = computed(() => this.currentUser()?.role === 'operator');
 
   private initPromise: Promise<void>;

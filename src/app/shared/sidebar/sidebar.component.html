@@ -64,6 +64,20 @@
     <div class="flex flex-row gap-x-2 items-center">
       <mat-icon>person</mat-icon>
       <p class="text-lg font-medium truncate">{{ authService.currentUser()?.user ?? 'TALLER' }}</p>
+      @if (authService.currentUser()?.role === 'admin') {
+        <button
+          (click)="toggleAdminMode(); $event.stopPropagation()"
+          class="ml-auto px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider transition cursor-pointer border"
+          [class.bg-koq]="authService.adminOverride()"
+          [class.text-white]="authService.adminOverride()"
+          [class.border-koq]="authService.adminOverride()"
+          [class.bg-gray-100]="!authService.adminOverride()"
+          [class.text-zinc-400]="!authService.adminOverride()"
+          [class.border-gray-200]="!authService.adminOverride()"
+        >
+          ADMIN
+        </button>
+      }
     </div>
 
     <app-nav-item
