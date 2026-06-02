@@ -280,6 +280,13 @@ export class TransferService {
     const transferId = crypto.randomUUID();
 
     try {
+      for (const item of currentItems) {
+        const stock = this.getStockForColorSize(item.productId, this.originId());
+        if (item.quantity > stock) {
+          console.error(`Stock insuficiente: ${item.modelName} T.${item.size} ${item.colorName} (${stock} disponible)`);
+          return false;
+        }
+      }
       const { error: transferError } = await supabase
         .from('transfers')
         .insert({

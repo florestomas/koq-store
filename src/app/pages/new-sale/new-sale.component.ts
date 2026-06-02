@@ -399,6 +399,20 @@ export class NewSaleComponent {
     const user = this.user();
     if (!channel || items.length === 0 || !user) return;
 
+    const stocks = this.catalogService.catalogStocks();
+    const cartQuantities = this.cartQuantities();
+    for (const item of items) {
+      const dbStock =
+        stocks.find(
+          (s) => s.idProduct === item.productId && s.idLocation === user.idLocation,
+        )?.currentStock ?? 0;
+      const cartTotal = cartQuantities.get(item.productId) ?? 0;
+      if (cartTotal > dbStock) {
+        this.error.set(`Stock insuficiente para "${item.modelName} T.${item.size} ${item.colorName}". Disponible: ${dbStock}.`);
+        return;
+      }
+    }
+
     if (!window.confirm('¿Confirmar esta venta?')) return;
 
     const ok = await this.saleService.confirmSale({
