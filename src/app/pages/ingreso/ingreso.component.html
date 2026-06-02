@@ -1,0 +1,313 @@
+<div class="flex flex-col md:flex-row w-full h-full gap-4 md:gap-6 p-4 md:p-8">
+  <!-- Left column — Search / Create / Variants -->
+  <div class="flex-1 flex flex-col gap-4 min-w-0">
+    <!-- Header -->
+    <div class="flex flex-row items-center gap-3">
+      <mat-icon class="text-2xl md:text-3xl text-koq">inventory</mat-icon>
+      <h1 class="text-2xl md:text-4xl text-black font-medium">{{ 'Ingreso de Stock' | uppercase }}</h1>
+    </div>
+
+    <!-- Success flash -->
+    @if (confirmed()) {
+      <div class="flex items-center gap-2 px-4 py-3 rounded-2xl bg-green-100 text-green-700 text-sm font-medium">
+        <mat-icon class="text-lg">check_circle</mat-icon>
+        Ingreso registrado correctamente
+      </div>
+    }
+
+    <!-- Error flash -->
+    @if (error(); as err) {
+      <div class="flex items-center gap-2 px-4 py-3 rounded-2xl bg-red-100 text-red-700 text-sm font-medium">
+        <mat-icon class="text-lg">error</mat-icon>
+        {{ err }}
+      </div>
+    }
+
+    <!-- ===== SEARCH MODE ===== -->
+    @if (mode() === 'search') {
+      <!-- Search input -->
+      <div class="flex flex-row items-center gap-2 bg-gray-100 rounded-full px-4 py-2.5 border-2 border-transparent focus-within:border-koq">
+        <mat-icon class="text-zinc-400">search</mat-icon>
+        <input
+          class="bg-transparent outline-none text-sm flex-1"
+          type="text"
+          placeholder="Buscar modelo por nombre..."
+          [formControl]="searchControl"
+        />
+        @if (searchTerm().trim()) {
+          <button (click)="searchControl.setValue(''); searchTerm.set('')" class="text-zinc-400 hover:text-zinc-700 transition cursor-pointer">
+            <mat-icon class="text-base">close</mat-icon>
+          </button>
+        }
+      </div>
+
+      <!-- Category tabs -->
+      <nav class="flex flex-row border-b border-gray-300 overflow-x-auto">
+        <button
+          (click)="setSelectedCategory(null)"
+          class="py-3 px-4 md:px-6 whitespace-nowrap text-zinc-500 font-medium tracking-widest text-xs border-b-4 border-transparent hover:border-b-4 hover:text-koq hover:border-koq transition cursor-pointer"
+          [class.text-koq]="selectedCategoryId() === null"
+          [class.border-koq]="selectedCategoryId() === null"
+          [class.border-b-4]="selectedCategoryId() === null"
+        >
+          TODOS
+        </button>
+        @for (cat of categoryTabs(); track cat.id) {
+          <button
+            (click)="setSelectedCategory(cat.id)"
+            class="py-3 px-4 md:px-6 whitespace-nowrap text-zinc-500 font-medium tracking-widest text-xs border-b-4 border-transparent hover:border-b-4 hover:text-koq hover:border-koq transition cursor-pointer"
+            [class.text-koq]="selectedCategoryId() === cat.id"
+            [class.border-koq]="selectedCategoryId() === cat.id"
+            [class.border-b-4]="selectedCategoryId() === cat.id"
+          >
+            {{ cat.name | uppercase }}
+          </button>
+        }
+      </nav>
+
+      <!-- Model cards -->
+      @if (filteredModels().length > 0) {
+        <div class="flex flex-col gap-3 overflow-y-auto flex-1 pr-1">
+          @for (result of filteredModels(); track result.model.id) {
+            <div
+              class="flex flex-row items-center bg-white border border-gray-200 rounded-2xl p-4 gap-3 hover:border-koq hover:shadow-md transition cursor-pointer"
+              (click)="selectModel(result.model)"
+            >
+              <img
+                [src]="result.imageUrl"
+                class="size-16 shrink-0 rounded-xl object-cover bg-gray-100"
+              />
+              <div class="flex flex-col flex-1 min-w-0">
+                <span class="px-2 py-0.5 w-min rounded-full text-xs bg-koq/20 text-koq font-medium whitespace-nowrap">
+                  {{ result.categoryName | uppercase }}
+                </span>
+                <p class="text-lg font-bold mt-1 truncate">{{ result.model.name }}</p>
+              </div>
+              <mat-icon class="text-zinc-300 text-2xl">chevron_right</mat-icon>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="flex flex-col items-center justify-center py-16 text-zinc-400">
+          <mat-icon class="text-5xl mb-3">search_off</mat-icon>
+          <p class="text-lg font-medium">No se encontraron modelos</p>
+          <p class="text-sm">Probá con otro término de búsqueda</p>
+          <button
+            (click)="switchToCreate()"
+            class="mt-4 px-6 py-2.5 rounded-full text-sm font-bold tracking-wider text-white bg-koq hover:opacity-90 transition cursor-pointer"
+          >
+            CREAR PRODUCTO NUEVO
+          </button>
+        </div>
+      }
+    }
+
+    <!-- ===== CREATE MODE ===== -->
+    @if (mode() === 'create') {
+      <div class="flex flex-col gap-5">
+        <div class="flex items-center gap-2">
+          <button (click)="mode.set('search')" class="text-zinc-400 hover:text-zinc-700 transition cursor-pointer">
+            <mat-icon>arrow_back</mat-icon>
+          </button>
+          <h2 class="text-xl font-bold">Crear producto nuevo</h2>
+        </div>
+
+        <!-- Nombre -->
+        <div class="flex flex-col gap-1">
+          <label class="text-xs font-semibold text-zinc-500">NOMBRE</label>
+          <input
+            class="border border-gray-300 rounded-xl px-4 py-3 text-base outline-none focus:border-koq"
+            type="text"
+            placeholder="Ej: Remera básica cuello V"
+            [formControl]="form.controls.name"
+          />
+        </div>
+
+        <div class="flex flex-row gap-4">
+          <!-- Precio -->
+          <div class="flex-1 flex flex-col gap-1">
+            <label class="text-xs font-semibold text-zinc-500">PRECIO</label>
+            <input
+              class="border border-gray-300 rounded-xl px-4 py-3 text-base outline-none focus:border-koq"
+              type="number"
+              min="1"
+              placeholder="0"
+              [formControl]="form.controls.price"
+            />
+          </div>
+
+          <!-- Categoría -->
+          <div class="flex-1 flex flex-col gap-1">
+            <label class="text-xs font-semibold text-zinc-500">CATEGORÍA</label>
+            <select
+              class="border border-gray-300 rounded-xl px-4 py-3 text-base outline-none focus:border-koq bg-white"
+              [formControl]="form.controls.categoryId"
+            >
+              <option value="" disabled selected>Seleccionar...</option>
+              @for (cat of categories; track cat.id) {
+                <option [value]="cat.id">{{ cat.name }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <!-- Colores -->
+        <div class="flex flex-col gap-2">
+          <label class="text-xs font-semibold text-zinc-500">COLORES ({{ selectedColors().length }})</label>
+          <div class="flex flex-row flex-wrap gap-2 items-center">
+            @for (colorId of selectedColors(); track colorId) {
+              <span class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-koq/10 text-koq text-sm font-medium">
+                {{ getColorName(colorId) | uppercase }}
+                <button (click)="removeColor(colorId)" class="hover:text-red-500 transition">&times;</button>
+              </span>
+            }
+            <div class="flex flex-row items-center gap-2">
+              <input
+                type="text"
+                placeholder="Nombre del color"
+                class="border border-gray-300 rounded-full px-3 py-1.5 text-sm w-36 text-center outline-none focus:border-koq"
+                [value]="newColorName()"
+                (input)="newColorName.set($any($event.target).value)"
+                list="colorList"
+              />
+              <datalist id="colorList">
+                @for (c of COLORS; track c.id) {
+                  <option [value]="c.name"></option>
+                }
+              </datalist>
+              <button
+                (click)="addColor()"
+                class="px-3 py-1.5 rounded-full text-xs font-medium bg-koq text-white hover:opacity-90 transition"
+              >+ Agregar</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Talles -->
+        <div class="flex flex-col gap-2">
+          <label class="text-xs font-semibold text-zinc-500">TALLES ({{ selectedSizes().length }})</label>
+          <div class="flex flex-row flex-wrap gap-2 items-center">
+            @for (size of selectedSizes(); track size) {
+              <span class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-koq/10 text-koq text-sm font-medium">
+                {{ size }}
+                <button (click)="removeSize(size)" class="hover:text-red-500 transition">&times;</button>
+              </span>
+            }
+            <div class="flex flex-row items-center gap-2">
+              <input
+                type="number"
+                min="0"
+                max="14"
+                placeholder="Talle"
+                class="border border-gray-300 rounded-full px-3 py-1.5 text-sm w-24 text-center outline-none focus:border-koq"
+                [value]="newSizeInput()"
+                (input)="newSizeInput.set($any($event.target).value)"
+              />
+              <button
+                (click)="addSize()"
+                class="px-3 py-1.5 rounded-full text-xs font-medium bg-koq text-white hover:opacity-90 transition"
+              >+ Agregar</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Create button -->
+        <button
+          (click)="saveAndIngress()"
+          class="w-full py-4 rounded-full text-base font-bold tracking-wider text-white transition disabled:opacity-30 disabled:cursor-not-allowed"
+          [class.bg-koq]="form.valid && selectedColors().length > 0 && selectedSizes().length > 0"
+          [class.hover:opacity-90]="form.valid && selectedColors().length > 0 && selectedSizes().length > 0"
+          [class.bg-gray-300]="form.invalid || selectedColors().length === 0 || selectedSizes().length === 0"
+          [disabled]="form.invalid || selectedColors().length === 0 || selectedSizes().length === 0"
+        >
+          CREAR E INGRESAR STOCK
+        </button>
+      </div>
+    }
+
+    <!-- ===== VARIANTS MODE ===== -->
+    @if (mode() === 'variants' && selectedModel(); as model) {
+      <!-- Model info header -->
+      <div class="flex flex-row items-center gap-4 bg-white border border-gray-200 rounded-2xl p-4">
+        <button (click)="clearModel()" class="shrink-0 text-zinc-400 hover:text-zinc-700 transition cursor-pointer">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+        @if (modelImageUrl()) {
+          <img [src]="modelImageUrl()" class="size-14 rounded-xl object-cover shrink-0 bg-gray-100" />
+        }
+        <div class="flex flex-col flex-1 min-w-0">
+          <p class="text-lg font-bold truncate">{{ model.name }}</p>
+        </div>
+      </div>
+
+      <!-- Variant grid -->
+      @if (variantGrid().length > 0) {
+        <div class="overflow-x-auto border border-gray-200 rounded-2xl bg-white">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-gray-200 bg-gray-50">
+                <th class="text-left py-3 px-4 text-zinc-500 font-medium text-xs uppercase tracking-wider">Color</th>
+                @for (size of allSizes(); track size) {
+                  <th class="text-center py-3 px-3 text-zinc-500 font-medium text-xs uppercase tracking-wider">T. {{ size }}</th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of variantGrid(); track row.colorName) {
+                <tr class="border-b border-gray-100 last:border-b-0">
+                  <td class="py-2.5 px-4 font-medium text-sm">{{ row.colorName }}</td>
+                  @for (cell of row.cells; track cell.productId ?? cell.size) {
+                    <td class="py-2.5 px-3 text-center">
+                      @if (cell.productId) {
+                        <input
+                          type="number"
+                          min="0"
+                          class="w-16 text-center border border-gray-300 rounded-lg px-2 py-1.5 text-sm outline-none focus:border-koq"
+                          [value]="getVariantQty(cell.productId)"
+                          (input)="setVariantQty(cell.productId, $any($event.target).value)"
+                          placeholder="0"
+                        />
+                      } @else {
+                        <span class="text-gray-200 text-xs">&mdash;</span>
+                      }
+                    </td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <div class="flex flex-col items-center justify-center py-10 text-zinc-400 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+          <mat-icon class="text-4xl mb-2">inventory_2</mat-icon>
+          <p class="text-sm font-medium">Este modelo no tiene variantes disponibles</p>
+        </div>
+      }
+
+      <!-- Location selector + Confirm -->
+      <div class="flex flex-col gap-4 bg-white border border-gray-200 rounded-2xl p-4">
+        <div class="flex flex-col gap-1">
+          <label class="text-xs font-semibold text-zinc-500">DESTINO</label>
+          <select
+            class="border border-gray-300 rounded-xl px-4 py-3 text-base outline-none focus:border-koq bg-white"
+            [value]="selectedLocationId()"
+            (change)="selectedLocationId.set($any($event.target).value)"
+          >
+            <option value="" disabled selected>Seleccionar ubicación...</option>
+            @for (loc of locations; track loc.id) {
+              <option [value]="loc.id">{{ loc.name }}</option>
+            }
+          </select>
+        </div>
+
+        <button
+          (click)="confirmIngreso()"
+          [disabled]="!canConfirm()"
+          class="w-full py-3.5 rounded-full text-sm font-bold tracking-wider text-white transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed bg-koq hover:opacity-90"
+        >
+          REGISTRAR INGRESO ({{ totalUnits() }} unidades)
+        </button>
+      </div>
+    }
+  </div>
+</div>

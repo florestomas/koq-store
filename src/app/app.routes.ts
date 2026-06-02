@@ -10,6 +10,7 @@ import { NewSaleComponent } from './pages/new-sale/new-sale.component';
 import { AlertasComponent } from './pages/alertas/alertas.component';
 import { HistorialComponent } from './pages/historial/historial.component';
 import { RecepcionesComponent } from './pages/recepciones/recepciones.component';
+import { IngresoComponent } from './pages/ingreso/ingreso.component';
 
 export const routes: Routes = [
   {
@@ -24,6 +25,7 @@ export const routes: Routes = [
       { path: 'catalogo', component: CatalogComponent },
       { path: 'transferencia', component: TransferenciaComponent },
       { path: 'crear-producto', component: CreateProductComponent, canActivate: [operadorGuard] },
+      { path: 'ingreso', component: IngresoComponent, canActivate: [operadorGuard] },
       { path: 'ventas/nueva', component: NewSaleComponent },
       { path: 'alertas', component: AlertasComponent },
       { path: 'historial', component: HistorialComponent },

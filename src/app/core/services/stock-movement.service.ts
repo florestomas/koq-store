@@ -14,7 +14,7 @@ export interface MovementRow {
   locationName: string;
   type: 'in' | 'out';
   quantity: number;
-  referenceType: 'sale' | 'transfer';
+  referenceType: 'sale' | 'transfer' | 'ingreso';
   referenceId: string;
 }
 
@@ -135,7 +135,7 @@ export class StockMovementService {
     idProduct: string,
     idLocation: string,
     quantity: number,
-    referenceType: 'sale' | 'transfer',
+    referenceType: 'sale' | 'transfer' | 'ingreso',
     referenceId: string,
   ): Promise<void> {
     const { error } = await getSupabase().from('stock_movements').insert({

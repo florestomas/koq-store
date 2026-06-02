@@ -5,6 +5,6 @@ export interface StockMovement {
   idLocation: string;
   type: 'in' | 'out';
   quantity: number;
-  referenceType: 'sale' | 'transfer';
+  referenceType: 'sale' | 'transfer' | 'ingreso';
   referenceId: string;
 }
