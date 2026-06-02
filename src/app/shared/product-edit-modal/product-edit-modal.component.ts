@@ -139,29 +139,6 @@ export class ProductEditModalComponent {
     );
   });
 
-  readonly systemColorsWithCount = computed(() => {
-    const used = this.usedColorIds();
-    const productCount = new Map<string, number>();
-    for (const p of this.allProducts().filter((p) => p.active)) {
-      productCount.set(p.idColor, (productCount.get(p.idColor) ?? 0) + 1);
-    }
-    return this.allColors().map((c) => ({
-      id: c.id,
-      name: c.name,
-      inUse: used.has(c.id),
-      productCount: productCount.get(c.id) ?? 0,
-    }));
-  });
-
-  async deleteUnusedColor(colorId: string): Promise<void> {
-    if (!window.confirm('¿Eliminar este color definitivamente? Solo se pueden eliminar colores sin productos activos.')) return;
-    const info = this.systemColorsWithCount().find((c) => c.id === colorId);
-    if (!info || info.inUse) return;
-
-    await getSupabase().from('colors').delete().eq('id', colorId);
-    await this.catalogService.triggerRefresh();
-  }
-
   readonly availableColors = computed(() => {
     const mc = this.modelColors();
     const used = this.usedColorIds();
@@ -528,6 +505,12 @@ export class ProductEditModalComponent {
 
     this.variantsVersion.update((v) => v + 1);
     await this.catalogService.triggerRefresh();
+
+    const stillLinked = this.allModelColors().some((mc) => mc.idColor === colorId);
+    if (!stillLinked) {
+      await supabase.from('colors').delete().eq('id', colorId);
+      await this.catalogService.triggerRefresh();
+    }
   }
 
   async addSize(): Promise<void> {

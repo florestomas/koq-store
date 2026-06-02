@@ -224,8 +224,15 @@ export class IngresoComponent {
     this.newColorName.set('');
   }
 
-  removeColor(colorId: string): void {
+  async removeColor(colorId: string): Promise<void> {
     this.selectedColors.update((colors) => colors.filter((c) => c !== colorId));
+    const modelColors = this.catalogService.catalogModelColors();
+    const products = this.catalogService.catalogProducts();
+    const usedInModelColor = modelColors.some((mc) => mc.idColor === colorId);
+    const usedInProduct = products.some((p) => p.idColor === colorId && p.active);
+    if (!usedInModelColor && !usedInProduct) {
+      await getSupabase().from('colors').delete().eq('id', colorId);
+    }
   }
 
   addSize(): void {
