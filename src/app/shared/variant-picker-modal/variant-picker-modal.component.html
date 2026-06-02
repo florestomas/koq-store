@@ -8,6 +8,12 @@
   </h2>
 
   <mat-dialog-content>
+    @if (warning()) {
+      <div class="flex items-center gap-2 px-4 py-2 mb-3 rounded-xl bg-amber-50 text-amber-700 text-xs font-medium">
+        <span>⚠️</span>
+        {{ warning() }}
+      </div>
+    }
     <div class="overflow-x-auto border border-gray-200 rounded-2xl">
       <table class="w-full text-xs">
         <thead>

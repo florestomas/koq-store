@@ -38,6 +38,7 @@ export class TransferService {
   readonly items = signal<TransferItem[]>([]);
   readonly searchTerm = signal('');
   readonly categoryFilterId = signal<string | null>(null);
+  readonly warning = signal<string | null>(null);
 
   private readonly authService = inject(AuthService);
   private readonly catalogService = inject(CatalogService);
@@ -243,9 +244,10 @@ export class TransferService {
           });
         }
       }
-    }
+      }
 
     this.items.set(items);
+    if (Object.keys(quantities).length > 0) this.warning.set(null);
   }
 
   changeQuantity(index: number, delta: number): void {
@@ -258,6 +260,10 @@ export class TransferService {
       currentItems.splice(index, 1);
     } else if (newQty <= item.stockAtOrigin) {
       currentItems[index] = { ...item, quantity: newQty };
+      this.warning.set(null);
+    } else {
+      this.warning.set(`Stock insuficiente: solo hay ${item.stockAtOrigin} de ${item.modelName} T.${item.size} ${item.colorName}`);
+      setTimeout(() => this.warning.set(null), 4000);
     }
     this.items.set(currentItems);
   }

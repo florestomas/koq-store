@@ -178,6 +178,12 @@
             Seleccioná un local de destino para habilitar la confirmación
           </div>
         }
+        @if (transferService.warning(); as w) {
+          <div class="flex items-center gap-2 px-4 py-2 rounded-2xl bg-amber-50 text-amber-700 text-xs font-medium">
+            <mat-icon class="text-sm">warning</mat-icon>
+            {{ w }}
+          </div>
+        }
         @if (error(); as err) {
           <div class="flex items-center gap-2 px-4 py-2 rounded-2xl bg-red-50 text-red-700 text-xs font-medium">
             <mat-icon class="text-sm">error</mat-icon>

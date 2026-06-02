@@ -42,6 +42,7 @@ export class TransferenciaComponent {
     const data: VariantPickerData = {
       model,
       originId: this.transferService.originId(),
+      existingItems: this.transferService.items(),
     };
 
     const dialogRef = this.dialog.open<

@@ -2,12 +2,12 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { UpperCasePipe } from '@angular/common';
-import { SelectableModel } from '../../core/services/transfer.service';
-import { CatalogService } from '../../core/services/catalog.service';
+import { SelectableModel, TransferItem } from '../../core/services/transfer.service';
 
 export interface VariantPickerData {
   model: SelectableModel;
   originId: string;
+  existingItems: TransferItem[];
 }
 
 export interface VariantPickerResult {
@@ -27,6 +27,7 @@ export class VariantPickerModalComponent {
   private readonly catalog = inject(CatalogService);
 
   readonly quantities = signal<Record<string, Record<string, number>>>({});
+  readonly warning = signal<string | null>(null);
 
   getColorName(colorId: string): string {
     return this.catalog.colors().find((c) => c.id === colorId)?.name ?? colorId;
@@ -43,11 +44,15 @@ export class VariantPickerModalComponent {
         p.active,
     );
     if (!product) return 0;
-    return allStocks
+    const dbStock = allStocks
       .filter(
         (s) => s.idProduct === product.id && s.idLocation === this.data.originId,
       )
       .reduce((sum, s) => sum + s.currentStock, 0);
+    const alreadyAdded = this.data.existingItems
+      .filter((i) => i.productId === product.id)
+      .reduce((sum, i) => sum + i.quantity, 0);
+    return Math.max(0, dbStock - alreadyAdded);
   }
 
   getQty(colorId: string, size: string): number {
@@ -57,7 +62,12 @@ export class VariantPickerModalComponent {
   setQty(colorId: string, size: string, value: string): void {
     const stock = this.getStock(colorId, size);
     if (stock <= 0) return;
-    const qty = Math.max(0, Math.min(parseInt(value) || 0, stock));
+    const raw = parseInt(value) || 0;
+    const qty = Math.max(0, Math.min(raw, stock));
+    if (raw > stock) {
+      this.warning.set(`Solo hay ${stock} disponibles para ${this.getColorName(colorId)}`);
+      setTimeout(() => this.warning.set(null), 3000);
+    }
     this.quantities.update((q) => {
       const next = { ...q };
       if (!next[colorId]) next[colorId] = {};
