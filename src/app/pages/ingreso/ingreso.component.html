@@ -93,136 +93,13 @@
           <p class="text-lg font-medium">No se encontraron modelos</p>
           <p class="text-sm">Probá con otro término de búsqueda</p>
           <button
-            (click)="switchToCreate()"
+            routerLink="/crear-producto"
             class="mt-4 px-6 py-2.5 rounded-full text-sm font-bold tracking-wider text-white bg-koq hover:opacity-90 transition cursor-pointer"
           >
             CREAR PRODUCTO NUEVO
           </button>
         </div>
       }
-    }
-
-    <!-- ===== CREATE MODE ===== -->
-    @if (mode() === 'create') {
-      <div class="flex flex-col gap-5">
-        <div class="flex items-center gap-2">
-          <button (click)="mode.set('search')" class="text-zinc-400 hover:text-zinc-700 transition cursor-pointer">
-            <mat-icon>arrow_back</mat-icon>
-          </button>
-          <h2 class="text-xl font-bold">Crear producto nuevo</h2>
-        </div>
-
-        <!-- Nombre -->
-        <div class="flex flex-col gap-1">
-          <label class="text-xs font-semibold text-zinc-500">NOMBRE</label>
-          <input
-            class="border border-gray-300 rounded-xl px-4 py-3 text-base outline-none focus:border-koq"
-            type="text"
-            placeholder="Ej: Remera básica cuello V"
-            [formControl]="form.controls.name"
-          />
-        </div>
-
-        <div class="flex flex-row gap-4">
-          <!-- Precio -->
-          <div class="flex-1 flex flex-col gap-1">
-            <label class="text-xs font-semibold text-zinc-500">PRECIO</label>
-            <input
-              class="border border-gray-300 rounded-xl px-4 py-3 text-base outline-none focus:border-koq"
-              type="number"
-              min="1"
-              placeholder="0"
-              [formControl]="form.controls.price"
-            />
-          </div>
-
-          <!-- Categoría -->
-          <div class="flex-1 flex flex-col gap-1">
-            <label class="text-xs font-semibold text-zinc-500">CATEGORÍA</label>
-            <select
-              class="border border-gray-300 rounded-xl px-4 py-3 text-base outline-none focus:border-koq bg-white"
-              [formControl]="form.controls.categoryId"
-            >
-              <option value="" disabled selected>Seleccionar...</option>
-              @for (cat of categories; track cat.id) {
-                <option [value]="cat.id">{{ cat.name }}</option>
-              }
-            </select>
-          </div>
-        </div>
-
-        <!-- Colores -->
-        <div class="flex flex-col gap-2">
-          <label class="text-xs font-semibold text-zinc-500">COLORES ({{ selectedColors().length }})</label>
-          <div class="flex flex-row flex-wrap gap-2 items-center">
-            @for (colorId of selectedColors(); track colorId) {
-              <span class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-koq/10 text-koq text-sm font-medium">
-                {{ getColorName(colorId) | uppercase }}
-                <button (click)="removeColor(colorId)" class="hover:text-red-500 transition">&times;</button>
-              </span>
-            }
-            <div class="flex flex-row items-center gap-2">
-              <input
-                type="text"
-                placeholder="Nombre del color"
-                class="border border-gray-300 rounded-full px-3 py-1.5 text-sm w-36 text-center outline-none focus:border-koq"
-                [value]="newColorName()"
-                (input)="newColorName.set($any($event.target).value)"
-                list="colorList"
-              />
-              <datalist id="colorList">
-                @for (c of COLORS; track c.id) {
-                  <option [value]="c.name"></option>
-                }
-              </datalist>
-              <button
-                (click)="addColor()"
-                class="px-3 py-1.5 rounded-full text-xs font-medium bg-koq text-white hover:opacity-90 transition"
-              >+ Agregar</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Talles -->
-        <div class="flex flex-col gap-2">
-          <label class="text-xs font-semibold text-zinc-500">TALLES ({{ selectedSizes().length }})</label>
-          <div class="flex flex-row flex-wrap gap-2 items-center">
-            @for (size of selectedSizes(); track size) {
-              <span class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-koq/10 text-koq text-sm font-medium">
-                {{ size }}
-                <button (click)="removeSize(size)" class="hover:text-red-500 transition">&times;</button>
-              </span>
-            }
-            <div class="flex flex-row items-center gap-2">
-              <input
-                type="number"
-                min="0"
-                max="14"
-                placeholder="Talle"
-                class="border border-gray-300 rounded-full px-3 py-1.5 text-sm w-24 text-center outline-none focus:border-koq"
-                [value]="newSizeInput()"
-                (input)="newSizeInput.set($any($event.target).value)"
-              />
-              <button
-                (click)="addSize()"
-                class="px-3 py-1.5 rounded-full text-xs font-medium bg-koq text-white hover:opacity-90 transition"
-              >+ Agregar</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Create button -->
-        <button
-          (click)="saveAndIngress()"
-          class="w-full py-4 rounded-full text-base font-bold tracking-wider text-white transition disabled:opacity-30 disabled:cursor-not-allowed"
-          [class.bg-koq]="form.valid && selectedColors().length > 0 && selectedSizes().length > 0"
-          [class.hover:opacity-90]="form.valid && selectedColors().length > 0 && selectedSizes().length > 0"
-          [class.bg-gray-300]="form.invalid || selectedColors().length === 0 || selectedSizes().length === 0"
-          [disabled]="form.invalid || selectedColors().length === 0 || selectedSizes().length === 0"
-        >
-          CREAR E INGRESAR STOCK
-        </button>
-      </div>
     }
 
     <!-- ===== VARIANTS MODE ===== -->
