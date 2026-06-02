@@ -151,7 +151,37 @@ export class TransferHistoryService {
       const productIds = details.map((d) => d.idProduct);
 
       if (productIds.length > 0) {
-        await supabase.from('stock_movements').delete().in('id_product', productIds).eq('reference_type', 'transfer');
+        await supabase
+          .from('stock_movements')
+          .delete()
+          .eq('reference_type', 'transfer')
+          .eq('reference_id', transferId);
+
+        const { data: stockRows } = await supabase
+          .from('stock_locations')
+          .select('*')
+          .in('id_product', productIds);
+
+        const transferData = this.transfersSig().find((t) => t.id === transferId);
+        const originId = transferData?.idOrigin;
+
+        if (stockRows && originId) {
+          for (const detail of details) {
+            const stock = stockRows.find(
+              (s: Record<string, unknown>) =>
+                s['id_product'] === detail.idProduct && s['id_location'] === originId,
+            );
+            if (stock) {
+              await supabase
+                .from('stock_locations')
+                .update({
+                  current_stock: (stock as Record<string, number>)['current_stock'] + detail.quantity,
+                })
+                .eq('id', (stock as Record<string, unknown>)['id']);
+            }
+          }
+        }
+
         await supabase.from('transfer_details').delete().eq('id_transfer', transferId);
       }
 

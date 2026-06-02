@@ -165,6 +165,8 @@ export class IngresoComponent {
     () => this.totalUnits() > 0 && this.selectedLocationId() !== '',
   );
 
+  readonly isConfirming = signal(false);
+
   constructor() {
     this.searchControl.valueChanges
       .pipe(debounceTime(300), distinctUntilChanged())
@@ -207,16 +209,17 @@ export class IngresoComponent {
       (c) => c.name.toLowerCase() === name.toLowerCase(),
     )?.id;
     if (!colorId) {
-      colorId = crypto.randomUUID();
-      const { error } = await supabase.from('colors').insert({
-        id: colorId,
-        name,
-      });
-      if (error) {
-        console.error('Error creating color:', error);
-        return;
+        colorId = crypto.randomUUID();
+        const { error } = await supabase.from('colors').insert({
+          id: colorId,
+          name: name.toUpperCase(),
+        });
+        if (error) {
+          console.error('Error creating color:', error);
+          return;
+        }
+        await this.catalogService.triggerRefresh();
       }
-    }
 
     if (!this.selectedColors().includes(colorId)) {
       this.selectedColors.update((colors) => [...colors, colorId]);
@@ -248,11 +251,23 @@ export class IngresoComponent {
   }
 
   switchToCreate(): void {
+    this.form.reset({ name: '', price: null, categoryId: '' });
+    this.selectedColors.set([]);
+    this.selectedSizes.set([]);
     this.mode.set('create');
   }
 
+  readonly duplicateName = computed(() => {
+    const name = this.form.controls.name.value.trim().toLowerCase();
+    if (!name) return false;
+    return this.catalogService.catalogModels().some(
+      (m) => m.name.toLowerCase() === name && m.active,
+    );
+  });
+
   async saveAndIngress(): Promise<void> {
     if (this.form.invalid) return;
+    if (this.duplicateName()) return;
     const colors = this.selectedColors();
     const sizes = this.selectedSizes();
     if (colors.length === 0 || sizes.length === 0) return;
@@ -261,7 +276,8 @@ export class IngresoComponent {
     const modelId = crypto.randomUUID();
     const price = this.form.controls.price.value ?? 0;
 
-    const { error: modelError } = await supabase.from('clothing_models').insert({
+    try {
+      const { error: modelError } = await supabase.from('clothing_models').insert({
       id: modelId,
       name: this.form.controls.name.value,
       id_category: this.form.controls.categoryId.value,
@@ -289,6 +305,7 @@ export class IngresoComponent {
 
       if (mcError) {
         console.error('Error linking color:', mcError);
+        await supabase.from('clothing_models').delete().eq('id', modelId);
         return;
       }
 
@@ -308,6 +325,9 @@ export class IngresoComponent {
 
         if (prodError) {
           console.error('Error creating product:', prodError);
+          await supabase.from('products').delete().eq('id_clothing_model', modelId);
+          await supabase.from('clothing_model_colors').delete().eq('id_clothing_model', modelId);
+          await supabase.from('clothing_models').delete().eq('id', modelId);
           return;
         }
 
@@ -337,8 +357,10 @@ export class IngresoComponent {
 
   async confirmIngreso(): Promise<void> {
     const model = this.selectedModel();
-    if (!model || !this.canConfirm()) return;
+    if (!model || !this.canConfirm() || this.isConfirming()) return;
 
+    this.isConfirming.set(true);
+    try {
     const quantities = this.variantQuantities();
     const locationId = this.selectedLocationId();
     const colors = this.catalogService.colors();
@@ -384,6 +406,9 @@ export class IngresoComponent {
       setTimeout(() => this.confirmed.set(false), 3000);
     } else {
       this.error.set('Error al registrar el ingreso. Intente nuevamente.');
+    }
+    } finally {
+      this.isConfirming.set(false);
     }
   }
 }

@@ -287,10 +287,31 @@ export class SalesHistoryService {
     if (!window.confirm('¿Eliminar esta venta definitivamente? Esta acción no se puede deshacer.')) return false;
     try {
       const supabase = getSupabase();
+      const sale = this.salesSig().find((s) => s.id === saleId);
       const details = this.saleDetailsSig().filter((d) => d.idSale === saleId);
       const productIds = details.map((d) => d.idProduct);
 
       if (productIds.length > 0) {
+        if (sale) {
+          for (const detail of details) {
+            const { data: stockRows } = await supabase
+              .from('stock_locations')
+              .select('*')
+              .eq('id_product', detail.idProduct)
+              .eq('id_location', sale.idLocation);
+
+            if (stockRows && stockRows.length > 0) {
+              const stock = stockRows[0];
+              await supabase
+                .from('stock_locations')
+                .update({
+                  current_stock: stock['current_stock'] + detail.quantity,
+                })
+                .eq('id', stock['id']);
+            }
+          }
+        }
+
         await supabase.from('stock_movements').delete().eq('reference_type', 'sale').eq('reference_id', saleId);
         await supabase.from('sale_details').delete().eq('id_sale', saleId);
       }

@@ -291,10 +291,21 @@ export class CatalogService {
     }
 
     if (mcList.length > 0) {
+      const deletedColorIds = mcList.map((mc) => mc.idColor);
+
       await supabase
         .from('clothing_model_colors')
         .delete()
         .eq('id_clothing_model', modelId);
+
+      for (const cid of deletedColorIds) {
+        const stillUsed = this.modelColorsSig().some(
+          (mc) => mc.idColor === cid && mc.idClothingModel !== modelId,
+        );
+        if (!stillUsed) {
+          await supabase.from('colors').delete().eq('id', cid);
+        }
+      }
     }
 
     await supabase.from('clothing_models').delete().eq('id', modelId);

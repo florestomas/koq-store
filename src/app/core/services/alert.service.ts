@@ -90,7 +90,7 @@ export class AlertService {
   );
 
   readonly lowStockCount = computed(
-    () => this.alerts().filter((a) => a.currentStock > 0).length,
+    () => this.alerts().filter((a) => a.currentStock > 0 && a.currentStock <= a.minimumStock).length,
   );
 
   refresh(): void {

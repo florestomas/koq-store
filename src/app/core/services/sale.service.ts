@@ -1,5 +1,7 @@
-import { Injectable, signal } from '@angular/core';
+import { inject } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { getSupabase } from './supabase.service';
+import { CatalogService } from './catalog.service';
 
 export interface CartItem {
   productId: string;
@@ -22,6 +24,8 @@ interface ConfirmSaleParams {
 
 @Injectable({ providedIn: 'root' })
 export class SaleService {
+  private readonly catalogService = inject(CatalogService);
+
   async confirmSale(data: ConfirmSaleParams): Promise<boolean> {
     const { items, idLocation, idUser, channel, discountType, discountValue } = data;
     if (items.length === 0 || !channel) return false;
@@ -49,6 +53,7 @@ export class SaleService {
         return false;
       }
 
+      this.catalogService.triggerRefresh();
       return true;
     } catch (err) {
       console.error('Sale error:', err);

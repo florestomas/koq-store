@@ -259,7 +259,30 @@ export class StockMovementService {
   async deleteIngresoGroup(referenceId: string): Promise<boolean> {
     if (!window.confirm('¿Eliminar este ingreso definitivamente? Esta acción no se puede deshacer.')) return false;
     try {
-      await getSupabase().from('stock_movements').delete().eq('reference_type', 'ingreso').eq('reference_id', referenceId);
+      const supabase = getSupabase();
+      const movements = this.movementsSig().filter(
+        (m) => m.referenceType === 'ingreso' && m.referenceId === referenceId,
+      );
+
+      for (const m of movements) {
+        const { data: stockRows } = await supabase
+          .from('stock_locations')
+          .select('*')
+          .eq('id_product', m.idProduct)
+          .eq('id_location', m.idLocation);
+
+        if (stockRows && stockRows.length > 0) {
+          const stock = stockRows[0];
+          await supabase
+            .from('stock_locations')
+            .update({
+              current_stock: Math.max(0, stock['current_stock'] - m.quantity),
+            })
+            .eq('id', stock['id']);
+        }
+      }
+
+      await supabase.from('stock_movements').delete().eq('reference_type', 'ingreso').eq('reference_id', referenceId);
       await this.loadMovements();
       return true;
     } catch (err) {

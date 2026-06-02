@@ -37,6 +37,7 @@ export class RecepcionesComponent {
     this.selectedTransferId.set(id);
     this.error.set(null);
     this.confirmed.set(false);
+    this.note.set('');
   }
 
   isTransferOld(dateTime: string): boolean {
