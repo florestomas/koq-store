@@ -209,7 +209,6 @@ export class CreateProductComponent {
         id: modelId,
         name: this.form.controls.name.value,
         id_category: this.form.controls.categoryId.value,
-        description: null,
         created_at: new Date().toISOString(),
         active: true,
       });
