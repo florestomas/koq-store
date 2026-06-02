@@ -4,9 +4,9 @@ import { MatIcon } from '@angular/material/icon';
 import { AuthService } from '../../core/services/auth.service';
 import { SalesHistoryService, SaleRow } from '../../core/services/sales-history.service';
 import { TransferHistoryService, TransferRow } from '../../core/services/transfer-history.service';
-import { StockMovementService, MovementRow, IngresoGroup } from '../../core/services/stock-movement.service';
+import { StockMovementService, IngresoGroup } from '../../core/services/stock-movement.service';
 
-type TimelineType = 'venta' | 'transferencia' | 'movimiento' | 'ingreso';
+type TimelineType = 'venta' | 'transferencia' | 'ingreso';
 
 interface TimelineEvent {
   id: string;
@@ -21,7 +21,6 @@ interface TimelineEvent {
   rowClass: string;
   sale?: SaleRow;
   transfer?: TransferRow;
-  movement?: MovementRow;
   ingreso?: IngresoGroup;
 }
 
@@ -47,7 +46,7 @@ export class HistorialComponent {
   readonly dateTo = signal<string | null>(null);
   readonly locationId = signal<string | null>(null);
   readonly timelineTypes = signal<Set<TimelineType>>(
-    new Set(['venta', 'transferencia', 'movimiento', 'ingreso']),
+    new Set(['venta', 'transferencia', 'ingreso']),
   );
 
   readonly page = signal(0);
@@ -119,7 +118,6 @@ export class HistorialComponent {
   readonly summary = computed(() => {
     const sales = this.salesHistoryService.filteredSales();
     const transfers = this.transferHistoryService.filteredTransfers();
-    const movements = this.stockMovementService.filteredMovements();
     const ingresos = this.stockMovementService.groupedIngresos();
 
     return {
@@ -128,8 +126,6 @@ export class HistorialComponent {
         .filter((s) => s.status === 'active')
         .reduce((sum, s) => sum + s.totalAmount, 0),
       transferenciasCount: transfers.length,
-      entradas: movements.filter((m) => m.type === 'in').reduce((sum, m) => sum + m.quantity, 0),
-      salidas: movements.filter((m) => m.type === 'out').reduce((sum, m) => sum + m.quantity, 0),
       ingresosCount: ingresos.length,
       ingresosUnits: ingresos.reduce((sum, g) => sum + g.totalUnits, 0),
     };
@@ -187,25 +183,6 @@ export class HistorialComponent {
           amountClass: 'text-zinc-800',
           rowClass: trf.status === 'cancelled' ? 'opacity-60' : '',
           transfer: trf,
-        });
-      }
-    }
-
-    if (types.has('movimiento')) {
-      for (const m of this.stockMovementService.filteredMovements()) {
-        const isIn = m.type === 'in';
-        events.push({
-          id: m.id,
-          dateTime: m.dateTime,
-          type: 'movimiento',
-          icon: isIn ? 'arrow_downward' : 'arrow_upward',
-          summary: `${isIn ? 'Entrada' : 'Salida'} · ${m.modelName}${m.size ? ' T.' + m.size : ''} ${m.colorName}`,
-          meta: m.locationName,
-          metaClass: 'text-zinc-500',
-          amount: `${isIn ? '+' : '−'}${m.quantity}`,
-          amountClass: isIn ? 'text-green-600' : 'text-red-500',
-          rowClass: '',
-          movement: m,
         });
       }
     }
@@ -269,10 +246,6 @@ export class HistorialComponent {
 
   async deleteTransfer(transferId: string): Promise<void> {
     await this.transferHistoryService.hardDeleteTransfer(transferId);
-  }
-
-  async deleteMovement(movementId: string): Promise<void> {
-    await this.stockMovementService.deleteMovement(movementId);
   }
 
   async deleteIngresoGroup(referenceId: string): Promise<void> {
