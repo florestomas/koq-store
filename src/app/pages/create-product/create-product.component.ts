@@ -55,22 +55,6 @@ export class CreateProductComponent {
     return allColors.filter((c) => usedColorIds.has(c.id));
   });
 
-  readonly systemColorsWithCount = computed(() => {
-    const allColors = this.COLORS;
-    const activeProducts = this.catalogService.catalogProducts().filter((p) => p.active);
-    const usedColorIds = new Set(activeProducts.map((p) => p.idColor));
-    const productCount = new Map<string, number>();
-    for (const p of activeProducts) {
-      productCount.set(p.idColor, (productCount.get(p.idColor) ?? 0) + 1);
-    }
-    return allColors.map((c) => ({
-      id: c.id,
-      name: c.name,
-      inUse: usedColorIds.has(c.id),
-      productCount: productCount.get(c.id) ?? 0,
-    }));
-  });
-
   readonly stockValues = signal<Record<string, Record<string, number>>>({});
   readonly minStockValues = signal<Record<string, Record<string, number>>>({});
 
@@ -175,15 +159,6 @@ export class CreateProductComponent {
     if (!usedInModelColor && !usedInProduct) {
       await getSupabase().from('colors').delete().eq('id', colorId);
     }
-  }
-
-  async deleteUnusedColor(colorId: string): Promise<void> {
-    if (!window.confirm('¿Eliminar este color definitivamente? Solo se pueden eliminar colores sin productos activos.')) return;
-    const info = this.systemColorsWithCount().find((c) => c.id === colorId);
-    if (!info || info.inUse) return;
-
-    await getSupabase().from('colors').delete().eq('id', colorId);
-    await this.catalogService.triggerRefresh();
   }
 
   addSize(): void {
