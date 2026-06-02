@@ -515,6 +515,7 @@
                 </td>
                 <td class="py-3 px-4 text-zinc-500 text-xs">
                   @if (m.referenceType === 'sale') { Venta #{{ m.referenceId }} }
+                  @else if (m.referenceType === 'ingreso') { Ingreso #{{ m.referenceId }} }
                   @else { Transferencia #{{ m.referenceId }} }
                 </td>
               </tr>
