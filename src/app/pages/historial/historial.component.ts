@@ -1,15 +1,35 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { DatePipe, UpperCasePipe, DecimalPipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { MatIcon } from '@angular/material/icon';
-import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
-import { SalesHistoryService } from '../../core/services/sales-history.service';
+import { SalesHistoryService, SaleRow } from '../../core/services/sales-history.service';
 import { TransferHistoryService, TransferRow } from '../../core/services/transfer-history.service';
-import { StockMovementService } from '../../core/services/stock-movement.service';
+import { StockMovementService, MovementRow, IngresoGroup } from '../../core/services/stock-movement.service';
+
+type TimelineType = 'venta' | 'transferencia' | 'movimiento' | 'ingreso';
+
+interface TimelineEvent {
+  id: string;
+  dateTime: string;
+  type: TimelineType;
+  icon: string;
+  summary: string;
+  meta: string;
+  metaClass: string;
+  amount: string;
+  amountClass: string;
+  rowClass: string;
+  sale?: SaleRow;
+  transfer?: TransferRow;
+  movement?: MovementRow;
+  ingreso?: IngresoGroup;
+}
+
+const PAGE_SIZE = 25;
 
 @Component({
   selector: 'app-historial',
-  imports: [DatePipe, UpperCasePipe, DecimalPipe, MatIcon, FormsModule],
+  imports: [DatePipe, DecimalPipe, MatIcon],
   templateUrl: './historial.component.html',
   styleUrl: './historial.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -20,135 +40,226 @@ export class HistorialComponent {
   readonly transferHistoryService = inject(TransferHistoryService);
   readonly stockMovementService = inject(StockMovementService);
 
-  readonly activeTab = signal<'ventas' | 'transferencias' | 'movimientos' | 'ingresos'>('ventas');
-
-  readonly expandedSaleId = signal<string | null>(null);
-  readonly expandedTransferId = signal<string | null>(null);
-  readonly expandedIngresoId = signal<string | null>(null);
-
   readonly today = new Date().toISOString().split('T')[0];
-  readonly thirtyDaysAgo = new Date(
-    Date.now() - 30 * 24 * 60 * 60 * 1000,
-  )
-    .toISOString()
-    .split('T')[0];
+  readonly thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-  readonly statusFilters: ('all' | 'pending' | 'confirmed' | 'cancelled')[] = [
-    'all',
-    'pending',
-    'confirmed',
-    'cancelled',
-  ];
-
-  readonly typeFilters: ('all' | 'in' | 'out')[] = ['all', 'in', 'out'];
-
-  readonly isAdmin = computed(
-    () => this.authService.currentUser()?.role === 'admin',
+  readonly dateFrom = signal<string | null>(null);
+  readonly dateTo = signal<string | null>(null);
+  readonly locationId = signal<string | null>(null);
+  readonly timelineTypes = signal<Set<TimelineType>>(
+    new Set(['venta', 'transferencia', 'movimiento', 'ingreso']),
   );
-  readonly userLocationId = computed(
-    () => this.authService.currentUser()?.idLocation ?? '1',
-  );
+
+  readonly page = signal(0);
+  readonly pageSize = PAGE_SIZE;
+
+  readonly expandedId = signal<string | null>(null);
+
+  readonly isAdmin = computed(() => this.authService.currentUser()?.role === 'admin');
 
   constructor() {
-    this.salesHistoryService.dateFrom.set(this.thirtyDaysAgo);
-    this.salesHistoryService.dateTo.set(this.today);
-    this.transferHistoryService.dateFrom.set(this.thirtyDaysAgo);
-    this.transferHistoryService.dateTo.set(this.today);
-    this.stockMovementService.dateFrom.set(this.thirtyDaysAgo);
-    this.stockMovementService.dateTo.set(this.today);
+    this.dateFrom.set(this.thirtyDaysAgo);
+    this.dateTo.set(this.today);
+    this.applyFilters();
   }
 
-  toggleExpand(saleId: string): void {
-    this.expandedSaleId.update((id) => (id === saleId ? null : saleId));
+  private applyFilters(): void {
+    const from = this.dateFrom();
+    const to = this.dateTo();
+    const loc = this.locationId();
+
+    this.salesHistoryService.dateFrom.set(from);
+    this.salesHistoryService.dateTo.set(to);
+    this.salesHistoryService.locationId.set(loc);
+    this.salesHistoryService.channel.set('all');
+
+    this.transferHistoryService.dateFrom.set(from);
+    this.transferHistoryService.dateTo.set(to);
+    this.transferHistoryService.locationId.set(loc);
+    this.transferHistoryService.statusFilter.set('all');
+
+    this.stockMovementService.dateFrom.set(from);
+    this.stockMovementService.dateTo.set(to);
+    this.stockMovementService.locationId.set(loc);
+    this.stockMovementService.typeFilter.set('all');
   }
 
-  toggleTransferExpand(id: string): void {
-    this.expandedTransferId.update((tid) => (tid === id ? null : id));
+  setDateFrom(value: string): void {
+    this.dateFrom.set(value || null);
+    this.applyFilters();
+    this.page.set(0);
   }
 
-  toggleIngresoExpand(id: string): void {
-    this.expandedIngresoId.update((iid) => (iid === id ? null : id));
+  setDateTo(value: string): void {
+    this.dateTo.set(value || null);
+    this.applyFilters();
+    this.page.set(0);
   }
 
-  setSaleDateFrom(value: string): void {
-    this.salesHistoryService.dateFrom.set(value || null);
+  setLocation(value: string): void {
+    this.locationId.set(value || null);
+    this.applyFilters();
+    this.page.set(0);
   }
 
-  setSaleDateTo(value: string): void {
-    this.salesHistoryService.dateTo.set(value || null);
+  toggleType(type: TimelineType): void {
+    this.timelineTypes.update((types) => {
+      const next = new Set(types);
+      if (next.has(type)) next.delete(type);
+      else next.add(type);
+      return next;
+    });
+    this.page.set(0);
   }
 
-  setTransferDateFrom(value: string): void {
-    this.transferHistoryService.dateFrom.set(value || null);
+  hasType(type: TimelineType): boolean {
+    return this.timelineTypes().has(type);
   }
 
-  setTransferDateTo(value: string): void {
-    this.transferHistoryService.dateTo.set(value || null);
+  readonly summary = computed(() => {
+    const sales = this.salesHistoryService.filteredSales();
+    const transfers = this.transferHistoryService.filteredTransfers();
+    const movements = this.stockMovementService.filteredMovements();
+    const ingresos = this.stockMovementService.groupedIngresos();
+
+    return {
+      ventasCount: sales.length,
+      ventasRevenue: sales
+        .filter((s) => s.status === 'active')
+        .reduce((sum, s) => sum + s.totalAmount, 0),
+      transferenciasCount: transfers.length,
+      entradas: movements.filter((m) => m.type === 'in').reduce((sum, m) => sum + m.quantity, 0),
+      salidas: movements.filter((m) => m.type === 'out').reduce((sum, m) => sum + m.quantity, 0),
+      ingresosCount: ingresos.length,
+      ingresosUnits: ingresos.reduce((sum, g) => sum + g.totalUnits, 0),
+    };
+  });
+
+  readonly timelineEvents = computed<TimelineEvent[]>(() => {
+    const types = this.timelineTypes();
+    const events: TimelineEvent[] = [];
+
+    if (types.has('venta')) {
+      for (const sale of this.salesHistoryService.filteredSales()) {
+        const cancelled = sale.status === 'cancelled';
+        events.push({
+          id: sale.id,
+          dateTime: sale.dateTime,
+          type: 'venta',
+          icon: 'receipt_long',
+          summary: `Venta · ${sale.operatorName}`,
+          meta: sale.channel === 'whatsapp' ? 'WhatsApp' : 'Local',
+          metaClass: sale.channel === 'whatsapp' ? 'text-blue-500' : 'text-green-600',
+          amount: `$ ${Math.round(sale.totalAmount).toLocaleString()}`,
+          amountClass: cancelled ? 'text-red-400 line-through' : 'text-zinc-800',
+          rowClass: cancelled ? 'opacity-60' : '',
+          sale,
+        });
+      }
+    }
+
+    if (types.has('transferencia')) {
+      for (const trf of this.transferHistoryService.filteredTransfers()) {
+        let statusMeta: string;
+        let statusClass: string;
+        switch (trf.status) {
+          case 'confirmed':
+            statusMeta = 'CONFIRMADA';
+            statusClass = 'text-green-600';
+            break;
+          case 'cancelled':
+            statusMeta = 'CANCELADA';
+            statusClass = 'text-red-400';
+            break;
+          default:
+            statusMeta = 'PENDIENTE';
+            statusClass = 'text-amber-600';
+        }
+        events.push({
+          id: trf.id,
+          dateTime: trf.dateTime,
+          type: 'transferencia',
+          icon: 'swap_horiz',
+          summary: `Transferencia · ${trf.originName} → ${trf.destinationName}`,
+          meta: statusMeta,
+          metaClass: statusClass,
+          amount: `${trf.itemCount} SKU${trf.itemCount !== 1 ? 's' : ''}`,
+          amountClass: 'text-zinc-800',
+          rowClass: trf.status === 'cancelled' ? 'opacity-60' : '',
+          transfer: trf,
+        });
+      }
+    }
+
+    if (types.has('movimiento')) {
+      for (const m of this.stockMovementService.filteredMovements()) {
+        const isIn = m.type === 'in';
+        events.push({
+          id: m.id,
+          dateTime: m.dateTime,
+          type: 'movimiento',
+          icon: isIn ? 'arrow_downward' : 'arrow_upward',
+          summary: `${isIn ? 'Entrada' : 'Salida'} · ${m.modelName}${m.size ? ' T.' + m.size : ''} ${m.colorName}`,
+          meta: m.locationName,
+          metaClass: 'text-zinc-500',
+          amount: `${isIn ? '+' : '−'}${m.quantity}`,
+          amountClass: isIn ? 'text-green-600' : 'text-red-500',
+          rowClass: '',
+          movement: m,
+        });
+      }
+    }
+
+    if (types.has('ingreso')) {
+      for (const ing of this.stockMovementService.groupedIngresos()) {
+        events.push({
+          id: ing.id,
+          dateTime: ing.dateTime,
+          type: 'ingreso',
+          icon: 'add_shopping_cart',
+          summary: `Ingreso · ${ing.itemCount} SKU${ing.itemCount !== 1 ? 's' : ''}`,
+          meta: ing.locationName,
+          metaClass: 'text-zinc-500',
+          amount: `+${ing.totalUnits}`,
+          amountClass: 'text-green-600',
+          rowClass: '',
+          ingreso: ing,
+        });
+      }
+    }
+
+    events.sort((a, b) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime());
+    return events;
+  });
+
+  readonly paginatedEvents = computed(() => {
+    const start = this.page() * this.pageSize;
+    return this.timelineEvents().slice(start, start + this.pageSize);
+  });
+
+  readonly totalPages = computed(() =>
+    Math.max(1, Math.ceil(this.timelineEvents().length / this.pageSize)),
+  );
+
+  toggleExpand(id: string): void {
+    this.expandedId.update((eid) => (eid === id ? null : id));
   }
 
-  setMovementDateFrom(value: string): void {
-    this.stockMovementService.dateFrom.set(value || null);
+  prevPage(): void {
+    this.page.update((p) => Math.max(0, p - 1));
   }
 
-  setMovementDateTo(value: string): void {
-    this.stockMovementService.dateTo.set(value || null);
-  }
-
-  setSaleLocation(value: string): void {
-    this.salesHistoryService.locationId.set(value || null);
-  }
-
-  setTransferStatus(st: 'all' | 'pending' | 'confirmed' | 'cancelled'): void {
-    this.transferHistoryService.statusFilter.set(st);
-  }
-
-  setTransferLocation(value: string): void {
-    this.transferHistoryService.locationId.set(value || null);
-  }
-
-  setMovementType(t: 'all' | 'in' | 'out'): void {
-    this.stockMovementService.typeFilter.set(t);
-  }
-
-  setMovementLocation(value: string): void {
-    this.stockMovementService.locationId.set(value || null);
+  nextPage(): void {
+    this.page.update((p) => Math.min(this.totalPages() - 1, p + 1));
   }
 
   getChannelIcon(channel: string): string {
-    switch (channel) {
-      case 'local':
-        return 'store';
-      case 'whatsapp':
-        return 'chat';
-      default:
-        return 'sell';
-    }
-  }
-
-  getStatusLabel(status: string): string {
-    switch (status) {
-      case 'pending': return 'PENDIENTE';
-      case 'confirmed': return 'CONFIRMADA';
-      case 'cancelled': return 'CANCELADA';
-      default: return '';
-    }
-  }
-
-  getStatusClass(status: string): string {
-    switch (status) {
-      case 'pending': return 'bg-amber-100 text-amber-700';
-      case 'confirmed': return 'bg-green-100 text-green-700';
-      case 'cancelled': return 'bg-red-100 text-red-600 line-through';
-      default: return '';
-    }
+    return channel === 'local' ? 'store' : channel === 'whatsapp' ? 'chat' : 'sell';
   }
 
   async confirmCancel(saleId: string): Promise<void> {
     if (window.confirm('¿Estás seguro de que querés anular esta venta?')) {
-      const ok = await this.salesHistoryService.cancelSale(saleId);
-      if (!ok) {
-        console.error('No se pudo anular la venta');
-      }
+      await this.salesHistoryService.cancelSale(saleId);
     }
   }
 

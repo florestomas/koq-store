@@ -1,382 +1,374 @@
-<div class="flex flex-col w-full h-full p-4 md:p-8 gap-4 md:gap-6">
+<div class="flex flex-col w-full h-full p-4 md:p-8 gap-4 md:gap-5">
   <!-- Header -->
   <div class="flex flex-row items-center gap-3 shrink-0">
     <mat-icon class="text-2xl md:text-3xl text-koq">history</mat-icon>
-    <h1 class="text-2xl md:text-4xl text-black font-medium">{{ 'Historial' | uppercase }}</h1>
+    <h1 class="text-2xl md:text-4xl text-black font-medium">HISTORIAL</h1>
   </div>
 
-  <!-- Tabs -->
-  <nav class="flex flex-row border-b border-gray-300 overflow-x-auto shrink-0">
-    <button
-      (click)="activeTab.set('ventas')"
-      class="py-3 px-4 md:px-8 whitespace-nowrap text-zinc-500 font-medium tracking-widest text-sm border-b-4 border-transparent hover:border-b-4 hover:text-koq hover:border-koq transition cursor-pointer"
-      [class.text-koq]="activeTab() === 'ventas'"
-      [class.border-koq]="activeTab() === 'ventas'"
-      [class.border-b-4]="activeTab() === 'ventas'"
-    >
-      VENTAS
-    </button>
-    <button
-      (click)="activeTab.set('transferencias')"
-      class="py-3 px-4 md:px-8 whitespace-nowrap text-zinc-500 font-medium tracking-widest text-sm border-b-4 border-transparent hover:border-b-4 hover:text-koq hover:border-koq transition cursor-pointer"
-      [class.text-koq]="activeTab() === 'transferencias'"
-      [class.border-koq]="activeTab() === 'transferencias'"
-      [class.border-b-4]="activeTab() === 'transferencias'"
-    >
-      TRANSFERENCIAS
-    </button>
-    <button
-      (click)="activeTab.set('movimientos')"
-      class="py-3 px-4 md:px-8 whitespace-nowrap text-zinc-500 font-medium tracking-widest text-sm border-b-4 border-transparent hover:border-b-4 hover:text-koq hover:border-koq transition cursor-pointer"
-      [class.text-koq]="activeTab() === 'movimientos'"
-      [class.border-koq]="activeTab() === 'movimientos'"
-      [class.border-b-4]="activeTab() === 'movimientos'"
-    >
-      MOVIMIENTOS
-    </button>
-    <button
-      (click)="activeTab.set('ingresos')"
-      class="py-3 px-4 md:px-8 whitespace-nowrap text-zinc-500 font-medium tracking-widest text-sm border-b-4 border-transparent hover:border-b-4 hover:text-koq hover:border-koq transition cursor-pointer"
-      [class.text-koq]="activeTab() === 'ingresos'"
-      [class.border-koq]="activeTab() === 'ingresos'"
-      [class.border-b-4]="activeTab() === 'ingresos'"
-    >
-      INGRESOS
-    </button>
-  </nav>
+  <!-- Summary strip -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-3 shrink-0">
+    <div class="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
+      <div class="flex flex-row items-center gap-1.5 mb-1">
+        <mat-icon class="text-koq text-sm">receipt_long</mat-icon>
+        <span class="text-[10px] text-zinc-400 font-semibold tracking-wider uppercase">Ventas</span>
+      </div>
+      <p class="text-lg font-bold text-koq">$ {{ summary().ventasRevenue | number:'1.0-0' }}</p>
+      <p class="text-[10px] text-zinc-400">{{ summary().ventasCount }} venta{{ summary().ventasCount !== 1 ? 's' : '' }}</p>
+    </div>
+    <div class="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
+      <div class="flex flex-row items-center gap-1.5 mb-1">
+        <mat-icon class="text-zinc-500 text-sm">swap_horiz</mat-icon>
+        <span class="text-[10px] text-zinc-400 font-semibold tracking-wider uppercase">Transferencias</span>
+      </div>
+      <p class="text-lg font-bold text-zinc-700">{{ summary().transferenciasCount }}</p>
+    </div>
+    <div class="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
+      <div class="flex flex-row items-center gap-1.5 mb-1">
+        <mat-icon class="text-zinc-500 text-sm">compare_arrows</mat-icon>
+        <span class="text-[10px] text-zinc-400 font-semibold tracking-wider uppercase">Movimientos</span>
+      </div>
+      <div class="flex flex-row gap-2 text-sm font-bold">
+        <span class="text-green-600">+{{ summary().entradas }}</span>
+        <span class="text-zinc-300">|</span>
+        <span class="text-red-500">−{{ summary().salidas }}</span>
+      </div>
+    </div>
+    <div class="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
+      <div class="flex flex-row items-center gap-1.5 mb-1">
+        <mat-icon class="text-green-600 text-sm">add_shopping_cart</mat-icon>
+        <span class="text-[10px] text-zinc-400 font-semibold tracking-wider uppercase">Ingresos</span>
+      </div>
+      <p class="text-lg font-bold text-green-600">+{{ summary().ingresosUnits }}</p>
+      <p class="text-[10px] text-zinc-400">{{ summary().ingresosCount }} ingreso{{ summary().ingresosCount !== 1 ? 's' : '' }}</p>
+    </div>
+  </div>
 
+  <!-- Type pills + filters -->
+  <div class="flex flex-row flex-wrap items-center gap-3 shrink-0">
+    <div class="flex flex-row gap-1.5">
+      <button
+        (click)="toggleType('venta')"
+        class="flex flex-row items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold tracking-wider transition border-2 cursor-pointer"
+        [class.bg-koq]="hasType('venta')"
+        [class.text-white]="hasType('venta')"
+        [class.border-koq]="hasType('venta')"
+        [class.bg-white]="!hasType('venta')"
+        [class.text-zinc-400]="!hasType('venta')"
+        [class.border-gray-200]="!hasType('venta')"
+        [class.hover:border-koq]="!hasType('venta')"
+      >
+        <mat-icon class="text-sm">receipt_long</mat-icon>
+        VENTAS
+      </button>
+      <button
+        (click)="toggleType('transferencia')"
+        class="flex flex-row items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold tracking-wider transition border-2 cursor-pointer"
+        [class.bg-koq]="hasType('transferencia')"
+        [class.text-white]="hasType('transferencia')"
+        [class.border-koq]="hasType('transferencia')"
+        [class.bg-white]="!hasType('transferencia')"
+        [class.text-zinc-400]="!hasType('transferencia')"
+        [class.border-gray-200]="!hasType('transferencia')"
+        [class.hover:border-koq]="!hasType('transferencia')"
+      >
+        <mat-icon class="text-sm">swap_horiz</mat-icon>
+        TRANSFERENCIAS
+      </button>
+      <button
+        (click)="toggleType('movimiento')"
+        class="flex flex-row items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold tracking-wider transition border-2 cursor-pointer"
+        [class.bg-koq]="hasType('movimiento')"
+        [class.text-white]="hasType('movimiento')"
+        [class.border-koq]="hasType('movimiento')"
+        [class.bg-white]="!hasType('movimiento')"
+        [class.text-zinc-400]="!hasType('movimiento')"
+        [class.border-gray-200]="!hasType('movimiento')"
+        [class.hover:border-koq]="!hasType('movimiento')"
+      >
+        <mat-icon class="text-sm">compare_arrows</mat-icon>
+        MOVIMIENTOS
+      </button>
+      <button
+        (click)="toggleType('ingreso')"
+        class="flex flex-row items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold tracking-wider transition border-2 cursor-pointer"
+        [class.bg-koq]="hasType('ingreso')"
+        [class.text-white]="hasType('ingreso')"
+        [class.border-koq]="hasType('ingreso')"
+        [class.bg-white]="!hasType('ingreso')"
+        [class.text-zinc-400]="!hasType('ingreso')"
+        [class.border-gray-200]="!hasType('ingreso')"
+        [class.hover:border-koq]="!hasType('ingreso')"
+      >
+        <mat-icon class="text-sm">add_shopping_cart</mat-icon>
+        INGRESOS
+      </button>
+    </div>
+
+    <div class="flex flex-row items-end gap-2">
+      <div class="flex flex-col gap-0.5">
+        <label class="text-[10px] text-zinc-400 font-semibold tracking-wider uppercase">Desde</label>
+        <input
+          type="date"
+          class="border border-gray-300 rounded-lg px-3 py-1.5 text-xs outline-none focus:border-koq bg-white"
+          [value]="dateFrom() ?? ''"
+          (change)="setDateFrom($any($event.target).value)"
+        />
+      </div>
+      <div class="flex flex-col gap-0.5">
+        <label class="text-[10px] text-zinc-400 font-semibold tracking-wider uppercase">Hasta</label>
+        <input
+          type="date"
+          class="border border-gray-300 rounded-lg px-3 py-1.5 text-xs outline-none focus:border-koq bg-white"
+          [value]="dateTo() ?? ''"
+          (change)="setDateTo($any($event.target).value)"
+        />
+      </div>
+    </div>
+
+    @if (isAdmin()) {
+      <select
+        class="border border-gray-300 rounded-lg px-3 py-1.5 text-xs outline-none focus:border-koq bg-white"
+        [value]="locationId() ?? ''"
+        (change)="setLocation($any($event.target).value)"
+      >
+        <option value="">Todas las ubicaciones</option>
+        @for (loc of salesHistoryService.availableLocations; track loc.id) {
+          <option [value]="loc.id">{{ loc.name }}</option>
+        }
+      </select>
+    }
+  </div>
+
+  <!-- Timeline -->
   <div class="min-h-0 flex-1 overflow-y-auto">
-  <!-- ==================== TAB: VENTAS ==================== -->
-  @if (activeTab() === 'ventas') {
-    <!-- Summary strip -->
-    <div class="flex flex-col md:flex-row gap-4">
-      <div class="flex-1 bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-        <p class="text-xs text-zinc-400 font-semibold tracking-wider uppercase mb-1">Ingresos totales</p>
-        <p class="text-2xl font-bold text-koq">$ {{ salesHistoryService.totalRevenue() | number:'1.0-0' }}</p>
-      </div>
-      <div class="flex-1 bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-        <p class="text-xs text-zinc-400 font-semibold tracking-wider uppercase mb-1">Canal con más ventas</p>
-        @if (salesHistoryService.topChannel(); as tc) {
-          <div class="flex flex-row items-center gap-2">
-            <mat-icon class="text-koq text-xl">{{ getChannelIcon(tc.name) }}</mat-icon>
-            <p class="text-xl font-bold text-zinc-800 capitalize">{{ tc.name }}</p>
-            <span class="text-sm text-zinc-400">({{ tc.count }})</span>
-          </div>
-        } @else {
-          <p class="text-base text-zinc-400">—</p>
-        }
-      </div>
-      <div class="flex-[2] bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-        <p class="text-xs text-zinc-400 font-semibold tracking-wider uppercase mb-1">Top 5 productos más vendidos</p>
-        @if (salesHistoryService.topProducts().length > 0) {
-          <div class="flex flex-row flex-wrap gap-x-6 gap-y-1">
-            @for (p of salesHistoryService.topProducts(); track $index) {
-              <span class="text-sm text-zinc-700">
-                <strong>{{ p.modelName }}</strong>
-                @if (p.size) { T.{{ p.size }} }
-                {{ p.colorName }}
-                <span class="text-koq font-bold">&times;{{ p.totalQuantity }}</span>
-                @if (!$last) { <span class="text-zinc-300 mx-1">|</span> }
-              </span>
-            }
-          </div>
-        } @else {
-          <p class="text-base text-zinc-400">—</p>
-        }
-      </div>
-    </div>
-
-    <!-- Filters -->
-    <div class="flex flex-row flex-wrap items-end gap-4">
-      <div class="flex flex-col gap-1">
-        <label class="text-xs text-zinc-400 font-semibold tracking-wider uppercase">Desde</label>
-        <input
-          type="date"
-          class="border border-gray-300 rounded-xl px-4 py-2 text-sm outline-none focus:border-koq bg-white"
-          [value]="salesHistoryService.dateFrom() ?? ''"
-          (change)="setSaleDateFrom($any($event.target).value)"
-        />
-      </div>
-      <div class="flex flex-col gap-1">
-        <label class="text-xs text-zinc-400 font-semibold tracking-wider uppercase">Hasta</label>
-        <input
-          type="date"
-          class="border border-gray-300 rounded-xl px-4 py-2 text-sm outline-none focus:border-koq bg-white"
-          [value]="salesHistoryService.dateTo() ?? ''"
-          (change)="setSaleDateTo($any($event.target).value)"
-        />
-      </div>
-      @if (isAdmin()) {
-        <div class="flex flex-col gap-1">
-          <label class="text-xs text-zinc-400 font-semibold tracking-wider uppercase">Ubicación</label>
-          <select
-            class="border border-gray-300 rounded-xl px-4 py-2 text-sm outline-none focus:border-koq bg-white"
-            [value]="salesHistoryService.locationId() ?? ''"
-            (change)="setSaleLocation($any($event.target).value)"
-          >
-            <option value="">Todas</option>
-            @for (loc of salesHistoryService.availableLocations; track loc.id) {
-              <option [value]="loc.id">{{ loc.name }}</option>
-            }
-          </select>
-        </div>
-      }
-    </div>
-
-    <!-- Sales list -->
-    @if (salesHistoryService.filteredSales().length === 0) {
-      <div class="flex flex-col items-center justify-center flex-1 text-zinc-400">
-        <mat-icon class="text-7xl mb-4 text-zinc-300">receipt_long</mat-icon>
-        <p class="text-xl font-medium text-zinc-500">No se encontraron ventas</p>
-        <p class="text-sm text-zinc-400 mt-1">Probá con otros filtros</p>
+    @if (timelineEvents().length === 0) {
+      <div class="flex flex-col items-center justify-center h-full text-zinc-400">
+        <mat-icon class="text-7xl mb-4 text-zinc-300">history</mat-icon>
+        <p class="text-xl font-medium text-zinc-500">No se encontraron eventos</p>
+        <p class="text-sm text-zinc-400 mt-1">Probá con otros filtros o tipos</p>
       </div>
     }
 
-    @if (salesHistoryService.filteredSales().length > 0) {
+    @if (paginatedEvents().length > 0) {
       <div class="flex flex-col gap-3">
-        @for (sale of salesHistoryService.filteredSales(); track sale.id) {
+        @for (event of paginatedEvents(); track event.id) {
           <div
             class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden cursor-pointer transition hover:shadow-md"
-            [class.opacity-60]="sale.status === 'cancelled'"
+            [class]="event.rowClass"
           >
             <div
-              class="flex flex-row items-center gap-2 md:gap-4 px-4 md:px-6 py-3 md:py-4"
-              (click)="toggleExpand(sale.id)"
+              class="flex flex-row items-center gap-2 md:gap-3 px-4 md:px-5 py-2.5 md:py-3"
+              (click)="toggleExpand(event.id)"
             >
-              <mat-icon class="text-zinc-300 text-lg shrink-0 transition-transform duration-300"
-                [class.rotate-90]="expandedSaleId() === sale.id"
+              <mat-icon
+                class="text-zinc-300 text-base shrink-0 transition-transform duration-300"
+                [class.rotate-90]="expandedId() === event.id"
               >chevron_right</mat-icon>
-              <div class="flex flex-col min-w-0 w-20 md:w-28 shrink-0">
-                <span class="text-xs md:text-sm font-semibold text-zinc-800">{{ sale.dateTime | date:'dd/MM/yyyy' }}</span>
-                <span class="text-[10px] md:text-xs text-zinc-400">{{ sale.dateTime | date:'HH:mm' }}</span>
+              <div class="flex flex-col min-w-0 w-16 md:w-24 shrink-0">
+                <span class="text-[10px] md:text-xs font-semibold text-zinc-800">{{ event.dateTime | date:'dd/MM' }}</span>
+                <span class="text-[10px] text-zinc-400">{{ event.dateTime | date:'HH:mm' }}</span>
               </div>
-              <span class="text-xs md:text-sm text-zinc-600 min-w-0 md:min-w-28 shrink-0 truncate max-w-20 md:max-w-none">{{ sale.operatorName }}</span>
-              <mat-icon class="text-base md:text-lg shrink-0"
-                [class.text-green-600]="sale.channel === 'local'"
-                [class.text-blue-500]="sale.channel === 'whatsapp'"
-              >{{ getChannelIcon(sale.channel) }}</mat-icon>
+              <mat-icon class="text-sm shrink-0" [class]="event.metaClass">{{ event.icon }}</mat-icon>
+              <span class="text-xs text-zinc-600 min-w-0 truncate">{{ event.summary }}</span>
               <span class="flex-1 min-w-0"></span>
-              <span class="text-sm md:text-base font-bold text-zinc-800 shrink-0">$ {{ sale.totalAmount | number:'1.0-0' }}</span>
-              @if (sale.status === 'active') {
-                <span class="px-2 md:px-3 py-1 rounded-full text-[10px] md:text-[11px] font-bold tracking-wider bg-green-100 text-green-700 shrink-0">ACTIVA</span>
-              } @else {
-                <span class="px-2 md:px-3 py-1 rounded-full text-[10px] md:text-[11px] font-bold tracking-wider bg-red-100 text-red-600 line-through shrink-0">ANULADA</span>
-              }
+              <span class="text-[10px] font-medium shrink-0 px-2 py-0.5 rounded-full"
+                [class.bg-blue-50]="event.metaClass === 'text-blue-500'"
+                [class.text-blue-600]="event.metaClass === 'text-blue-500'"
+                [class.bg-green-50]="event.metaClass === 'text-green-600'"
+                [class.text-green-600]="event.metaClass === 'text-green-600'"
+                [class.bg-amber-50]="event.metaClass === 'text-amber-600'"
+                [class.text-amber-600]="event.metaClass === 'text-amber-600'"
+                [class.bg-red-50]="event.metaClass === 'text-red-400'"
+                [class.text-red-400]="event.metaClass === 'text-red-400'"
+                [class.bg-gray-100]="event.metaClass === 'text-zinc-500'"
+                [class.text-zinc-500]="event.metaClass === 'text-zinc-500'"
+              >{{ event.meta }}</span>
+              <span class="text-sm font-bold shrink-0" [class]="event.amountClass">{{ event.amount }}</span>
             </div>
             <div
               class="expandable-content"
-              [class.expanded]="expandedSaleId() === sale.id"
+              [class.expanded]="expandedId() === event.id"
             >
-              <div class="border-t border-gray-100 px-4 md:px-6 py-4 overflow-x-auto">
-                <table class="w-full text-xs md:text-sm mb-3">
-                  <thead>
-                    <tr class="border-b border-gray-100">
-                      <th class="text-left py-2 text-zinc-400 font-medium text-xs uppercase tracking-wider">Modelo</th>
-                      <th class="text-left py-2 text-zinc-400 font-medium text-xs uppercase tracking-wider">Talle</th>
-                      <th class="text-left py-2 text-zinc-400 font-medium text-xs uppercase tracking-wider">Color</th>
-                      <th class="text-right py-2 text-zinc-400 font-medium text-xs uppercase tracking-wider">Cant.</th>
-                      <th class="text-right py-2 text-zinc-400 font-medium text-xs uppercase tracking-wider">P. Unit.</th>
-                      <th class="text-right py-2 text-zinc-400 font-medium text-xs uppercase tracking-wider">Subtotal</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (det of sale.details; track $index) {
-                      <tr class="border-b border-gray-50 last:border-b-0">
-                        <td class="py-2 font-medium whitespace-nowrap">{{ det.modelName }}</td>
-                        <td class="py-2 text-zinc-500 whitespace-nowrap">T. {{ det.size }}</td>
-                        <td class="py-2 text-zinc-500 whitespace-nowrap">{{ det.colorName }}</td>
-                        <td class="py-2 text-right whitespace-nowrap">{{ det.quantity }}</td>
-                        <td class="py-2 text-right whitespace-nowrap">$ {{ det.unitPrice | number:'1.0-0' }}</td>
-                        <td class="py-2 text-right font-semibold whitespace-nowrap">$ {{ det.quantity * det.unitPrice | number:'1.0-0' }}</td>
-                      </tr>
+              <div class="border-t border-gray-100 px-4 md:px-5 py-4 overflow-x-auto">
+                @switch (event.type) {
+                  @case ('venta') {
+                    @if (event.sale) {
+                      <table class="w-full text-xs mb-3">
+                        <thead>
+                          <tr class="border-b border-gray-100">
+                            <th class="text-left py-1.5 text-zinc-400 font-medium text-[10px] uppercase tracking-wider">Modelo</th>
+                            <th class="text-left py-1.5 text-zinc-400 font-medium text-[10px] uppercase tracking-wider">Talle</th>
+                            <th class="text-left py-1.5 text-zinc-400 font-medium text-[10px] uppercase tracking-wider">Color</th>
+                            <th class="text-right py-1.5 text-zinc-400 font-medium text-[10px] uppercase tracking-wider">Cant.</th>
+                            <th class="text-right py-1.5 text-zinc-400 font-medium text-[10px] uppercase tracking-wider">P. Unit.</th>
+                            <th class="text-right py-1.5 text-zinc-400 font-medium text-[10px] uppercase tracking-wider">Subtotal</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @for (det of event.sale.details; track $index) {
+                            <tr class="border-b border-gray-50 last:border-b-0">
+                              <td class="py-1.5 font-medium whitespace-nowrap">{{ det.modelName }}</td>
+                              <td class="py-1.5 text-zinc-500 whitespace-nowrap">T. {{ det.size }}</td>
+                              <td class="py-1.5 text-zinc-500 whitespace-nowrap">{{ det.colorName }}</td>
+                              <td class="py-1.5 text-right whitespace-nowrap">{{ det.quantity }}</td>
+                              <td class="py-1.5 text-right whitespace-nowrap">$ {{ det.unitPrice | number:'1.0-0' }}</td>
+                              <td class="py-1.5 text-right font-semibold whitespace-nowrap">$ {{ det.quantity * det.unitPrice | number:'1.0-0' }}</td>
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
+                      <div class="flex flex-col items-end gap-1 text-xs border-t border-gray-100 pt-2">
+                        <div class="flex flex-row gap-4">
+                          <span class="text-zinc-400">Subtotal</span>
+                          <span class="font-semibold w-20 text-right">$ {{ event.sale.totalBeforeDiscount | number:'1.0-0' }}</span>
+                        </div>
+                        @if (event.sale.discountType && event.sale.discountType !== 'none') {
+                          <div class="flex flex-row gap-4">
+                            <span class="text-green-600">
+                              Descuento
+                              @if (event.sale.discountType === 'percentage') { ({{ event.sale.discountValue }}%) }
+                            </span>
+                            <span class="font-semibold w-20 text-right text-green-600">
+                              &minus; $ {{ event.sale.discountType === 'percentage'
+                                ? (event.sale.totalBeforeDiscount * (event.sale.discountValue ?? 0) / 100 | number:'1.0-0')
+                                : (event.sale.discountValue ?? 0) }}
+                            </span>
+                          </div>
+                        }
+                        <div class="flex flex-row gap-4 text-sm">
+                          <span class="font-bold text-zinc-700">Total</span>
+                          <span class="font-bold w-20 text-right text-koq">$ {{ event.sale.totalAmount | number:'1.0-0' }}</span>
+                        </div>
+                      </div>
+                      @if (event.sale.status === 'active' || isAdmin()) {
+                        <div class="mt-3 flex justify-end gap-2">
+                          @if (isAdmin()) {
+                            <button
+                              (click)="$event.stopPropagation(); deleteSale(event.sale.id)"
+                              class="flex flex-row items-center gap-1 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wider text-white bg-red-500 border border-red-500 hover:bg-red-600 transition cursor-pointer"
+                            >
+                              <mat-icon class="text-sm">delete</mat-icon>
+                              ELIMINAR
+                            </button>
+                          }
+                          @if (event.sale.status === 'active') {
+                            <button
+                              (click)="$event.stopPropagation(); confirmCancel(event.sale.id)"
+                              class="flex flex-row items-center gap-1 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wider text-red-600 border border-red-200 hover:bg-red-50 transition cursor-pointer"
+                            >
+                              <mat-icon class="text-sm">cancel</mat-icon>
+                              ANULAR VENTA
+                            </button>
+                          }
+                        </div>
+                      }
                     }
-                  </tbody>
-                </table>
-                <div class="flex flex-col items-end gap-1 text-sm border-t border-gray-100 pt-3">
-                  <div class="flex flex-row gap-6">
-                    <span class="text-zinc-400">Subtotal</span>
-                    <span class="font-semibold w-24 text-right">$ {{ sale.totalBeforeDiscount | number:'1.0-0' }}</span>
-                  </div>
-                  @if (sale.discountType && sale.discountType !== 'none') {
-                    <div class="flex flex-row gap-6">
-                      <span class="text-green-600">
-                        Descuento
-                        @if (sale.discountType === 'percentage') { ({{ sale.discountValue }}%) }
-                      </span>
-                      <span class="font-semibold w-24 text-right text-green-600">
-                        &minus; $ {{ sale.discountType === 'percentage'
-                          ? (sale.totalBeforeDiscount * (sale.discountValue ?? 0) / 100 | number:'1.0-0')
-                          : (sale.discountValue ?? 0) }}
-                      </span>
-                    </div>
                   }
-                  <div class="flex flex-row gap-6 text-base">
-                    <span class="font-bold text-zinc-700">Total</span>
-                    <span class="font-bold w-24 text-right text-koq">$ {{ sale.totalAmount | number:'1.0-0' }}</span>
-                  </div>
-                </div>
-                <div class="mt-4 flex justify-end gap-2">
-                  @if (isAdmin()) {
-                    <button
-                      (click)="$event.stopPropagation(); deleteSale(sale.id)"
-                      class="flex flex-row items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold tracking-wider text-white bg-red-500 border border-red-500 hover:bg-red-600 transition cursor-pointer"
-                    >
-                      <mat-icon class="text-base">delete</mat-icon>
-                      ELIMINAR
-                    </button>
-                  }
-                  @if (sale.status === 'active') {
-                    <button
-                      (click)="$event.stopPropagation(); confirmCancel(sale.id)"
-                      class="flex flex-row items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold tracking-wider text-red-600 border border-red-200 hover:bg-red-50 transition cursor-pointer"
-                    >
-                      <mat-icon class="text-base">cancel</mat-icon>
-                      ANULAR VENTA
-                    </button>
-                  }
-                </div>
-              </div>
-            </div>
-          </div>
-        }
-      </div>
-    }
-  }
-
-  <!-- ==================== TAB: TRANSFERENCIAS ==================== -->
-  @if (activeTab() === 'transferencias') {
-    <!-- Filters -->
-    <div class="flex flex-row flex-wrap items-end gap-4">
-      <div class="flex flex-col gap-1">
-        <label class="text-xs text-zinc-400 font-semibold tracking-wider uppercase">Desde</label>
-        <input
-          type="date"
-          class="border border-gray-300 rounded-xl px-4 py-2 text-sm outline-none focus:border-koq bg-white"
-          [value]="transferHistoryService.dateFrom() ?? ''"
-          (change)="setTransferDateFrom($any($event.target).value)"
-        />
-      </div>
-      <div class="flex flex-col gap-1">
-        <label class="text-xs text-zinc-400 font-semibold tracking-wider uppercase">Hasta</label>
-        <input
-          type="date"
-          class="border border-gray-300 rounded-xl px-4 py-2 text-sm outline-none focus:border-koq bg-white"
-          [value]="transferHistoryService.dateTo() ?? ''"
-          (change)="setTransferDateTo($any($event.target).value)"
-        />
-      </div>
-      <div class="flex flex-col gap-1">
-        <label class="text-xs text-zinc-400 font-semibold tracking-wider uppercase">Estado</label>
-        <div class="flex flex-row gap-1.5">
-          @for (st of statusFilters; track st) {
-            <button
-              (click)="setTransferStatus(st)"
-              class="px-3.5 py-2 rounded-xl text-xs font-bold tracking-wider transition border-2 cursor-pointer capitalize"
-              [class.bg-koq]="transferHistoryService.statusFilter() === st"
-              [class.text-white]="transferHistoryService.statusFilter() === st"
-              [class.border-koq]="transferHistoryService.statusFilter() === st"
-              [class.bg-white]="transferHistoryService.statusFilter() !== st"
-              [class.text-zinc-500]="transferHistoryService.statusFilter() !== st"
-              [class.border-gray-200]="transferHistoryService.statusFilter() !== st"
-              [class.hover:border-koq]="transferHistoryService.statusFilter() !== st"
-            >
-              @switch (st) {
-                @case ('all') { TODOS }
-                @case ('pending') { PENDIENTE }
-                @case ('confirmed') { CONFIRMADA }
-                @case ('cancelled') { CANCELADA }
-              }
-            </button>
-          }
-        </div>
-      </div>
-      @if (isAdmin()) {
-        <div class="flex flex-col gap-1">
-          <label class="text-xs text-zinc-400 font-semibold tracking-wider uppercase">Ubicación</label>
-          <select
-            class="border border-gray-300 rounded-xl px-4 py-2 text-sm outline-none focus:border-koq bg-white"
-            [value]="transferHistoryService.locationId() ?? ''"
-            (change)="setTransferLocation($any($event.target).value)"
-          >
-            <option value="">Todas</option>
-            @for (loc of salesHistoryService.availableLocations; track loc.id) {
-              <option [value]="loc.id">{{ loc.name }}</option>
-            }
-          </select>
-        </div>
-      }
-    </div>
-
-    <!-- Transfer list -->
-    @if (transferHistoryService.filteredTransfers().length === 0) {
-      <div class="flex flex-col items-center justify-center flex-1 text-zinc-400">
-        <mat-icon class="text-7xl mb-4 text-zinc-300">swap_horiz</mat-icon>
-        <p class="text-xl font-medium text-zinc-500">No se encontraron transferencias</p>
-        <p class="text-sm text-zinc-400 mt-1">Probá con otros filtros</p>
-      </div>
-    }
-
-    @if (transferHistoryService.filteredTransfers().length > 0) {
-      <div class="flex flex-col gap-3">
-        @for (trf of transferHistoryService.filteredTransfers(); track trf.id) {
-          <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden cursor-pointer transition hover:shadow-md">
-            <div
-              class="flex flex-row items-center gap-2 md:gap-4 px-4 md:px-6 py-3 md:py-4 flex-wrap"
-              (click)="toggleTransferExpand(trf.id)"
-            >
-              <mat-icon class="text-zinc-300 text-lg shrink-0 transition-transform duration-300"
-                [class.rotate-90]="expandedTransferId() === trf.id"
-              >chevron_right</mat-icon>
-              <div class="flex flex-col min-w-0 w-20 md:w-28 shrink-0">
-                <span class="text-xs md:text-sm font-semibold text-zinc-800">{{ trf.dateTime | date:'dd/MM/yyyy' }}</span>
-                <span class="text-[10px] md:text-xs text-zinc-400">{{ trf.dateTime | date:'HH:mm' }}</span>
-              </div>
-              <div class="flex flex-row items-center gap-1.5 text-xs md:text-sm shrink-0">
-                <span class="font-medium text-zinc-700 truncate max-w-16 md:max-w-none">{{ trf.originName }}</span>
-                <mat-icon class="text-zinc-300 text-sm md:text-base">arrow_forward</mat-icon>
-                <span class="font-medium text-zinc-700 truncate max-w-16 md:max-w-none">{{ trf.destinationName }}</span>
-              </div>
-              <span class="text-[10px] md:text-xs text-zinc-400 shrink-0">{{ trf.itemCount }} {{ trf.itemCount === 1 ? 'SKU' : 'SKUs' }}</span>
-              <span class="flex-1 min-w-0"></span>
-              <span class="px-2 md:px-3 py-1 rounded-full text-[10px] md:text-[11px] font-bold tracking-wider shrink-0" [class]="getStatusClass(trf.status)">
-                {{ getStatusLabel(trf.status) }}
-              </span>
-            </div>
-            <div
-              class="expandable-content"
-              [class.expanded]="expandedTransferId() === trf.id"
-            >
-              <div class="border-t border-gray-100 px-6 py-4">
-                <table class="w-full text-sm">
-                  <thead>
-                    <tr class="border-b border-gray-100">
-                      <th class="text-left py-2 text-zinc-400 font-medium text-xs uppercase tracking-wider">Modelo</th>
-                      <th class="text-left py-2 text-zinc-400 font-medium text-xs uppercase tracking-wider">Talle</th>
-                      <th class="text-left py-2 text-zinc-400 font-medium text-xs uppercase tracking-wider">Color</th>
-                      <th class="text-right py-2 text-zinc-400 font-medium text-xs uppercase tracking-wider">Cantidad</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (det of trf.details; track $index) {
-                      <tr class="border-b border-gray-50 last:border-b-0">
-                        <td class="py-2 font-medium">{{ det.modelName }}</td>
-                        <td class="py-2 text-zinc-500">T. {{ det.size }}</td>
-                        <td class="py-2 text-zinc-500">{{ det.colorName }}</td>
-                        <td class="py-2 text-right font-semibold">{{ det.quantity }}</td>
-                      </tr>
+                  @case ('transferencia') {
+                    @if (event.transfer) {
+                      <table class="w-full text-xs">
+                        <thead>
+                          <tr class="border-b border-gray-100">
+                            <th class="text-left py-1.5 text-zinc-400 font-medium text-[10px] uppercase tracking-wider">Modelo</th>
+                            <th class="text-left py-1.5 text-zinc-400 font-medium text-[10px] uppercase tracking-wider">Talle</th>
+                            <th class="text-left py-1.5 text-zinc-400 font-medium text-[10px] uppercase tracking-wider">Color</th>
+                            <th class="text-right py-1.5 text-zinc-400 font-medium text-[10px] uppercase tracking-wider">Cantidad</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @for (det of event.transfer.details; track $index) {
+                            <tr class="border-b border-gray-50 last:border-b-0">
+                              <td class="py-1.5 font-medium">{{ det.modelName }}</td>
+                              <td class="py-1.5 text-zinc-500">T. {{ det.size }}</td>
+                              <td class="py-1.5 text-zinc-500">{{ det.colorName }}</td>
+                              <td class="py-1.5 text-right font-semibold">{{ det.quantity }}</td>
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
+                      @if (isAdmin()) {
+                        <div class="mt-3 flex justify-end">
+                          <button
+                            (click)="$event.stopPropagation(); deleteTransfer(event.transfer.id)"
+                            class="flex flex-row items-center gap-1 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wider text-white bg-red-500 border border-red-500 hover:bg-red-600 transition cursor-pointer"
+                          >
+                            <mat-icon class="text-sm">delete</mat-icon>
+                            ELIMINAR
+                          </button>
+                        </div>
+                      }
                     }
-                  </tbody>
-                </table>
-                @if (isAdmin()) {
-                  <div class="mt-4 flex justify-end">
-                    <button
-                      (click)="$event.stopPropagation(); deleteTransfer(trf.id)"
-                      class="flex flex-row items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold tracking-wider text-white bg-red-500 border border-red-500 hover:bg-red-600 transition cursor-pointer"
-                    >
-                      <mat-icon class="text-base">delete</mat-icon>
-                      ELIMINAR
-                    </button>
-                  </div>
+                  }
+                  @case ('movimiento') {
+                    @if (event.movement) {
+                      <div class="flex flex-row gap-6 text-xs">
+                        <div>
+                          <span class="text-zinc-400">Producto: </span>
+                          <span class="font-medium">{{ event.movement.modelName }}</span>
+                          @if (event.movement.size) { <span class="text-zinc-400"> T.{{ event.movement.size }}</span> }
+                          @if (event.movement.colorName) { <span class="text-zinc-400"> {{ event.movement.colorName }}</span> }
+                        </div>
+                        <div>
+                          <span class="text-zinc-400">Ubicación: </span>
+                          <span class="font-medium">{{ event.movement.locationName }}</span>
+                        </div>
+                        <div>
+                          <span class="text-zinc-400">Ref: </span>
+                          <span class="font-medium">
+                            @if (event.movement.referenceType === 'sale') { Venta #{{ event.movement.referenceId }} }
+                            @else if (event.movement.referenceType === 'ingreso') { Ingreso #{{ event.movement.referenceId }} }
+                            @else { Transferencia #{{ event.movement.referenceId }} }
+                          </span>
+                        </div>
+                      </div>
+                      @if (isAdmin()) {
+                        <div class="mt-3 flex justify-end">
+                          <button
+                            (click)="$event.stopPropagation(); deleteMovement(event.movement.id)"
+                            class="flex flex-row items-center gap-1 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wider text-white bg-red-500 border border-red-500 hover:bg-red-600 transition cursor-pointer"
+                          >
+                            <mat-icon class="text-sm">delete</mat-icon>
+                            ELIMINAR
+                          </button>
+                        </div>
+                      }
+                    }
+                  }
+                  @case ('ingreso') {
+                    @if (event.ingreso) {
+                      <table class="w-full text-xs">
+                        <thead>
+                          <tr class="border-b border-gray-100">
+                            <th class="text-left py-1.5 text-zinc-400 font-medium text-[10px] uppercase tracking-wider">Modelo</th>
+                            <th class="text-left py-1.5 text-zinc-400 font-medium text-[10px] uppercase tracking-wider">Talle</th>
+                            <th class="text-left py-1.5 text-zinc-400 font-medium text-[10px] uppercase tracking-wider">Color</th>
+                            <th class="text-right py-1.5 text-zinc-400 font-medium text-[10px] uppercase tracking-wider">Cantidad</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @for (det of event.ingreso.details; track $index) {
+                            <tr class="border-b border-gray-50 last:border-b-0">
+                              <td class="py-1.5 font-medium">{{ det.modelName }}</td>
+                              <td class="py-1.5 text-zinc-500">T. {{ det.size }}</td>
+                              <td class="py-1.5 text-zinc-500">{{ det.colorName }}</td>
+                              <td class="py-1.5 text-right font-semibold text-green-600">{{ det.quantity }}</td>
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
+                      @if (isAdmin()) {
+                        <div class="mt-3 flex justify-end">
+                          <button
+                            (click)="$event.stopPropagation(); deleteIngresoGroup(event.ingreso.id)"
+                            class="flex flex-row items-center gap-1 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wider text-white bg-red-500 border border-red-500 hover:bg-red-600 transition cursor-pointer"
+                          >
+                            <mat-icon class="text-sm">delete</mat-icon>
+                            ELIMINAR
+                          </button>
+                        </div>
+                      }
+                    }
+                  }
                 }
               </div>
             </div>
@@ -384,290 +376,24 @@
         }
       </div>
     }
-  }
-
-  <!-- ==================== TAB: MOVIMIENTOS ==================== -->
-  @if (activeTab() === 'movimientos') {
-    <!-- Summary mini-strip -->
-    <div class="flex flex-row gap-4">
-      <div class="flex-1 bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
-        <p class="text-xs text-zinc-400 font-semibold tracking-wider uppercase mb-1">Entradas</p>
-        <p class="text-2xl font-bold text-green-600">+ {{ stockMovementService.totalIn() | number:'1.0-0' }}</p>
-      </div>
-      <div class="flex-1 bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
-        <p class="text-xs text-zinc-400 font-semibold tracking-wider uppercase mb-1">Salidas</p>
-        <p class="text-2xl font-bold text-red-500">&minus; {{ stockMovementService.totalOut() | number:'1.0-0' }}</p>
-      </div>
-    </div>
-
-    <!-- Filters -->
-    <div class="flex flex-row flex-wrap items-end gap-4">
-      <div class="flex flex-col gap-1">
-        <label class="text-xs text-zinc-400 font-semibold tracking-wider uppercase">Desde</label>
-        <input
-          type="date"
-          class="border border-gray-300 rounded-xl px-4 py-2 text-sm outline-none focus:border-koq bg-white"
-          [value]="stockMovementService.dateFrom() ?? ''"
-          (change)="setMovementDateFrom($any($event.target).value)"
-        />
-      </div>
-      <div class="flex flex-col gap-1">
-        <label class="text-xs text-zinc-400 font-semibold tracking-wider uppercase">Hasta</label>
-        <input
-          type="date"
-          class="border border-gray-300 rounded-xl px-4 py-2 text-sm outline-none focus:border-koq bg-white"
-          [value]="stockMovementService.dateTo() ?? ''"
-          (change)="setMovementDateTo($any($event.target).value)"
-        />
-      </div>
-      <div class="flex flex-col gap-1">
-        <label class="text-xs text-zinc-400 font-semibold tracking-wider uppercase">Tipo</label>
-        <div class="flex flex-row gap-1.5">
-          @for (t of typeFilters; track t) {
-            <button
-              (click)="setMovementType(t)"
-              class="px-3.5 py-2 rounded-xl text-xs font-bold tracking-wider transition border-2 cursor-pointer capitalize"
-              [class.bg-koq]="stockMovementService.typeFilter() === t"
-              [class.text-white]="stockMovementService.typeFilter() === t"
-              [class.border-koq]="stockMovementService.typeFilter() === t"
-              [class.bg-white]="stockMovementService.typeFilter() !== t"
-              [class.text-zinc-500]="stockMovementService.typeFilter() !== t"
-              [class.border-gray-200]="stockMovementService.typeFilter() !== t"
-              [class.hover:border-koq]="stockMovementService.typeFilter() !== t"
-            >
-              @switch (t) {
-                @case ('all') { TODOS }
-                @case ('in') { ENTRADAS }
-                @case ('out') { SALIDAS }
-              }
-            </button>
-          }
-        </div>
-      </div>
-      @if (isAdmin()) {
-        <div class="flex flex-col gap-1">
-          <label class="text-xs text-zinc-400 font-semibold tracking-wider uppercase">Ubicación</label>
-          <select
-            class="border border-gray-300 rounded-xl px-4 py-2 text-sm outline-none focus:border-koq bg-white"
-            [value]="stockMovementService.locationId() ?? ''"
-            (change)="setMovementLocation($any($event.target).value)"
-          >
-            <option value="">Todas</option>
-            @for (loc of salesHistoryService.availableLocations; track loc.id) {
-              <option [value]="loc.id">{{ loc.name }}</option>
-            }
-          </select>
-        </div>
-      }
-      <div class="flex flex-col gap-1">
-        <label class="text-xs text-zinc-400 font-semibold tracking-wider uppercase">Buscar</label>
-        <input
-          type="text"
-          placeholder="Producto o referencia..."
-          class="border border-gray-300 rounded-xl px-4 py-2 text-sm outline-none focus:border-koq bg-white w-48"
-          [ngModel]="stockMovementService.productSearch()"
-          (ngModelChange)="stockMovementService.productSearch.set($any($event))"
-        />
-      </div>
-    </div>
-
-    <!-- Movements table -->
-    @if (stockMovementService.filteredMovements().length === 0) {
-      <div class="flex flex-col items-center justify-center flex-1 text-zinc-400">
-        <mat-icon class="text-7xl mb-4 text-zinc-300">compare_arrows</mat-icon>
-        <p class="text-xl font-medium text-zinc-500">No se encontraron movimientos</p>
-        <p class="text-sm text-zinc-400 mt-1">Probá con otros filtros</p>
-      </div>
-    }
-
-    @if (stockMovementService.filteredMovements().length > 0) {
-      <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-        <table class="w-full text-sm">
-          <thead>
-            <tr class="border-b border-gray-100 bg-gray-50">
-              <th class="text-left py-3 px-4 text-zinc-400 font-medium text-xs uppercase tracking-wider">Fecha</th>
-              <th class="text-left py-3 px-4 text-zinc-400 font-medium text-xs uppercase tracking-wider">Producto</th>
-              <th class="text-left py-3 px-4 text-zinc-400 font-medium text-xs uppercase tracking-wider">Ubicación</th>
-              <th class="text-left py-3 px-4 text-zinc-400 font-medium text-xs uppercase tracking-wider">Tipo</th>
-              <th class="text-right py-3 px-4 text-zinc-400 font-medium text-xs uppercase tracking-wider">Cantidad</th>
-              <th class="text-left py-3 px-4 text-zinc-400 font-medium text-xs uppercase tracking-wider">Referencia</th>
-              @if (isAdmin()) {
-                <th class="py-3 px-4 w-10"></th>
-              }
-            </tr>
-          </thead>
-          <tbody>
-            @for (m of stockMovementService.filteredMovements(); track m.id) {
-              <tr class="border-b border-gray-50 last:border-b-0 hover:bg-gray-50">
-                <td class="py-3 px-4 whitespace-nowrap">
-                  <span class="font-semibold text-zinc-800">{{ m.dateTime | date:'dd/MM/yyyy' }}</span>
-                  <span class="text-zinc-400 ml-1">{{ m.dateTime | date:'HH:mm' }}</span>
-                </td>
-                <td class="py-3 px-4">
-                  <span class="font-medium">{{ m.modelName }}</span>
-                  @if (m.size) { <span class="text-zinc-400">T.{{ m.size }}</span> }
-                  @if (m.colorName) { <span class="text-zinc-400">{{ m.colorName }}</span> }
-                </td>
-                <td class="py-3 px-4 text-zinc-600">{{ m.locationName }}</td>
-                <td class="py-3 px-4">
-                  @if (m.type === 'in') {
-                    <span class="px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wider bg-green-100 text-green-700">ENTRADA</span>
-                  } @else {
-                    <span class="px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wider bg-red-100 text-red-600">SALIDA</span>
-                  }
-                </td>
-                <td class="py-3 px-4 text-right font-bold"
-                  [class.text-green-600]="m.type === 'in'"
-                  [class.text-red-500]="m.type === 'out'"
-                >
-                  {{ m.type === 'in' ? '+' : '&minus;' }}{{ m.quantity }}
-                </td>
-                <td class="py-3 px-4 text-zinc-500 text-xs">
-                  @if (m.referenceType === 'sale') { Venta #{{ m.referenceId }} }
-                  @else if (m.referenceType === 'ingreso') { Ingreso #{{ m.referenceId }} }
-                  @else { Transferencia #{{ m.referenceId }} }
-                </td>
-                @if (isAdmin()) {
-                  <td class="py-3 px-2 text-center">
-                    <button
-                      (click)="deleteMovement(m.id)"
-                      class="text-zinc-300 hover:text-red-500 transition cursor-pointer"
-                      title="Eliminar movimiento"
-                    >
-                      <mat-icon class="text-lg">delete</mat-icon>
-                    </button>
-                  </td>
-                }
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    }
-  }
-
-  <!-- ==================== TAB: INGRESOS ==================== -->
-  @if (activeTab() === 'ingresos') {
-    <div class="flex flex-col md:flex-row gap-4">
-      <div class="flex-1 bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-        <p class="text-xs text-zinc-400 font-semibold tracking-wider uppercase mb-1">Total ingresos</p>
-        <p class="text-2xl font-bold text-green-600">{{ stockMovementService.groupedIngresos().length }}</p>
-      </div>
-      <div class="flex-1 bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-        <p class="text-xs text-zinc-400 font-semibold tracking-wider uppercase mb-1">Unidades ingresadas</p>
-        <p class="text-2xl font-bold text-koq">+ {{ stockMovementService.totalIngresadas() | number:'1.0-0' }}</p>
-      </div>
-    </div>
-
-    <!-- Filters -->
-    <div class="flex flex-row flex-wrap items-end gap-4">
-      <div class="flex flex-col gap-1">
-        <label class="text-xs text-zinc-400 font-semibold tracking-wider uppercase">Desde</label>
-        <input
-          type="date"
-          class="border border-gray-300 rounded-xl px-4 py-2 text-sm outline-none focus:border-koq bg-white"
-          [value]="stockMovementService.dateFrom() ?? ''"
-          (change)="setMovementDateFrom($any($event.target).value)"
-        />
-      </div>
-      <div class="flex flex-col gap-1">
-        <label class="text-xs text-zinc-400 font-semibold tracking-wider uppercase">Hasta</label>
-        <input
-          type="date"
-          class="border border-gray-300 rounded-xl px-4 py-2 text-sm outline-none focus:border-koq bg-white"
-          [value]="stockMovementService.dateTo() ?? ''"
-          (change)="setMovementDateTo($any($event.target).value)"
-        />
-      </div>
-      @if (isAdmin()) {
-        <div class="flex flex-col gap-1">
-          <label class="text-xs text-zinc-400 font-semibold tracking-wider uppercase">Ubicación</label>
-          <select
-            class="border border-gray-300 rounded-xl px-4 py-2 text-sm outline-none focus:border-koq bg-white"
-            [value]="stockMovementService.locationId() ?? ''"
-            (change)="setMovementLocation($any($event.target).value)"
-          >
-            <option value="">Todas</option>
-            @for (loc of salesHistoryService.availableLocations; track loc.id) {
-              <option [value]="loc.id">{{ loc.name }}</option>
-            }
-          </select>
-        </div>
-      }
-    </div>
-
-    <!-- Ingresos list -->
-    @if (stockMovementService.groupedIngresos().length === 0) {
-      <div class="flex flex-col items-center justify-center flex-1 text-zinc-400">
-        <mat-icon class="text-7xl mb-4 text-zinc-300">add_shopping_cart</mat-icon>
-        <p class="text-xl font-medium text-zinc-500">No se encontraron ingresos</p>
-        <p class="text-sm text-zinc-400 mt-1">Probá con otros filtros</p>
-      </div>
-    }
-
-    @if (stockMovementService.groupedIngresos().length > 0) {
-      <div class="flex flex-col gap-3">
-        @for (group of stockMovementService.groupedIngresos(); track group.id) {
-          <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden cursor-pointer transition hover:shadow-md">
-            <div
-              class="flex flex-row items-center gap-2 md:gap-4 px-4 md:px-6 py-3 md:py-4"
-              (click)="toggleIngresoExpand(group.id)"
-            >
-              <mat-icon class="text-zinc-300 text-lg shrink-0 transition-transform duration-300"
-                [class.rotate-90]="expandedIngresoId() === group.id"
-              >chevron_right</mat-icon>
-              <div class="flex flex-col min-w-0 w-20 md:w-28 shrink-0">
-                <span class="text-xs md:text-sm font-semibold text-zinc-800">{{ group.dateTime | date:'dd/MM/yyyy' }}</span>
-                <span class="text-[10px] md:text-xs text-zinc-400">{{ group.dateTime | date:'HH:mm' }}</span>
-              </div>
-              <mat-icon class="text-zinc-400 text-base shrink-0">store</mat-icon>
-              <span class="text-xs md:text-sm text-zinc-600 font-medium truncate max-w-24 md:max-w-none">{{ group.locationName }}</span>
-              <span class="text-[10px] md:text-xs text-zinc-400 shrink-0">{{ group.itemCount }} {{ group.itemCount === 1 ? 'SKU' : 'SKUs' }}</span>
-              <span class="flex-1 min-w-0"></span>
-              <span class="text-sm md:text-base font-bold text-green-600 shrink-0">+{{ group.totalUnits }}</span>
-            </div>
-            <div
-              class="expandable-content"
-              [class.expanded]="expandedIngresoId() === group.id"
-            >
-              <div class="border-t border-gray-100 px-6 py-4">
-                <table class="w-full text-sm">
-                  <thead>
-                    <tr class="border-b border-gray-100">
-                      <th class="text-left py-2 text-zinc-400 font-medium text-xs uppercase tracking-wider">Modelo</th>
-                      <th class="text-left py-2 text-zinc-400 font-medium text-xs uppercase tracking-wider">Talle</th>
-                      <th class="text-left py-2 text-zinc-400 font-medium text-xs uppercase tracking-wider">Color</th>
-                      <th class="text-right py-2 text-zinc-400 font-medium text-xs uppercase tracking-wider">Cantidad</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (det of group.details; track $index) {
-                      <tr class="border-b border-gray-50 last:border-b-0">
-                        <td class="py-2 font-medium">{{ det.modelName }}</td>
-                        <td class="py-2 text-zinc-500">T. {{ det.size }}</td>
-                        <td class="py-2 text-zinc-500">{{ det.colorName }}</td>
-                        <td class="py-2 text-right font-semibold text-green-600">{{ det.quantity }}</td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-                @if (isAdmin()) {
-                  <div class="mt-4 flex justify-end">
-                    <button
-                      (click)="$event.stopPropagation(); deleteIngresoGroup(group.id)"
-                      class="flex flex-row items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold tracking-wider text-white bg-red-500 border border-red-500 hover:bg-red-600 transition cursor-pointer"
-                    >
-                      <mat-icon class="text-base">delete</mat-icon>
-                      ELIMINAR
-                    </button>
-                  </div>
-                }
-              </div>
-            </div>
-          </div>
-        }
-      </div>
-    }
-  }
   </div>
+
+  <!-- Pagination -->
+  @if (totalPages() > 1) {
+    <div class="flex flex-row items-center justify-center gap-4 shrink-0 pb-1">
+      <button
+        (click)="prevPage()"
+        [disabled]="page() === 0"
+        class="px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-500 border border-gray-200 hover:border-koq hover:text-koq transition cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+      >← Anterior</button>
+      <span class="text-xs text-zinc-400">
+        Página {{ page() + 1 }} de {{ totalPages() }}
+      </span>
+      <button
+        (click)="nextPage()"
+        [disabled]="page() >= totalPages() - 1"
+        class="px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-500 border border-gray-200 hover:border-koq hover:text-koq transition cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+      >Siguiente →</button>
+    </div>
+  }
 </div>
