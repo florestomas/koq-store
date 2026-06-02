@@ -3,6 +3,7 @@ import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/materia
 import { MatButtonModule } from '@angular/material/button';
 import { UpperCasePipe } from '@angular/common';
 import { SelectableModel, TransferItem } from '../../core/services/transfer.service';
+import { CatalogService } from '../../core/services/catalog.service';
 
 export interface VariantPickerData {
   model: SelectableModel;

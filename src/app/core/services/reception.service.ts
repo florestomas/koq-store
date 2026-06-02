@@ -52,7 +52,7 @@ export class ReceptionService {
 
   private buildReceptionRows(status: 'pending' | 'confirmed'): ReceptionRow[] {
     const user = this.authService.currentUser();
-    const isAdmin = user?.role === 'admin';
+    const isAdmin = this.authService.isAdmin();
     const userLocationId = user?.idLocation;
 
     const allProducts = this.catalog.catalogProducts();

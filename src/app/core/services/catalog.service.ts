@@ -48,7 +48,7 @@ export class CatalogService {
   readonly filteredItems = computed<CatalogItem[]>(() => {
     const _refresh = this.refreshCounter();
     const user = this.authService.currentUser();
-    const isAdmin = user?.role === 'admin';
+    const isAdmin = this.authService.isAdmin();
 
     const term = this.searchTerm().toLowerCase().trim();
     const catId = this.selectedCategoryId();

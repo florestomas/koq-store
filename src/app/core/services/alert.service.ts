@@ -25,7 +25,7 @@ export class AlertService {
   readonly alerts = computed<AlertItem[]>(() => {
     this.refreshCounter();
     const user = this.authService.currentUser();
-    const isAdmin = user?.role === 'admin';
+    const isAdmin = this.authService.isAdmin();
     const userLocationId = user?.idLocation;
     const filterLocationId = this.selectedLocationId();
 
