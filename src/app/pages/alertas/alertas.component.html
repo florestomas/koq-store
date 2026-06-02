@@ -38,7 +38,7 @@
       <div class="flex flex-row items-center gap-2 mb-4 flex-wrap">
         <span class="text-xs font-semibold text-zinc-400 tracking-wider uppercase mr-2">Ubicación:</span>
         <button
-          class="px-4 py-1.5 rounded-full text-xs font-bold tracking-wider transition cursor-pointer"
+          class="px-4 py-2.5 rounded-full text-xs font-bold tracking-wider transition cursor-pointer"
           [class.bg-koq]="selectedLocationId() === null"
           [class.text-white]="selectedLocationId() === null"
           [class.bg-gray-100]="selectedLocationId() !== null"
@@ -47,7 +47,7 @@
         >Todas</button>
         @for (loc of locations(); track loc.id) {
           <button
-            class="px-4 py-1.5 rounded-full text-xs font-bold tracking-wider transition cursor-pointer"
+            class="px-4 py-2.5 rounded-full text-xs font-bold tracking-wider transition cursor-pointer"
             [class.bg-koq]="selectedLocationId() === loc.id"
             [class.text-white]="selectedLocationId() === loc.id"
             [class.bg-gray-100]="selectedLocationId() !== loc.id"

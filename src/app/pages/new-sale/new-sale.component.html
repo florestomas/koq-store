@@ -222,12 +222,12 @@
               <div class="flex flex-row items-center gap-1">
                 <button
                   (click)="changeQuantity(i, -1)"
-                  class="size-7 rounded-full border border-gray-300 flex items-center justify-center text-sm font-bold hover:bg-red-50 hover:border-red-300 hover:text-red-500 transition cursor-pointer"
+                  class="size-9 rounded-full border border-gray-300 flex items-center justify-center text-sm font-bold hover:bg-red-50 hover:border-red-300 hover:text-red-500 transition cursor-pointer"
                 >&minus;</button>
                 <span class="w-8 text-center text-sm font-bold">{{ item.quantity }}</span>
                 <button
                   (click)="changeQuantity(i, 1)"
-                  class="size-7 rounded-full border border-gray-300 flex items-center justify-center text-sm font-bold hover:bg-koq/10 hover:border-koq hover:text-koq transition cursor-pointer"
+                  class="size-9 rounded-full border border-gray-300 flex items-center justify-center text-sm font-bold hover:bg-koq/10 hover:border-koq hover:text-koq transition cursor-pointer"
                 >+</button>
               </div>
               <p class="text-xs font-bold text-zinc-700">$ {{ item.quantity * item.unitPrice | number:'1.0-0' }}</p>

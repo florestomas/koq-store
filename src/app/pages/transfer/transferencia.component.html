@@ -145,17 +145,17 @@
             <div class="flex flex-row items-center gap-1">
               <button
                 (click)="transferService.changeQuantity($index, -1)"
-                class="size-7 rounded-full border border-gray-300 flex items-center justify-center text-sm font-bold hover:bg-red-50 hover:border-red-300 hover:text-red-500 transition"
+                class="size-9 rounded-full border border-gray-300 flex items-center justify-center text-sm font-bold hover:bg-red-50 hover:border-red-300 hover:text-red-500 transition"
               >&minus;</button>
               <span class="w-8 text-center text-sm font-bold">{{ item.quantity }}</span>
               <button
                 (click)="transferService.changeQuantity($index, 1)"
-                class="size-7 rounded-full border border-gray-300 flex items-center justify-center text-sm font-bold hover:bg-koq/10 hover:border-koq hover:text-koq transition"
+                class="size-9 rounded-full border border-gray-300 flex items-center justify-center text-sm font-bold hover:bg-koq/10 hover:border-koq hover:text-koq transition"
               >+</button>
             </div>
             <button
               (click)="transferService.removeItem($index)"
-              class="size-7 rounded-full flex items-center justify-center text-zinc-400 hover:bg-red-50 hover:text-red-400 transition"
+              class="size-9 rounded-full flex items-center justify-center text-zinc-400 hover:bg-red-50 hover:text-red-400 transition"
             >
               <mat-icon class="text-base">close</mat-icon>
             </button>

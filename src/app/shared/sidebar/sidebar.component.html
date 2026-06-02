@@ -1,5 +1,5 @@
 <div
-  class="flex flex-col h-full items-start justify-start bg-white max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-50 max-md:shadow-2xl max-md:transition-transform max-md:duration-300 max-md:w-72"
+  class="flex flex-col h-full items-start justify-start bg-white relative max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-50 max-md:shadow-2xl max-md:transition-transform max-md:duration-300 max-md:w-72"
   [class.max-md:-translate-x-full]="!open"
 >
   <!-- Mobile close button -->
@@ -58,10 +58,8 @@
     ></app-nav-item>
   </nav>
 
-  <div class="flex-1"></div>
-
   <div
-    class="flex flex-col justify-start items-start p-6 gap-2 w-full border-t-2 border-gray-300"
+    class="absolute bottom-0 left-0 right-0 flex flex-col justify-start items-start px-6 py-4 gap-2 w-full border-t-2 border-gray-300 bg-white"
   >
     <div class="flex flex-row gap-x-2 items-center">
       <mat-icon>person</mat-icon>
@@ -69,7 +67,7 @@
       @if (authService.currentUser()?.role === 'admin') {
         <button
           (click)="toggleAdminMode(); $event.stopPropagation()"
-          class="ml-auto px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider transition cursor-pointer border"
+          class="ml-auto px-3 py-1.5 rounded-full text-xs font-bold tracking-wider transition cursor-pointer border"
           [class.bg-koq]="authService.adminOverride()"
           [class.text-white]="authService.adminOverride()"
           [class.border-koq]="authService.adminOverride()"

@@ -37,7 +37,7 @@
     <div class="flex flex-row gap-1.5">
       <button
         (click)="toggleType('venta')"
-        class="flex flex-row items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold tracking-wider transition border-2 cursor-pointer"
+        class="flex flex-row items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold tracking-wider transition border-2 cursor-pointer"
         [class.bg-koq]="hasType('venta')"
         [class.text-white]="hasType('venta')"
         [class.border-koq]="hasType('venta')"
@@ -51,7 +51,7 @@
       </button>
       <button
         (click)="toggleType('transferencia')"
-        class="flex flex-row items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold tracking-wider transition border-2 cursor-pointer"
+        class="flex flex-row items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold tracking-wider transition border-2 cursor-pointer"
         [class.bg-koq]="hasType('transferencia')"
         [class.text-white]="hasType('transferencia')"
         [class.border-koq]="hasType('transferencia')"
@@ -65,7 +65,7 @@
       </button>
       <button
         (click)="toggleType('ingreso')"
-        class="flex flex-row items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold tracking-wider transition border-2 cursor-pointer"
+        class="flex flex-row items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold tracking-wider transition border-2 cursor-pointer"
         [class.bg-koq]="hasType('ingreso')"
         [class.text-white]="hasType('ingreso')"
         [class.border-koq]="hasType('ingreso')"
@@ -220,7 +220,7 @@
                           @if (isAdmin()) {
                             <button
                               (click)="$event.stopPropagation(); deleteSale(event.sale.id)"
-                              class="flex flex-row items-center gap-1 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wider text-white bg-red-500 border border-red-500 hover:bg-red-600 transition cursor-pointer"
+                              class="flex flex-row items-center gap-1 px-3 py-2 rounded-full text-xs font-bold tracking-wider text-white bg-red-500 border border-red-500 hover:bg-red-600 transition cursor-pointer"
                             >
                               <mat-icon class="text-sm">delete</mat-icon>
                               ELIMINAR
@@ -229,7 +229,7 @@
                           @if (event.sale.status === 'active') {
                             <button
                               (click)="$event.stopPropagation(); confirmCancel(event.sale.id)"
-                              class="flex flex-row items-center gap-1 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wider text-red-600 border border-red-200 hover:bg-red-50 transition cursor-pointer"
+                              class="flex flex-row items-center gap-1 px-3 py-2 rounded-full text-xs font-bold tracking-wider text-red-600 border border-red-200 hover:bg-red-50 transition cursor-pointer"
                             >
                               <mat-icon class="text-sm">cancel</mat-icon>
                               ANULAR VENTA
@@ -265,7 +265,7 @@
                         <div class="mt-3 flex justify-end">
                           <button
                             (click)="$event.stopPropagation(); deleteTransfer(event.transfer.id)"
-                            class="flex flex-row items-center gap-1 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wider text-white bg-red-500 border border-red-500 hover:bg-red-600 transition cursor-pointer"
+                            class="flex flex-row items-center gap-1 px-3 py-2 rounded-full text-xs font-bold tracking-wider text-white bg-red-500 border border-red-500 hover:bg-red-600 transition cursor-pointer"
                           >
                             <mat-icon class="text-sm">delete</mat-icon>
                             ELIMINAR
@@ -300,7 +300,7 @@
                         <div class="mt-3 flex justify-end">
                           <button
                             (click)="$event.stopPropagation(); deleteIngresoGroup(event.ingreso.id)"
-                            class="flex flex-row items-center gap-1 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wider text-white bg-red-500 border border-red-500 hover:bg-red-600 transition cursor-pointer"
+                            class="flex flex-row items-center gap-1 px-3 py-2 rounded-full text-xs font-bold tracking-wider text-white bg-red-500 border border-red-500 hover:bg-red-600 transition cursor-pointer"
                           >
                             <mat-icon class="text-sm">delete</mat-icon>
                             ELIMINAR
@@ -324,7 +324,7 @@
       <button
         (click)="prevPage()"
         [disabled]="page() === 0"
-        class="px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-500 border border-gray-200 hover:border-koq hover:text-koq transition cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+        class="px-3 py-2 rounded-lg text-xs font-medium text-zinc-500 border border-gray-200 hover:border-koq hover:text-koq transition cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
       >← Anterior</button>
       <span class="text-xs text-zinc-400">
         Página {{ page() + 1 }} de {{ totalPages() }}
@@ -332,7 +332,7 @@
       <button
         (click)="nextPage()"
         [disabled]="page() >= totalPages() - 1"
-        class="px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-500 border border-gray-200 hover:border-koq hover:text-koq transition cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+        class="px-3 py-2 rounded-lg text-xs font-medium text-zinc-500 border border-gray-200 hover:border-koq hover:text-koq transition cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
       >Siguiente →</button>
     </div>
   }
