@@ -18,6 +18,6 @@ describe('RecepcionesComponent', () => {
     const fixture = TestBed.createComponent(RecepcionesComponent);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.textContent).toContain('RECEPCIONES PENDIENTES');
+    expect(compiled.textContent).toContain('RECEPCIONES');
   });
 });

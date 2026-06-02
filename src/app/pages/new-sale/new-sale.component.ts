@@ -63,6 +63,14 @@ export class NewSaleComponent {
   );
   readonly user = computed(() => this.authService.currentUser());
 
+  readonly cartQuantities = computed(() => {
+    const map = new Map<string, number>();
+    for (const item of this.cartItems()) {
+      map.set(item.productId, (map.get(item.productId) ?? 0) + item.quantity);
+    }
+    return map;
+  });
+
   readonly availableModels = computed<ModelSearchResult[]>(() => {
     const locId = this.userLocationId();
     const models = this.catalogService.catalogModels();
@@ -70,6 +78,7 @@ export class NewSaleComponent {
     const stocks = this.catalogService.catalogStocks();
     const modelColors = this.catalogService.catalogModelColors();
     const categories = this.catalogService.categories();
+    const cartMap = this.cartQuantities();
 
     return models
       .filter((m) => m.active)
@@ -88,6 +97,8 @@ export class NewSaleComponent {
           0,
         );
 
+        const cartTotal = productIds.reduce((sum, pid) => sum + (cartMap.get(pid) ?? 0), 0);
+
         const imageUrl =
           modelColors.find(
             (mc) => mc.idClothingModel === model.id,
@@ -96,7 +107,7 @@ export class NewSaleComponent {
         const categoryName =
           categories.find((c) => c.id === model.idCategory)?.name ?? '';
 
-        return { model, imageUrl, categoryName, totalStock };
+        return { model, imageUrl, categoryName, totalStock: Math.max(0, totalStock - cartTotal) };
       })
       .filter((r) => r.totalStock > 0);
   });
@@ -150,13 +161,16 @@ export class NewSaleComponent {
     const products = this.modelProducts();
     const locId = this.userLocationId();
     const stocks = this.catalogService.catalogStocks();
-    return stocks
+    const cartMap = this.cartQuantities();
+    const dbStock = stocks
       .filter(
         (s) =>
           products.some((p) => p.id === s.idProduct) &&
           s.idLocation === locId,
       )
       .reduce((sum, s) => sum + s.currentStock, 0);
+    const cartTotal = products.reduce((sum, p) => sum + (cartMap.get(p.id) ?? 0), 0);
+    return Math.max(0, dbStock - cartTotal);
   });
 
   readonly allSizes = computed(() => {
@@ -172,6 +186,7 @@ export class NewSaleComponent {
     const sizes = this.allSizes();
     const colors = this.catalogService.colors();
     const stocks = this.catalogService.catalogStocks();
+    const cartMap = this.cartQuantities();
     const colorIds = [...new Set(products.map((p) => p.idColor))];
 
     return colorIds.map((colorId) => {
@@ -181,11 +196,12 @@ export class NewSaleComponent {
       const cells: VariantCell[] = sizes.map((size) => {
         const product = colorProducts.find((p) => p.size === size);
         if (!product) return { productId: null, size, stock: 0 };
-        const stock =
+        const dbStock =
           stocks.find(
             (s) => s.idProduct === product.id && s.idLocation === locId,
           )?.currentStock ?? 0;
-        return { productId: product.id, size, stock };
+        const cartQty = cartMap.get(product.id) ?? 0;
+        return { productId: product.id, size, stock: Math.max(0, dbStock - cartQty) };
       });
 
       return { colorId, colorName, cells };
@@ -399,6 +415,7 @@ export class NewSaleComponent {
       this.discountValue.set(0);
       this.searchControl.setValue('');
       this.searchTerm.set('');
+      this.catalogService.triggerRefresh();
       setTimeout(() => this.confirmed.set(false), 3000);
     } else {
       this.error.set('Error al procesar la venta. Intente nuevamente.');

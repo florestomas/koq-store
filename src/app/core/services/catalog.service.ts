@@ -113,7 +113,10 @@ export class CatalogService {
           const sizeStock = stocks
             .filter((s) => sizeProducts.some((sp) => sp.id === s.idProduct))
             .reduce((sum, s) => sum + s.currentStock, 0);
-          return { size, stock: sizeStock };
+          const sizeMinStock = stocks
+            .filter((s) => sizeProducts.some((sp) => sp.id === s.idProduct))
+            .reduce((sum, s) => sum + s.minimumStock, 0);
+          return { size, stock: sizeStock, minStock: sizeMinStock };
         });
         return { colorName, sizes };
       });
@@ -151,6 +154,7 @@ export class CatalogService {
         idProduct: s.idProduct,
         idLocation: s.idLocation,
         currentStock: s.currentStock,
+        minimumStock: s.minimumStock,
       }));
 
       return {

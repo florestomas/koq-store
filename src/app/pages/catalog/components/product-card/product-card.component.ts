@@ -58,7 +58,10 @@ export class ProductCardComponent {
           const sizeStock = stocks
             .filter((s) => sizeProducts.some((sp) => sp.id === s.idProduct))
             .reduce((sum, s) => sum + s.currentStock, 0);
-          return { size, stock: sizeStock };
+          const sizeMinStock = stocks
+            .filter((s) => sizeProducts.some((sp) => sp.id === s.idProduct))
+            .reduce((sum, s) => sum + s.minimumStock, 0);
+          return { size, stock: sizeStock, minStock: sizeMinStock };
         });
       return { colorName, sizes };
     });
@@ -78,5 +81,9 @@ export class ProductCardComponent {
 
   getStockForSize(row: ColorSizeRow, size: string): number {
     return row.sizes.find((s) => s.size === size)?.stock ?? 0;
+  }
+
+  getMinStockForSize(row: ColorSizeRow, size: string): number {
+    return row.sizes.find((s) => s.size === size)?.minStock ?? 0;
   }
 }

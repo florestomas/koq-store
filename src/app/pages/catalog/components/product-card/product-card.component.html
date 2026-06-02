@@ -76,7 +76,7 @@
             </span>
             <div class="flex flex-1 flex-row justify-around mx-2 md:mx-3">
               @for (size of uniqueSizes(); track size) {
-                <app-stock-badge [stock]="getStockForSize(row, size)"></app-stock-badge>
+                <app-stock-badge [stock]="getStockForSize(row, size)" [minStock]="getMinStockForSize(row, size)"></app-stock-badge>
               }
             </div>
           </div>
