@@ -18,6 +18,22 @@ export interface MovementRow {
   referenceId: string;
 }
 
+export interface IngresoDetail {
+  modelName: string;
+  size: string;
+  colorName: string;
+  quantity: number;
+}
+
+export interface IngresoGroup {
+  id: string;
+  dateTime: string;
+  locationName: string;
+  itemCount: number;
+  totalUnits: number;
+  details: IngresoDetail[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class StockMovementService {
   private readonly authService = inject(AuthService);
@@ -49,7 +65,9 @@ export class StockMovementService {
 
     let movements: StockMovement[] = this.movementsSig();
 
-    if (!isAdmin && userLocationId) {
+    if (isAdmin && locId) {
+      movements = movements.filter((m) => m.idLocation === locId);
+    } else if (!isAdmin && userLocationId) {
       movements = movements.filter((m) => m.idLocation === userLocationId);
     }
 
@@ -117,6 +135,75 @@ export class StockMovementService {
       .reduce((sum, m) => sum + m.quantity, 0),
   );
 
+  readonly groupedIngresos = computed<IngresoGroup[]>(() => {
+    const user = this.authService.currentUser();
+    const isAdmin = user?.role === 'admin';
+    const userLocationId = user?.idLocation;
+
+    const from = this.dateFrom();
+    const to = this.dateTo();
+    const locId = this.locationId();
+
+    const allProducts = this.catalog.catalogProducts();
+    const allModels = this.catalog.catalogModels();
+    const allColors = this.catalog.colors();
+    const allLocations = this.catalog.locations();
+
+    let movements = this.movementsSig().filter((m) => m.referenceType === 'ingreso');
+
+    if (isAdmin && locId) {
+      movements = movements.filter((m) => m.idLocation === locId);
+    } else if (!isAdmin && userLocationId) {
+      movements = movements.filter((m) => m.idLocation === userLocationId);
+    }
+
+    if (from) {
+      movements = movements.filter((m) => m.dateTime >= from);
+    }
+    if (to) {
+      movements = movements.filter((m) => m.dateTime <= to + 'T23:59:59.999Z');
+    }
+
+    const groups = new Map<string, { dateTime: string; locationId: string; items: StockMovement[] }>();
+    for (const m of movements) {
+      if (!groups.has(m.referenceId)) {
+        groups.set(m.referenceId, { dateTime: m.dateTime, locationId: m.idLocation, items: [] });
+      }
+      groups.get(m.referenceId)!.items.push(m);
+    }
+
+    const result: IngresoGroup[] = [];
+    for (const [id, group] of groups) {
+      const details: IngresoDetail[] = group.items.map((m) => {
+        const product = allProducts.find((p) => p.id === m.idProduct);
+        const model = product ? allModels.find((x) => x.id === product.idClothingModel) : undefined;
+        const color = product ? allColors.find((c) => c.id === product.idColor) : undefined;
+        return {
+          modelName: model?.name ?? 'Producto',
+          size: product?.size ?? '',
+          colorName: color?.name ?? '',
+          quantity: m.quantity,
+        };
+      });
+
+      result.push({
+        id,
+        dateTime: group.dateTime,
+        locationName: allLocations.find((l) => l.id === group.locationId)?.name ?? 'Desconocido',
+        itemCount: details.length,
+        totalUnits: details.reduce((sum, d) => sum + d.quantity, 0),
+        details,
+      });
+    }
+
+    result.sort((a, b) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime());
+    return result;
+  });
+
+  readonly totalIngresadas = computed(() =>
+    this.groupedIngresos().reduce((sum, g) => sum + g.totalUnits, 0),
+  );
+
   constructor() {
     this.authService.waitForInit().then(() => this.loadMovements());
   }
@@ -155,5 +242,29 @@ export class StockMovementService {
     }
 
     await this.loadMovements();
+  }
+
+  async deleteMovement(movementId: string): Promise<boolean> {
+    if (!window.confirm('¿Eliminar este movimiento definitivamente? Esta acción no se puede deshacer.')) return false;
+    try {
+      await getSupabase().from('stock_movements').delete().eq('id', movementId);
+      await this.loadMovements();
+      return true;
+    } catch (err) {
+      console.error('Error deleting movement:', err);
+      return false;
+    }
+  }
+
+  async deleteIngresoGroup(referenceId: string): Promise<boolean> {
+    if (!window.confirm('¿Eliminar este ingreso definitivamente? Esta acción no se puede deshacer.')) return false;
+    try {
+      await getSupabase().from('stock_movements').delete().eq('reference_type', 'ingreso').eq('reference_id', referenceId);
+      await this.loadMovements();
+      return true;
+    } catch (err) {
+      console.error('Error deleting ingreso group:', err);
+      return false;
+    }
   }
 }

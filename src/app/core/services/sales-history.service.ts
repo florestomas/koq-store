@@ -283,6 +283,27 @@ export class SalesHistoryService {
     }
   }
 
+  async hardDeleteSale(saleId: string): Promise<boolean> {
+    if (!window.confirm('¿Eliminar esta venta definitivamente? Esta acción no se puede deshacer.')) return false;
+    try {
+      const supabase = getSupabase();
+      const details = this.saleDetailsSig().filter((d) => d.idSale === saleId);
+      const productIds = details.map((d) => d.idProduct);
+
+      if (productIds.length > 0) {
+        await supabase.from('stock_movements').delete().eq('reference_type', 'sale').eq('reference_id', saleId);
+        await supabase.from('sale_details').delete().eq('id_sale', saleId);
+      }
+
+      await supabase.from('sales').delete().eq('id', saleId);
+      this.refresh();
+      return true;
+    } catch (err) {
+      console.error('Error deleting sale:', err);
+      return false;
+    }
+  }
+
   refresh(): void {
     this.refreshCounter.update((c) => c + 1);
     this.loadSales();

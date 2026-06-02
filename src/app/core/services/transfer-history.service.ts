@@ -58,7 +58,11 @@ export class TransferHistoryService {
 
     let transfers = this.transfersSig();
 
-    if (!isAdmin && userLocationId) {
+    if (isAdmin && locId) {
+      transfers = transfers.filter(
+        (t) => t.idOrigin === locId || t.idDestination === locId,
+      );
+    } else if (!isAdmin && userLocationId) {
       transfers = transfers.filter(
         (t) => t.idOrigin === userLocationId || t.idDestination === userLocationId,
       );
@@ -137,5 +141,26 @@ export class TransferHistoryService {
   refresh(): void {
     this.refreshCounter.update((c) => c + 1);
     this.loadTransfers();
+  }
+
+  async hardDeleteTransfer(transferId: string): Promise<boolean> {
+    if (!window.confirm('¿Eliminar esta transferencia definitivamente? Esta acción no se puede deshacer.')) return false;
+    try {
+      const supabase = getSupabase();
+      const details = this.transferDetailsSig().filter((d) => d.idTransfer === transferId);
+      const productIds = details.map((d) => d.idProduct);
+
+      if (productIds.length > 0) {
+        await supabase.from('stock_movements').delete().in('id_product', productIds).eq('reference_type', 'transfer');
+        await supabase.from('transfer_details').delete().eq('id_transfer', transferId);
+      }
+
+      await supabase.from('transfers').delete().eq('id', transferId);
+      this.refresh();
+      return true;
+    } catch (err) {
+      console.error('Error deleting transfer:', err);
+      return false;
+    }
   }
 }

@@ -20,10 +20,11 @@ export class HistorialComponent {
   readonly transferHistoryService = inject(TransferHistoryService);
   readonly stockMovementService = inject(StockMovementService);
 
-  readonly activeTab = signal<'ventas' | 'transferencias' | 'movimientos'>('ventas');
+  readonly activeTab = signal<'ventas' | 'transferencias' | 'movimientos' | 'ingresos'>('ventas');
 
   readonly expandedSaleId = signal<string | null>(null);
   readonly expandedTransferId = signal<string | null>(null);
+  readonly expandedIngresoId = signal<string | null>(null);
 
   readonly today = new Date().toISOString().split('T')[0];
   readonly thirtyDaysAgo = new Date(
@@ -69,6 +70,10 @@ export class HistorialComponent {
 
   toggleTransferExpand(id: string): void {
     this.expandedTransferId.update((tid) => (tid === id ? null : id));
+  }
+
+  toggleIngresoExpand(id: string): void {
+    this.expandedIngresoId.update((iid) => (iid === id ? null : id));
   }
 
   setSaleDateFrom(value: string): void {
@@ -155,5 +160,21 @@ export class HistorialComponent {
         console.error('No se pudo anular la venta');
       }
     }
+  }
+
+  async deleteSale(saleId: string): Promise<void> {
+    await this.salesHistoryService.hardDeleteSale(saleId);
+  }
+
+  async deleteTransfer(transferId: string): Promise<void> {
+    await this.transferHistoryService.hardDeleteTransfer(transferId);
+  }
+
+  async deleteMovement(movementId: string): Promise<void> {
+    await this.stockMovementService.deleteMovement(movementId);
+  }
+
+  async deleteIngresoGroup(referenceId: string): Promise<void> {
+    await this.stockMovementService.deleteIngresoGroup(referenceId);
   }
 }

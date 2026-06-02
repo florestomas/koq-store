@@ -34,6 +34,15 @@
     >
       MOVIMIENTOS
     </button>
+    <button
+      (click)="activeTab.set('ingresos')"
+      class="py-3 px-4 md:px-8 whitespace-nowrap text-zinc-500 font-medium tracking-widest text-sm border-b-4 border-transparent hover:border-b-4 hover:text-koq hover:border-koq transition cursor-pointer"
+      [class.text-koq]="activeTab() === 'ingresos'"
+      [class.border-koq]="activeTab() === 'ingresos'"
+      [class.border-b-4]="activeTab() === 'ingresos'"
+    >
+      INGRESOS
+    </button>
   </nav>
 
   <!-- ==================== TAB: VENTAS ==================== -->
@@ -229,8 +238,17 @@
                     <span class="font-bold w-24 text-right text-koq">$ {{ sale.totalAmount | number:'1.0-0' }}</span>
                   </div>
                 </div>
-                @if (sale.status === 'active') {
-                  <div class="mt-4 flex justify-end">
+                <div class="mt-4 flex justify-end gap-2">
+                  @if (isAdmin()) {
+                    <button
+                      (click)="$event.stopPropagation(); deleteSale(sale.id)"
+                      class="flex flex-row items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold tracking-wider text-white bg-red-500 border border-red-500 hover:bg-red-600 transition cursor-pointer"
+                    >
+                      <mat-icon class="text-base">delete</mat-icon>
+                      ELIMINAR
+                    </button>
+                  }
+                  @if (sale.status === 'active') {
                     <button
                       (click)="$event.stopPropagation(); confirmCancel(sale.id)"
                       class="flex flex-row items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold tracking-wider text-red-600 border border-red-200 hover:bg-red-50 transition cursor-pointer"
@@ -238,8 +256,8 @@
                       <mat-icon class="text-base">cancel</mat-icon>
                       ANULAR VENTA
                     </button>
-                  </div>
-                }
+                  }
+                </div>
               </div>
             </div>
           </div>
@@ -372,6 +390,17 @@
                     }
                   </tbody>
                 </table>
+                @if (isAdmin()) {
+                  <div class="mt-4 flex justify-end">
+                    <button
+                      (click)="$event.stopPropagation(); deleteTransfer(trf.id)"
+                      class="flex flex-row items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold tracking-wider text-white bg-red-500 border border-red-500 hover:bg-red-600 transition cursor-pointer"
+                    >
+                      <mat-icon class="text-base">delete</mat-icon>
+                      ELIMINAR
+                    </button>
+                  </div>
+                }
               </div>
             </div>
           </div>
@@ -485,6 +514,9 @@
               <th class="text-left py-3 px-4 text-zinc-400 font-medium text-xs uppercase tracking-wider">Tipo</th>
               <th class="text-right py-3 px-4 text-zinc-400 font-medium text-xs uppercase tracking-wider">Cantidad</th>
               <th class="text-left py-3 px-4 text-zinc-400 font-medium text-xs uppercase tracking-wider">Referencia</th>
+              @if (isAdmin()) {
+                <th class="py-3 px-4 w-10"></th>
+              }
             </tr>
           </thead>
           <tbody>
@@ -518,10 +550,145 @@
                   @else if (m.referenceType === 'ingreso') { Ingreso #{{ m.referenceId }} }
                   @else { Transferencia #{{ m.referenceId }} }
                 </td>
+                @if (isAdmin()) {
+                  <td class="py-3 px-2 text-center">
+                    <button
+                      (click)="deleteMovement(m.id)"
+                      class="text-zinc-300 hover:text-red-500 transition cursor-pointer"
+                      title="Eliminar movimiento"
+                    >
+                      <mat-icon class="text-lg">delete</mat-icon>
+                    </button>
+                  </td>
+                }
               </tr>
             }
           </tbody>
         </table>
+      </div>
+    }
+  }
+
+  <!-- ==================== TAB: INGRESOS ==================== -->
+  @if (activeTab() === 'ingresos') {
+    <div class="flex flex-col md:flex-row gap-4">
+      <div class="flex-1 bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+        <p class="text-xs text-zinc-400 font-semibold tracking-wider uppercase mb-1">Total ingresos</p>
+        <p class="text-2xl font-bold text-green-600">{{ stockMovementService.groupedIngresos().length }}</p>
+      </div>
+      <div class="flex-1 bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+        <p class="text-xs text-zinc-400 font-semibold tracking-wider uppercase mb-1">Unidades ingresadas</p>
+        <p class="text-2xl font-bold text-koq">+ {{ stockMovementService.totalIngresadas() | number:'1.0-0' }}</p>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="flex flex-row flex-wrap items-end gap-4">
+      <div class="flex flex-col gap-1">
+        <label class="text-xs text-zinc-400 font-semibold tracking-wider uppercase">Desde</label>
+        <input
+          type="date"
+          class="border border-gray-300 rounded-xl px-4 py-2 text-sm outline-none focus:border-koq bg-white"
+          [value]="stockMovementService.dateFrom() ?? ''"
+          (change)="setMovementDateFrom($any($event.target).value)"
+        />
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="text-xs text-zinc-400 font-semibold tracking-wider uppercase">Hasta</label>
+        <input
+          type="date"
+          class="border border-gray-300 rounded-xl px-4 py-2 text-sm outline-none focus:border-koq bg-white"
+          [value]="stockMovementService.dateTo() ?? ''"
+          (change)="setMovementDateTo($any($event.target).value)"
+        />
+      </div>
+      @if (isAdmin()) {
+        <div class="flex flex-col gap-1">
+          <label class="text-xs text-zinc-400 font-semibold tracking-wider uppercase">Ubicación</label>
+          <select
+            class="border border-gray-300 rounded-xl px-4 py-2 text-sm outline-none focus:border-koq bg-white"
+            [value]="stockMovementService.locationId() ?? ''"
+            (change)="setMovementLocation($any($event.target).value)"
+          >
+            <option value="">Todas</option>
+            @for (loc of salesHistoryService.availableLocations; track loc.id) {
+              <option [value]="loc.id">{{ loc.name }}</option>
+            }
+          </select>
+        </div>
+      }
+    </div>
+
+    <!-- Ingresos list -->
+    @if (stockMovementService.groupedIngresos().length === 0) {
+      <div class="flex flex-col items-center justify-center flex-1 text-zinc-400">
+        <mat-icon class="text-7xl mb-4 text-zinc-300">add_shopping_cart</mat-icon>
+        <p class="text-xl font-medium text-zinc-500">No se encontraron ingresos</p>
+        <p class="text-sm text-zinc-400 mt-1">Probá con otros filtros</p>
+      </div>
+    }
+
+    @if (stockMovementService.groupedIngresos().length > 0) {
+      <div class="flex flex-col gap-3">
+        @for (group of stockMovementService.groupedIngresos(); track group.id) {
+          <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden cursor-pointer transition hover:shadow-md">
+            <div
+              class="flex flex-row items-center gap-2 md:gap-4 px-4 md:px-6 py-3 md:py-4"
+              (click)="toggleIngresoExpand(group.id)"
+            >
+              <mat-icon class="text-zinc-300 text-lg shrink-0 transition-transform duration-300"
+                [class.rotate-90]="expandedIngresoId() === group.id"
+              >chevron_right</mat-icon>
+              <div class="flex flex-col min-w-0 w-20 md:w-28 shrink-0">
+                <span class="text-xs md:text-sm font-semibold text-zinc-800">{{ group.dateTime | date:'dd/MM/yyyy' }}</span>
+                <span class="text-[10px] md:text-xs text-zinc-400">{{ group.dateTime | date:'HH:mm' }}</span>
+              </div>
+              <mat-icon class="text-zinc-400 text-base shrink-0">store</mat-icon>
+              <span class="text-xs md:text-sm text-zinc-600 font-medium truncate max-w-24 md:max-w-none">{{ group.locationName }}</span>
+              <span class="text-[10px] md:text-xs text-zinc-400 shrink-0">{{ group.itemCount }} {{ group.itemCount === 1 ? 'SKU' : 'SKUs' }}</span>
+              <span class="flex-1 min-w-0"></span>
+              <span class="text-sm md:text-base font-bold text-green-600 shrink-0">+{{ group.totalUnits }}</span>
+            </div>
+            <div
+              class="expandable-content"
+              [class.expanded]="expandedIngresoId() === group.id"
+            >
+              <div class="border-t border-gray-100 px-6 py-4">
+                <table class="w-full text-sm">
+                  <thead>
+                    <tr class="border-b border-gray-100">
+                      <th class="text-left py-2 text-zinc-400 font-medium text-xs uppercase tracking-wider">Modelo</th>
+                      <th class="text-left py-2 text-zinc-400 font-medium text-xs uppercase tracking-wider">Talle</th>
+                      <th class="text-left py-2 text-zinc-400 font-medium text-xs uppercase tracking-wider">Color</th>
+                      <th class="text-right py-2 text-zinc-400 font-medium text-xs uppercase tracking-wider">Cantidad</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (det of group.details; track $index) {
+                      <tr class="border-b border-gray-50 last:border-b-0">
+                        <td class="py-2 font-medium">{{ det.modelName }}</td>
+                        <td class="py-2 text-zinc-500">T. {{ det.size }}</td>
+                        <td class="py-2 text-zinc-500">{{ det.colorName }}</td>
+                        <td class="py-2 text-right font-semibold text-green-600">{{ det.quantity }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+                @if (isAdmin()) {
+                  <div class="mt-4 flex justify-end">
+                    <button
+                      (click)="$event.stopPropagation(); deleteIngresoGroup(group.id)"
+                      class="flex flex-row items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold tracking-wider text-white bg-red-500 border border-red-500 hover:bg-red-600 transition cursor-pointer"
+                    >
+                      <mat-icon class="text-base">delete</mat-icon>
+                      ELIMINAR
+                    </button>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        }
       </div>
     }
   }
