@@ -1,4 +1,4 @@
-import { UpperCasePipe } from '@angular/common';
+import { UpperCasePipe, DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatIcon } from '@angular/material/icon';
@@ -15,7 +15,7 @@ import {
 
 @Component({
   selector: 'app-transferencia',
-  imports: [UpperCasePipe, ReactiveFormsModule, MatIcon],
+  imports: [UpperCasePipe, DecimalPipe, ReactiveFormsModule, MatIcon],
   templateUrl: './transferencia.component.html',
   styleUrl: './transferencia.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -61,7 +61,7 @@ export class TransferenciaComponent {
   async confirmTransfer(): Promise<void> {
     if (this.isConfirming()) return;
 
-    if (!window.confirm('¿Confirmar esta transferencia?')) return;
+    if (!window.confirm('¿Confirmar este traslado?')) return;
 
     this.error.set(null);
     this.isConfirming.set(true);
@@ -71,7 +71,7 @@ export class TransferenciaComponent {
         this.confirmed.set(true);
         setTimeout(() => this.confirmed.set(false), 3000);
       } else {
-        this.error.set('Error al confirmar la transferencia. Verificá destino y stock.');
+        this.error.set('Error al confirmar el traslado. Verificá destino y stock.');
       }
     } finally {
       this.isConfirming.set(false);

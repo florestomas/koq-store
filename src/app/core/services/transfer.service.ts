@@ -190,25 +190,6 @@ export class TransferService {
         },
       ]);
     }
-    } else {
-      const allColors = this.catalogService.colors();
-      const colorName =
-        allColors.find((c) => c.id === colorId)?.name ?? colorId;
-      this.items.update((items) => [
-        ...items,
-        {
-          modelId: model.modelId,
-          modelName: model.modelName,
-          imageUrl: model.imageUrl,
-          colorId,
-          colorName,
-          size,
-          productId,
-          stockAtOrigin,
-          quantity: 1,
-        },
-      ]);
-    }
   }
 
   addItemsFromPicker(
