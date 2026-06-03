@@ -23,6 +23,7 @@ export interface TransferRow {
   status: 'pending' | 'confirmed' | 'cancelled';
   confirmedAt?: string;
   itemCount: number;
+  totalValue: number;
   details: TransferDetailRow[];
 }
 
@@ -80,10 +81,12 @@ export class TransferHistoryService {
     }
 
     const result: TransferRow[] = transfers.map((t) => {
+      let totalValue = 0;
       const details: TransferDetailRow[] = this.transferDetailsSig()
         .filter((d) => d.idTransfer === t.id)
         .map((d) => {
           const product = allProducts.find((p) => p.id === d.idProduct);
+          totalValue += d.quantity * (product?.salePrice ?? 0);
           const model = product
             ? allModels.find((m) => m.id === product.idClothingModel)
             : undefined;
@@ -108,6 +111,7 @@ export class TransferHistoryService {
         status: t.status,
         confirmedAt: t.confirmedAt,
         itemCount: details.length,
+        totalValue,
         details,
       };
     });

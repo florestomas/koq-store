@@ -126,6 +126,7 @@ export class HistorialComponent {
         .filter((s) => s.status === 'active')
         .reduce((sum, s) => sum + s.totalAmount, 0),
       transferenciasCount: transfers.length,
+      transferenciasValue: transfers.reduce((sum, t) => sum + t.totalValue, 0),
       ingresosCount: ingresos.length,
       ingresosUnits: ingresos.reduce((sum, g) => sum + g.totalUnits, 0),
     };
@@ -179,7 +180,7 @@ export class HistorialComponent {
           summary: `Transferencia · ${trf.originName} → ${trf.destinationName}`,
           meta: statusMeta,
           metaClass: statusClass,
-          amount: `${trf.itemCount} SKU${trf.itemCount !== 1 ? 's' : ''}`,
+          amount: `$ ${Math.round(trf.totalValue).toLocaleString()}`,
           amountClass: 'text-zinc-800',
           rowClass: trf.status === 'cancelled' ? 'opacity-60' : '',
           transfer: trf,
