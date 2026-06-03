@@ -276,6 +276,7 @@ export class SalesHistoryService {
       }
 
       this.refresh();
+      this.catalog.triggerRefresh();
       return true;
     } catch (err) {
       console.error('Error in cancelSale:', err);
@@ -318,6 +319,7 @@ export class SalesHistoryService {
 
       await supabase.from('sales').delete().eq('id', saleId);
       this.refresh();
+      this.catalog.triggerRefresh();
       return true;
     } catch (err) {
       console.error('Error deleting sale:', err);

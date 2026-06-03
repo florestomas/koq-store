@@ -145,8 +145,8 @@ export class HistorialComponent {
           type: 'venta',
           icon: 'receipt_long',
           summary: `Venta · ${sale.operatorName}`,
-          meta: sale.channel === 'whatsapp' ? 'WhatsApp' : 'Local',
-          metaClass: sale.channel === 'whatsapp' ? 'text-blue-500' : 'text-green-600',
+          meta: cancelled ? 'DEVUELTA' : (sale.channel === 'whatsapp' ? 'WhatsApp' : 'Local'),
+          metaClass: cancelled ? 'text-red-400' : (sale.channel === 'whatsapp' ? 'text-blue-500' : 'text-green-600'),
           amount: `$ ${Math.round(sale.totalAmount).toLocaleString()}`,
           amountClass: cancelled ? 'text-red-400 line-through' : 'text-zinc-800',
           rowClass: cancelled ? 'opacity-60' : '',
@@ -242,7 +242,7 @@ export class HistorialComponent {
   }
 
   async confirmCancel(saleId: string): Promise<void> {
-    if (window.confirm('¿Estás seguro de que querés anular esta venta?')) {
+    if (window.confirm('¿Confirmar devolución de esta venta? Se restaurará el stock.')) {
       await this.salesHistoryService.cancelSale(saleId);
     }
   }
