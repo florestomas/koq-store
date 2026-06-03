@@ -194,7 +194,12 @@
                               <td class="py-1.5 text-zinc-500 whitespace-nowrap">T. {{ det.size }}</td>
                               <td class="py-1.5 text-zinc-500 whitespace-nowrap">{{ det.colorName }}</td>
                               <td class="py-1.5 text-right whitespace-nowrap">{{ det.quantity }}</td>
-                              <td class="py-1.5 text-right whitespace-nowrap">$ {{ det.unitPrice | number:'1.0-0' }}</td>
+                              <td class="py-1.5 text-right whitespace-nowrap">
+                                $ {{ det.unitPrice | number:'1.0-0' }}
+                                @if (det.isOffer) {
+                                  <span class="ml-1 text-[9px] font-bold text-koq bg-koq/10 px-1 py-0.5 rounded-full tracking-wider">OFERTA</span>
+                                }
+                              </td>
                               <td class="py-1.5 text-right font-semibold whitespace-nowrap">$ {{ det.quantity * det.unitPrice | number:'1.0-0' }}</td>
                             </tr>
                           }

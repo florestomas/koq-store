@@ -5,7 +5,8 @@
   [class.hover:border-red-400]="item().stockAlerts.length > 0"
 >
   <div
-    class="flex flex-row items-center justify-start bg-white rounded-t-3xl gap-2 w-full p-3 md:p-4 border-b border-gray-300/60"
+    (click)="cardExpanded.set(!cardExpanded())"
+    class="flex flex-row items-center justify-start bg-white rounded-t-3xl gap-2 w-full p-3 md:p-4 border-b border-gray-300/60 cursor-pointer"
   >
     <img [src]="item().imageUrl" class="size-12 md:size-16 rounded-xl" />
     <div class="flex flex-col flex-1 mx-2 md:mx-6 min-w-0">
@@ -41,20 +42,20 @@
 
     @if (authService.isAdmin()) {
       <button
-        (click)="deleteModel()"
+        (click)="$event.stopPropagation(); deleteModel()"
         class="rounded-full border p-1.5 border-zinc-500 text-zinc-500 hover:scale-110 hover:shadow-lg hover:border-red-500 hover:text-red-500 active:scale-95 transition-all duration-200 cursor-pointer group"
       >
         <mat-icon class="group-hover:scale-110 transition-transform duration-200">delete</mat-icon>
       </button>
       <button
-        (click)="openEdit()"
+        (click)="$event.stopPropagation(); openEdit()"
         class="rounded-full border p-1.5 border-zinc-500 text-zinc-500 hover:scale-110 hover:shadow-lg hover:border-koq hover:text-koq active:scale-95 transition-all duration-200 cursor-pointer group"
       >
         <mat-icon class="group-hover:rotate-12 transition-transform duration-200">edit</mat-icon>
       </button>
     }
     <button
-      (click)="cardExpanded.set(!cardExpanded())"
+      (click)="$event.stopPropagation(); cardExpanded.set(!cardExpanded())"
       class="rounded-full border p-1 border-koq text-white hover:scale-110 hover:shadow-xl active:scale-95 transition-all duration-200 cursor-pointer shrink-0"
       [class.bg-koq]="item().stockAlerts.length === 0"
       [class.bg-red-400]="item().stockAlerts.length > 0"

@@ -14,6 +14,7 @@ export interface SaleDetailRow {
   quantity: number;
   unitPrice: number;
   productId: string;
+  isOffer: boolean;
 }
 
 export interface SaleRow {
@@ -112,6 +113,7 @@ export class SalesHistoryService {
             quantity: d.quantity,
             unitPrice: d.unitPrice,
             productId: d.idProduct,
+            isOffer: product ? d.unitPrice < (d.originalPrice ?? product.salePrice) : false,
           };
         });
 

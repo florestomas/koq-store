@@ -10,6 +10,7 @@ export interface CartItem {
   size: string;
   quantity: number;
   unitPrice: number;
+  originalPrice: number;
   imageUrl: string;
 }
 
@@ -35,6 +36,7 @@ export class SaleService {
         id_product: item.productId,
         quantity: item.quantity,
         unit_price: item.unitPrice,
+        original_price: item.originalPrice,
       }));
 
       const { error } = await getSupabase().rpc('confirmar_venta', {

@@ -216,7 +216,17 @@
               <p class="text-xs text-zinc-400 leading-tight mt-0.5">
                 {{ item.colorName | uppercase }} &middot; Talle {{ item.size }}
               </p>
-              <p class="text-xs text-koq font-semibold mt-0.5">$ {{ item.unitPrice | number:'1.0-0' }} c/u</p>
+              <div class="flex flex-row items-center gap-1 mt-0.5">
+                <span class="text-xs text-zinc-400">$</span>
+                <input
+                  type="number"
+                  min="0"
+                  class="price-input w-14 text-xs text-koq font-semibold text-center bg-transparent border border-transparent focus:border-koq focus:bg-white rounded px-1 py-0.5 outline-none"
+                  [value]="item.unitPrice"
+                  (input)="updateUnitPrice(i, parseNumber($any($event.target).value))"
+                />
+                <span class="text-xs text-zinc-400">c/u</span>
+              </div>
             </div>
             <div class="flex flex-col items-end gap-1 shrink-0">
               <div class="flex flex-row items-center gap-1">

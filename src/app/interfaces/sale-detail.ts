@@ -4,4 +4,5 @@ export interface SaleDetail {
   idProduct: string;
   quantity: number;
   unitPrice: number;
+  originalPrice?: number;
 }

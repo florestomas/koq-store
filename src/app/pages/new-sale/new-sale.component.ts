@@ -336,6 +336,7 @@ export class NewSaleComponent {
             size: cell.size,
             quantity: qty,
             unitPrice: product.salePrice,
+            originalPrice: product.salePrice,
             imageUrl: this.modelImageUrl(),
           });
         }
@@ -384,6 +385,13 @@ export class NewSaleComponent {
   removeItem(index: number): void {
     const items = [...this.cartItems()];
     items.splice(index, 1);
+    this.cartItems.set(items);
+  }
+
+  updateUnitPrice(index: number, newPrice: number): void {
+    const items = [...this.cartItems()];
+    if (newPrice <= 0) return;
+    items[index] = { ...items[index], unitPrice: newPrice };
     this.cartItems.set(items);
   }
 
