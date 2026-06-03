@@ -15,6 +15,7 @@ export interface TransferItem {
   productId: string;
   stockAtOrigin: number;
   quantity: number;
+  salePrice: number;
 }
 
 export interface SelectableModel {
@@ -48,6 +49,9 @@ export class TransferService {
   readonly totalItems = computed(() => this.items().length);
   readonly totalQuantity = computed(() =>
     this.items().reduce((sum, i) => sum + i.quantity, 0),
+  );
+  readonly totalValue = computed(() =>
+    this.items().reduce((sum, i) => sum + i.quantity * i.salePrice, 0),
   );
 
   readonly categories = computed(() => this.catalogService.categories());
@@ -145,6 +149,9 @@ export class TransferService {
 
     if (stockAtOrigin <= 0) return;
 
+    const salePrice =
+      this.catalogService.catalogProducts().find((p) => p.id === productId)?.salePrice ?? 0;
+
     const existing = this.items().findIndex(
       (i) =>
         i.productId === productId &&
@@ -163,6 +170,26 @@ export class TransferService {
         };
         this.items.set(currentItems);
       }
+    } else {
+      const allColors = this.catalogService.colors();
+      const colorName =
+        allColors.find((c) => c.id === colorId)?.name ?? colorId;
+      this.items.update((items) => [
+        ...items,
+        {
+          modelId: model.modelId,
+          modelName: model.modelName,
+          imageUrl: model.imageUrl,
+          colorId,
+          colorName,
+          size,
+          productId,
+          stockAtOrigin,
+          quantity: 1,
+          salePrice,
+        },
+      ]);
+    }
     } else {
       const allColors = this.catalogService.colors();
       const colorName =
@@ -218,6 +245,9 @@ export class TransferService {
             i.size === size,
         );
 
+        const salePrice =
+          allProducts.find((p) => p.id === productId)?.salePrice ?? 0;
+
         if (existing !== -1) {
           const newQty = Math.min(
             items[existing].quantity + qty,
@@ -241,6 +271,7 @@ export class TransferService {
             productId,
             stockAtOrigin,
             quantity: Math.min(qty, stockAtOrigin),
+            salePrice,
           });
         }
       }
