@@ -274,7 +274,16 @@ export class NewSaleComponent {
   }
 
   setVariantQty(productId: string, rawValue: string): void {
-    const value = Math.max(parseInt(rawValue) || 0, 0);
+    let value = Math.max(parseInt(rawValue) || 0, 0);
+    if (value > 0) {
+      const stocks = this.catalogService.catalogStocks();
+      const dbStock =
+        stocks.find(
+          (s) => s.idProduct === productId && s.idLocation === this.userLocationId(),
+        )?.currentStock ?? 0;
+      const cartTotal = this.cartQuantities().get(productId) ?? 0;
+      value = Math.min(value, Math.max(0, dbStock - cartTotal));
+    }
     this.variantQuantities.update((map) => ({ ...map, [productId]: value }));
   }
 
@@ -286,6 +295,8 @@ export class NewSaleComponent {
     const model = this.selectedModel();
     if (!model || !this.canAddToCart()) return;
 
+    this.error.set(null);
+
     const quantities = this.variantQuantities();
     const items: CartItem[] = [];
 
@@ -294,6 +305,13 @@ export class NewSaleComponent {
         if (!cell.productId) continue;
         const qty = quantities[cell.productId] ?? 0;
         if (qty <= 0) continue;
+
+        if (qty > cell.stock) {
+          this.error.set(
+            `Stock insuficiente para "${model.name} T.${cell.size} ${row.colorName}". Disponible: ${cell.stock}.`,
+          );
+          return;
+        }
 
         const products = this.catalogService.catalogProducts();
         const product = products.find((p) => p.id === cell.productId);
