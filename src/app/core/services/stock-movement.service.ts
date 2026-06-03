@@ -208,6 +208,10 @@ export class StockMovementService {
     this.authService.waitForInit().then(() => this.loadMovements());
   }
 
+  refresh(): void {
+    this.loadMovements();
+  }
+
   private async loadMovements(): Promise<void> {
     try {
       const { data } = await getSupabase().from('stock_movements').select('*');

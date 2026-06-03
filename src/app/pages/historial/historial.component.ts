@@ -234,6 +234,12 @@ export class HistorialComponent {
     return channel === 'local' ? 'store' : channel === 'whatsapp' ? 'chat' : 'sell';
   }
 
+  refresh(): void {
+    this.salesHistoryService.refresh();
+    this.transferHistoryService.refresh();
+    this.stockMovementService.refresh();
+  }
+
   async confirmCancel(saleId: string): Promise<void> {
     if (window.confirm('¿Estás seguro de que querés anular esta venta?')) {
       await this.salesHistoryService.cancelSale(saleId);
