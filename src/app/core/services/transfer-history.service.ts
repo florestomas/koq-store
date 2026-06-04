@@ -148,7 +148,7 @@ export class TransferHistoryService {
   }
 
   async hardDeleteTransfer(transferId: string): Promise<boolean> {
-    if (!window.confirm('¿Eliminar esta transferencia definitivamente? Esta acción no se puede deshacer.')) return false;
+    if (!window.confirm('¿Eliminar este traslado de stock definitivamente? Esta acción no se puede deshacer.')) return false;
     try {
       const supabase = getSupabase();
       const details = this.transferDetailsSig().filter((d) => d.idTransfer === transferId);

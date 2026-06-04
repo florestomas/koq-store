@@ -121,7 +121,7 @@ export class HistorialComponent {
     const ingresos = this.stockMovementService.groupedIngresos();
 
     return {
-      ventasCount: sales.length,
+      ventasCount: sales.filter((s) => s.status === 'active').length,
       ventasRevenue: sales
         .filter((s) => s.status === 'active')
         .reduce((sum, s) => sum + s.totalAmount, 0),
@@ -177,7 +177,7 @@ export class HistorialComponent {
           dateTime: trf.dateTime,
           type: 'transferencia',
           icon: 'swap_horiz',
-          summary: `Transferencia · ${trf.originName} → ${trf.destinationName}`,
+          summary: `Traslado stock · ${trf.originName} → ${trf.destinationName}`,
           meta: statusMeta,
           metaClass: statusClass,
           amount: `$ ${Math.round(trf.totalValue).toLocaleString()}`,
