@@ -3,35 +3,36 @@
 ## Commands
 
 ```bash
-npm start              # dev server → http://localhost:4200 (file polling every 2s)
-npm test               # Vitest via Angular CLI (`@angular/build:unit-test`)
-npm test -- --include src/app/app.spec.ts  # single spec file
-npm run build          # production build → dist/
+npm start              # ng serve → http://localhost:4200 (polls files every 2s)
+npm test               # Vitest via Angular CLI (not vitest directly)
+npm test -- --include src/app/app.spec.ts   # single spec
+npm run build          # production build → dist/koq-store
 npm run deploy         # npx vercel --prod
 npm run preview        # npx vercel dev
 ```
 
-No `vitest.config` — Angular build system manages Vitest under the hood.
-No CI pipeline (no `.github/` directory).
+No `vitest.config` — Angular builder manages Vitest. You cannot pass vitest CLI flags; use `--include` for filtering.
+No CI (no `.github/`). No ESLint — only Prettier (100w, single quotes, Angular HTML parser).
 
 ## Stack
 
-- **Angular 21** standalone (class `App`, not `AppComponent`), bootstrapped in `src/main.ts`; all components use explicit `imports` arrays (no NgModules)
-- **Vitest** (no Jasmine/Karma), globals via `tsconfig.spec.json` — no `describe`/`it`/`expect` imports
-- **Tailwind CSS v4** via `@tailwindcss/postcss`; `@import 'tailwindcss'` in `styles.css`
-- **Angular Material M3** (`material-theme.scss`), Material Icons Outlined as default icon set
-- **Prettier** (100w, single quotes, Angular parser for `.html`) — no ESLint
-- **npm@11.8.0** pinned as package manager
+- **Angular 21** standalone (`class App`, not `AppComponent`), bootstrapped in `src/main.ts`
+- **Zoneless** — no `zone.js` dep, no `provideZoneChangeDetection`. Do NOT import `NgZone`/`zone.runOutsideAngular()`. Use signals + `ChangeDetectorRef.markForCheck()`.
+- **All components** use `ChangeDetectionStrategy.OnPush`, external `.html` templates, explicit `imports[]` arrays (no NgModules)
+- **Vitest** with globals (`tsconfig.spec.json` `"types": ["vitest/globals"]`) — no `describe`/`it`/`expect` imports needed
+- **Tailwind CSS v4** via `@tailwindcss/postcss`; `@import 'tailwindcss'` in `styles.css`. No `postcss.config.js` — Angular build handles it.
+- **Angular Material M3** (`material-theme.scss`, magenta primary). No `provideAnimations()` in `app.config.ts` — do not add it.
+- **Material Icons Outlined** as default icon set (configured in `app.config.ts`)
 - Brand color `--color-koq: #ad65af` (Tailwind `@theme` in `styles.css`)
-- Angular CLI MCP via `.vscode/mcp.json` (`npx @angular/cli mcp`)
-- Vercel deploy: `vercel.json` SPA rewrites, output `dist/koq-store`
+- Vercel deploy: SPA rewrites in `vercel.json`, output `dist/koq-store`
+- npm@11.8.0 pinned as package manager
 
 ## Architecture
 
 ```
 src/app/
-  app.ts / app.html / app.css     root component (class App); app.css is empty
-  app.config.ts                   providers (router, icon defaults, error listeners)
+  app.ts / app.html / app.css     root component (class App); app.html is just <router-outlet/>
+  app.config.ts                   providers: router, icon defaults, global error listeners
   app.routes.ts                   route definitions
   core/
     guards/       auth.guard.ts, operador.guard.ts (functional CanActivateFn)
@@ -41,39 +42,54 @@ src/app/
   layouts/        app-layout (route shell + sidebar)
   pages/          auth, catalog, transfer, create-product, ingreso, new-sale, alertas, historial, recepciones
   interfaces/     14 TS interfaces
-  mocks/          14 `.mock.ts` files — unused (all services call Supabase directly)
+  mocks/          14 .mock.ts files — unused (all services call Supabase directly)
 ```
 
-- Routes use Spanish slugs; default redirect `/` → `/catalogo`
-  - `/catalogo`, `/trasladar-stock`, `/crear-producto`, `/ingreso`, `/ventas/nueva`, `/alertas`, `/historial`, `/recepciones`
-  - Note: route `/trasladar-stock` lives in `pages/transfer/` (directory name != route path)
-- `withComponentInputBinding()` — route params as `@Input()` bindings
-- `ChangeDetectionStrategy.OnPush` on all components; external `.html` templates
-- `app.config.ts` uses `provideBrowserGlobalErrorListeners()` (Angular 19+ API)
-- Supabase URL + anon key **hardcoded** in `supabase.service.ts` (no env vars); storage bucket: `product-images`
-- `ng serve` has `"poll": 2000` in `angular.json` (WSL/network mounts)
+### Routes (Spanish slugs, layout shell guards all children)
+
+| Path | Page dir | Admin only? |
+|------|----------|-------------|
+| `/login` | `pages/auth/` | — |
+| `/catalogo` (default) | `pages/catalog/` | |
+| `/trasladar-stock` | `pages/transfer/` (note mismatch) | |
+| `/crear-producto` | `pages/create-product/` | yes |
+| `/ingreso` | `pages/ingreso/` | yes |
+| `/ventas/nueva` | `pages/new-sale/` | |
+| `/alertas` | `pages/alertas/` | |
+| `/historial` | `pages/historial/` | |
+| `/recepciones` | `pages/recepciones/` | |
+
+- `withComponentInputBinding()` enabled — route params mapped as `@Input()` bindings
+- `provideBrowserGlobalErrorListeners()` in config (Angular 19+ API)
+- Redirect: `**` → `/login`
 
 ## Conventions
 
 ### Auth
-- `AuthService.logged` defaults to `signal(false)` — set `true` in tests to skip login
-- `AuthService.adminOverride` defaults to `signal(true)` — sidebar directly mutates this signal for ADMIN/OPERADOR toggle; `isAdmin()` returns `false` when off (test operator flows without separate account)
-- Guards call `await auth.waitForInit()` before checking auth (async session init)
-- Supabase accessed via `getSupabase()` singleton function from `supabase.service.ts` (not a class-based injectable)
+
+- `AuthService.logged` defaults to `signal(false)` — set `logged.set(true)` in test `beforeEach` to skip login
+- `AuthService.adminOverride` defaults to `signal(true)` — sidebar can toggle this for ADMIN/OPERADOR simulation; `isAdmin()` computed as `adminOverride() && role === 'admin'`
+- Guards call `await auth.waitForInit()` before checking auth — async session init on construction
+- Supabase accessed via `getSupabase()` singleton function (not an injectable class); URL + anon key **hardcoded** in `supabase.service.ts`
+- Storage bucket: `product-images`
 
 ### Data
-- `toCamelCase()` in `core/utils/supabase-utils.ts` maps Supabase snake_case → camelCase for all query results
-- All `providedIn: 'root'` services; no `provideHttpClient` — all data through Supabase
+
+- All services `providedIn: 'root'`; no `provideHttpClient` — all data through Supabase
+- `toCamelCase<T>()` maps Supabase snake_case → camelCase on all query results
 
 ### Codegen
-- `ng g c foo --type=component` produces `foo.component.ts` (suffix configured in `angular.json` schematics)
+
+- `ng g c foo --type=component` → `foo.component.ts` (schematic prefix configured in `angular.json`)
 
 ### Tests
-- Vitest globals — 5 spec files: `app`, `new-sale`, `alertas`, `historial`, `recepciones` — all basic smoke tests with no mocking of Supabase or services
-- `.vscode/launch.json` `ng test` debug config still on port `9876` (Karma-era) — **stale for Vitest**
 
-## RBAC
+- 5 spec files: `app`, `new-sale`, `alertas`, `historial`, `recepciones` — basic smoke tests, no service mocking
+- `.vscode/launch.json` `ng test` debug config references Karma port `9876` — **stale, Vitest doesn't use this**
 
-- **Route guards**: `authGuard` on layout shell; `operadorGuard` blocks `/crear-producto` and `/ingreso` for operators (redirects to `/catalogo`)
-- **UI enforcement**: sidebar hides CREAR PRODUCTO and INGRESO when `isAdmin()` is false; catalog/alertas/history/receptions/sales services filter by operator's `idLocation`
-- **Supabase RLS**: not yet active
+### RBAC
+
+- Route `operadorGuard` blocks `/crear-producto`, `/ingreso` for operators → redirects `/catalogo`
+- Sidebar hides CREAR PRODUCTO/INGRESO when `isAdmin()` is false
+- Catalog/alertas/history/receptions/sales services filter by operator's `idLocation`
+- Supabase RLS: not active
