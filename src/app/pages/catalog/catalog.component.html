@@ -1,39 +1,43 @@
 <div class="flex flex-col w-full h-full p-4 md:p-8">
-  <!-- Top -->
-  <div class="flex flex-col md:flex-row w-full justify-between items-start md:items-center gap-4">
-    <div class="flex flex-row items-center gap-3">
-      <mat-icon class="text-2xl md:text-3xl text-koq">inventory_2</mat-icon>
-      <div class="flex flex-col">
-        <h1 class="text-3xl md:text-5xl text-black font-medium">{{ 'Catálogo' | uppercase }}</h1>
-        <div class="flex flex-row items-center text-zinc-500 gap-2">
-          <mat-icon class="material-icons">warehouse</mat-icon>
-          <p class="text-sm md:text-base font-light">INVENTARIO: {{ catalogService.totalInventory() }} UNIDADES</p>
-        </div>
+  <!-- Top row: everything in one line -->
+  <div class="flex flex-row items-center gap-3 flex-wrap w-full justify-between shrink-0 mb-4">
+    <div class="flex flex-row items-center gap-2 shrink-0">
+      <mat-icon class="text-3xl md:text-4xl text-koq">inventory_2</mat-icon>
+      <div class="flex flex-row items-baseline gap-2">
+        <h1 class="text-2xl md:text-4xl text-black font-medium">{{ 'Catálogo' | uppercase }}</h1>
+        <span class="text-[10px] md:text-xs text-zinc-400 font-medium whitespace-nowrap">{{ catalogService.totalInventory() }} unid.</span>
       </div>
     </div>
 
-    <div class="flex flex-col md:flex-row items-stretch md:items-center gap-3 w-full md:w-auto">
-      <app-search-bar></app-search-bar>
-      <div class="flex flex-row gap-3">
-        <button
-          (click)="openFilters()"
-          class="flex flex-row flex-1 md:flex-initial justify-center text-black! items-center gap-2 bg-zinc-500/20 px-5 py-3 rounded-full text-sm"
+    <div class="flex flex-row items-center gap-2 flex-wrap min-w-0">
+      @if (isAdmin()) {
+        <div class="flex flex-row items-center gap-1">
+          <span class="text-[10px] text-zinc-400 font-semibold tracking-wider uppercase shrink-0">Ubic.</span>
+          <select
+            class="border border-gray-300 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-koq bg-white"
+            [value]="catalogService.locationFilterId() ?? ''"
+            (change)="catalogService.setLocationFilter($any($event.target).value || null)"
+          >
+            <option value="">Todas</option>
+            @for (loc of locations; track loc.id) {
+              <option [value]="loc.id">{{ loc.name }}</option>
+            }
+          </select>
+        </div>
+      }
+      <div class="flex flex-row items-center gap-1">
+        <span class="text-[10px] text-zinc-400 font-semibold tracking-wider uppercase shrink-0">Stock</span>
+        <select
+          class="border border-gray-300 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-koq bg-white"
+          [value]="catalogService.stockFilter()"
+          (change)="catalogService.setStockFilter($any($event.target).value)"
         >
-          <mat-icon>filter_list</mat-icon>FILTROS
-        </button>
-
-        <label
-          class="flex flex-row flex-1 md:flex-initial justify-center text-koq! items-center gap-2 bg-koq/20 px-5 py-3 rounded-full cursor-pointer text-sm"
-        >
-          ALERTAS
-          <input
-            class="appearance-none border rounded-full checked:bg-koq size-5 transition duration-100 cursor-pointer"
-            type="checkbox"
-            [checked]="catalogService.stockFilter() === 'low'"
-            (change)="toggleAlerts($event)"
-          />
-        </label>
+          <option value="all">Todo</option>
+          <option value="low">Bajo</option>
+          <option value="out">Sin stock</option>
+        </select>
       </div>
+      <app-search-bar></app-search-bar>
     </div>
   </div>
 

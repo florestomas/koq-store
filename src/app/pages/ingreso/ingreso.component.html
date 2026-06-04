@@ -2,13 +2,15 @@
   <!-- Left column — Search / Create / Variants -->
   <div class="flex-1 flex flex-col gap-4 min-w-0">
     <!-- Header -->
-    <div class="flex flex-row items-center gap-3">
-      <mat-icon class="text-2xl md:text-3xl text-koq">inventory</mat-icon>
-      <div class="flex flex-col">
-        <h1 class="text-2xl md:text-4xl text-black font-medium">{{ isEditing() ? 'Editando Ingreso' : 'Ingreso de Stock' | uppercase }}</h1>
-        @if (isEditing()) {
-          <button (click)="cancelEdit()" class="text-xs text-zinc-400 hover:text-red-500 transition text-left cursor-pointer">Cancelar edición</button>
-        }
+    <div class="flex flex-row items-center gap-3 w-full justify-between shrink-0">
+      <div class="flex flex-row items-center gap-3">
+        <mat-icon class="text-3xl md:text-4xl text-koq">inventory</mat-icon>
+        <div class="flex flex-col">
+          <h1 class="text-2xl md:text-4xl text-black font-medium">{{ isEditing() ? 'Editando Ingreso' : 'Ingreso de Stock' | uppercase }}</h1>
+          @if (isEditing()) {
+            <button (click)="cancelEdit()" class="text-xs text-zinc-400 hover:text-red-500 transition text-left cursor-pointer">Cancelar edición</button>
+          }
+        </div>
       </div>
     </div>
 

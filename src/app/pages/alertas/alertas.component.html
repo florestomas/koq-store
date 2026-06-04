@@ -1,9 +1,39 @@
 <div class="flex flex-col w-full h-full p-4 md:p-8">
   <!-- Screen-only header -->
   <div class="no-print">
-    <div class="flex flex-row items-center gap-3 mb-6 md:mb-8">
-      <mat-icon class="text-3xl md:text-4xl text-koq">warning</mat-icon>
-      <h1 class="text-2xl md:text-4xl text-black font-medium">{{ 'Alertas de Stock' | uppercase }}</h1>
+    <div class="flex flex-row items-center gap-3 mb-6 md:mb-8 flex-wrap w-full justify-between">
+      <div class="flex flex-row items-center gap-2">
+        <mat-icon class="text-3xl md:text-4xl text-koq">warning</mat-icon>
+        <h1 class="text-2xl md:text-4xl text-black font-medium mr-2">{{ 'Alertas de Stock' | uppercase }}</h1>
+      </div>
+      @if (isAdmin()) {
+        <div class="flex flex-row items-center gap-1.5">
+          <button
+            class="px-3 py-1.5 rounded-full text-xs font-bold tracking-wider transition border cursor-pointer"
+            [class.bg-koq]="selectedLocationId() === null"
+            [class.text-white]="selectedLocationId() === null"
+            [class.border-koq]="selectedLocationId() === null"
+            [class.bg-white]="selectedLocationId() !== null"
+            [class.text-zinc-400]="selectedLocationId() !== null"
+            [class.border-gray-200]="selectedLocationId() !== null"
+            [class.hover:border-koq]="selectedLocationId() !== null"
+            (click)="setLocationFilter(null)"
+          >Todas</button>
+          @for (loc of locations(); track loc.id) {
+            <button
+              class="px-3 py-1.5 rounded-full text-xs font-bold tracking-wider transition border cursor-pointer"
+              [class.bg-koq]="selectedLocationId() === loc.id"
+              [class.text-white]="selectedLocationId() === loc.id"
+              [class.border-koq]="selectedLocationId() === loc.id"
+              [class.bg-white]="selectedLocationId() !== loc.id"
+              [class.text-zinc-400]="selectedLocationId() !== loc.id"
+              [class.border-gray-200]="selectedLocationId() !== loc.id"
+              [class.hover:border-koq]="selectedLocationId() !== loc.id"
+              (click)="setLocationFilter(loc.id)"
+            >{{ loc.name | uppercase }}</button>
+          }
+        </div>
+      }
     </div>
   </div>
 
@@ -30,33 +60,6 @@
       <p class="text-xs font-semibold text-zinc-400 tracking-wider uppercase mb-1">En Reposición</p>
       <p class="text-3xl font-bold text-yellow-700">0</p>
     </div>
-  </div>
-
-  <!-- Location filter bar + view toggle -->
-  <div class="no-print">
-    @if (isAdmin()) {
-      <div class="flex flex-row items-center gap-2 mb-4 flex-wrap">
-        <span class="text-xs font-semibold text-zinc-400 tracking-wider uppercase mr-2">Ubicación:</span>
-        <button
-          class="px-4 py-2.5 rounded-full text-xs font-bold tracking-wider transition cursor-pointer"
-          [class.bg-koq]="selectedLocationId() === null"
-          [class.text-white]="selectedLocationId() === null"
-          [class.bg-gray-100]="selectedLocationId() !== null"
-          [class.text-zinc-600]="selectedLocationId() !== null"
-          (click)="setLocationFilter(null)"
-        >Todas</button>
-        @for (loc of locations(); track loc.id) {
-          <button
-            class="px-4 py-2.5 rounded-full text-xs font-bold tracking-wider transition cursor-pointer"
-            [class.bg-koq]="selectedLocationId() === loc.id"
-            [class.text-white]="selectedLocationId() === loc.id"
-            [class.bg-gray-100]="selectedLocationId() !== loc.id"
-            [class.text-zinc-600]="selectedLocationId() !== loc.id"
-            (click)="setLocationFilter(loc.id)"
-          >{{ loc.name | uppercase }}</button>
-        }
-      </div>
-    }
   </div>
 
   <!-- Export / Print button + search + count -->

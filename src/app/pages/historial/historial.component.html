@@ -1,8 +1,59 @@
 <div class="flex flex-col w-full h-full p-4 md:p-8 gap-4 md:gap-5">
-  <!-- Header -->
-  <div class="flex flex-row items-center gap-3 shrink-0">
-    <mat-icon class="text-2xl md:text-3xl text-koq">history</mat-icon>
-    <h1 class="text-2xl md:text-4xl text-black font-medium">HISTORIAL</h1>
+  <!-- Header row: title + filters + search -->
+  <div class="flex flex-row flex-wrap items-center gap-2 shrink-0 w-full justify-between">
+    <div class="flex flex-row items-center gap-2">
+      <mat-icon class="text-3xl md:text-4xl text-koq">history</mat-icon>
+      <h1 class="text-2xl md:text-4xl text-black font-medium mr-2">HISTORIAL</h1>
+    </div>
+      <div class="flex-1 min-w-0"></div>
+    <input
+      type="date"
+      class="border border-gray-300 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-koq bg-white w-28"
+      [value]="dateFrom() ?? ''"
+      (change)="setDateFrom($any($event.target).value)"
+      title="Desde"
+    />
+    <input
+      type="date"
+      class="border border-gray-300 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-koq bg-white w-28"
+      [value]="dateTo() ?? ''"
+      (change)="setDateTo($any($event.target).value)"
+      title="Hasta"
+    />
+    @if (isAdmin()) {
+      <select
+        class="border border-gray-300 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-koq bg-white"
+        [value]="locationId() ?? ''"
+        (change)="setLocation($any($event.target).value)"
+      >
+        <option value="">Todas</option>
+        @for (loc of salesHistoryService.availableLocations; track loc.id) {
+          <option [value]="loc.id">{{ loc.name }}</option>
+        }
+      </select>
+    }
+    <button
+      (click)="refresh()"
+      class="flex flex-row items-center justify-center size-8 rounded-lg border border-gray-200 text-zinc-400 hover:border-koq hover:text-koq transition cursor-pointer shrink-0"
+      title="Actualizar"
+    >
+      <mat-icon class="text-base">refresh</mat-icon>
+    </button>
+
+    <div class="flex flex-row items-center gap-1.5 bg-gray-100 rounded-full px-3 py-1.5 border border-transparent focus-within:border-koq min-w-0">
+      <mat-icon class="text-zinc-400 text-sm shrink-0">search</mat-icon>
+      <input
+        class="bg-transparent outline-none text-xs flex-1 min-w-0 w-32"
+        type="text"
+        placeholder="Buscar..."
+        [formControl]="searchControl"
+      />
+      @if (searchTerm()) {
+        <button (click)="searchControl.setValue(''); searchTerm.set('')" class="text-zinc-400 hover:text-zinc-700 transition cursor-pointer shrink-0">
+          <mat-icon class="text-sm">close</mat-icon>
+        </button>
+      }
+    </div>
   </div>
 
   <!-- Summary strip -->
@@ -52,109 +103,6 @@
       <p class="text-2xl md:text-3xl font-bold text-green-600">+{{ summary().ingresosUnits }}</p>
       <p class="text-xs text-zinc-400">{{ summary().ingresosCount }} ingreso{{ summary().ingresosCount !== 1 ? 's' : '' }}</p>
     </div>
-  </div>
-
-  <!-- Type pills + filters -->
-  <div class="flex flex-row flex-wrap items-center gap-3 shrink-0">
-    <div class="flex flex-row gap-1.5">
-      <button
-        (click)="showAllTypes()"
-        class="flex flex-row items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold tracking-wider transition border-2 cursor-pointer"
-        [class.bg-koq]="timelineTypes().size === 3 || timelineTypes().size === 0"
-        [class.text-white]="timelineTypes().size === 3 || timelineTypes().size === 0"
-        [class.border-koq]="timelineTypes().size === 3 || timelineTypes().size === 0"
-        [class.bg-white]="timelineTypes().size !== 3 && timelineTypes().size !== 0"
-        [class.text-zinc-400]="timelineTypes().size !== 3 && timelineTypes().size !== 0"
-        [class.border-gray-200]="timelineTypes().size !== 3 && timelineTypes().size !== 0"
-        [class.hover:border-koq]="timelineTypes().size !== 3 && timelineTypes().size !== 0"
-      >
-        <mat-icon class="text-sm">view_list</mat-icon>
-        TODO
-      </button>
-      <button
-        (click)="toggleType('venta')"
-        class="flex flex-row items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold tracking-wider transition border-2 cursor-pointer"
-        [class.bg-koq]="hasType('venta')"
-        [class.text-white]="hasType('venta')"
-        [class.border-koq]="hasType('venta')"
-        [class.bg-white]="!hasType('venta')"
-        [class.text-zinc-400]="!hasType('venta')"
-        [class.border-gray-200]="!hasType('venta')"
-        [class.hover:border-koq]="!hasType('venta')"
-      >
-        <mat-icon class="text-sm">receipt_long</mat-icon>
-        VENTAS
-      </button>
-      <button
-        (click)="toggleType('transferencia')"
-        class="flex flex-row items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold tracking-wider transition border-2 cursor-pointer"
-        [class.bg-koq]="hasType('transferencia')"
-        [class.text-white]="hasType('transferencia')"
-        [class.border-koq]="hasType('transferencia')"
-        [class.bg-white]="!hasType('transferencia')"
-        [class.text-zinc-400]="!hasType('transferencia')"
-        [class.border-gray-200]="!hasType('transferencia')"
-        [class.hover:border-koq]="!hasType('transferencia')"
-      >
-        <mat-icon class="text-sm">swap_horiz</mat-icon>
-        TRASLADO STOCK
-      </button>
-      <button
-        (click)="toggleType('ingreso')"
-        class="flex flex-row items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold tracking-wider transition border-2 cursor-pointer"
-        [class.bg-koq]="hasType('ingreso')"
-        [class.text-white]="hasType('ingreso')"
-        [class.border-koq]="hasType('ingreso')"
-        [class.bg-white]="!hasType('ingreso')"
-        [class.text-zinc-400]="!hasType('ingreso')"
-        [class.border-gray-200]="!hasType('ingreso')"
-        [class.hover:border-koq]="!hasType('ingreso')"
-      >
-        <mat-icon class="text-sm">add_shopping_cart</mat-icon>
-        INGRESOS
-      </button>
-    </div>
-
-    <div class="flex flex-row items-end gap-2">
-      <div class="flex flex-col gap-0.5">
-        <label class="text-[10px] text-zinc-400 font-semibold tracking-wider uppercase">Desde</label>
-        <input
-          type="date"
-          class="border border-gray-300 rounded-lg px-3 py-1.5 text-xs outline-none focus:border-koq bg-white"
-          [value]="dateFrom() ?? ''"
-          (change)="setDateFrom($any($event.target).value)"
-        />
-      </div>
-      <div class="flex flex-col gap-0.5">
-        <label class="text-[10px] text-zinc-400 font-semibold tracking-wider uppercase">Hasta</label>
-        <input
-          type="date"
-          class="border border-gray-300 rounded-lg px-3 py-1.5 text-xs outline-none focus:border-koq bg-white"
-          [value]="dateTo() ?? ''"
-          (change)="setDateTo($any($event.target).value)"
-        />
-      </div>
-    </div>
-
-    @if (isAdmin()) {
-      <select
-        class="border border-gray-300 rounded-lg px-3 py-1.5 text-xs outline-none focus:border-koq bg-white"
-        [value]="locationId() ?? ''"
-        (change)="setLocation($any($event.target).value)"
-      >
-        <option value="">Todas las ubicaciones</option>
-        @for (loc of salesHistoryService.availableLocations; track loc.id) {
-          <option [value]="loc.id">{{ loc.name }}</option>
-        }
-      </select>
-    }
-    <button
-      (click)="refresh()"
-      class="ml-auto flex flex-row items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold tracking-wider border-2 border-gray-200 text-zinc-500 hover:border-koq hover:text-koq transition cursor-pointer"
-    >
-      <mat-icon class="text-sm">refresh</mat-icon>
-      ACTUALIZAR
-    </button>
   </div>
 
   <!-- Timeline -->

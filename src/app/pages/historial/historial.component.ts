@@ -1,7 +1,9 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatIcon } from '@angular/material/icon';
+import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { SalesHistoryService, SaleRow } from '../../core/services/sales-history.service';
 import { TransferHistoryService, TransferRow } from '../../core/services/transfer-history.service';
@@ -29,7 +31,7 @@ const PAGE_SIZE = 25;
 
 @Component({
   selector: 'app-historial',
-  imports: [DatePipe, DecimalPipe, MatIcon],
+  imports: [DatePipe, DecimalPipe, MatIcon, ReactiveFormsModule],
   templateUrl: './historial.component.html',
   styleUrl: './historial.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -63,13 +65,25 @@ export class HistorialComponent {
   readonly pageSize = PAGE_SIZE;
 
   readonly expandedId = signal<string | null>(null);
+  readonly searchControl = new FormControl('');
+  readonly searchTerm = signal('');
 
   readonly isAdmin = computed(() => this.authService.currentUser()?.role === 'admin');
+  private readonly destroyRef = inject(DestroyRef);
 
   constructor() {
     this.dateFrom.set(this.startOfWeek);
     this.dateTo.set(this.today);
     this.applyFilters();
+
+    const sub = this.searchControl.valueChanges
+      .pipe(debounceTime(200), distinctUntilChanged())
+      .subscribe((value) => {
+        this.searchTerm.set((value ?? '').toLowerCase().trim());
+        this.page.set(0);
+      });
+
+    this.destroyRef.onDestroy(() => sub.unsubscribe());
   }
 
   private getMonday(): Date {
@@ -245,6 +259,11 @@ export class HistorialComponent {
     }
 
     events.sort((a, b) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime());
+
+    const term = this.searchTerm();
+    if (term) {
+      return events.filter((e) => e.summary.toLowerCase().includes(term));
+    }
     return events;
   });
 
