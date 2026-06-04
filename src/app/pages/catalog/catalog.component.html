@@ -37,7 +37,20 @@
           <option value="out">Sin stock</option>
         </select>
       </div>
-      <app-search-bar></app-search-bar>
+      <div class="flex flex-row items-center gap-1.5 bg-gray-100 rounded-full px-3 py-1.5 border border-transparent focus-within:border-koq min-w-0">
+        <mat-icon class="text-zinc-400 text-sm shrink-0">search</mat-icon>
+        <input
+          class="bg-transparent outline-none text-xs flex-1 min-w-0 w-32"
+          type="text"
+          placeholder="Buscar..."
+          [formControl]="searchControl"
+        />
+        @if (searchTerm()) {
+          <button (click)="searchControl.setValue(''); catalogService.setSearchTerm('')" class="text-zinc-400 hover:text-zinc-700 transition cursor-pointer shrink-0">
+            <mat-icon class="text-sm">close</mat-icon>
+          </button>
+        }
+      </div>
     </div>
   </div>
 

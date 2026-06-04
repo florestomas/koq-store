@@ -85,7 +85,6 @@ export class SaleService {
           id_product: null,
           quantity: item.quantity,
           unit_price: item.unitPrice,
-          original_price: item.originalPrice,
         }));
 
         const { error: detailError } = await supabase
@@ -173,7 +172,6 @@ export class SaleService {
           id_product: null,
           quantity: item.quantity,
           unit_price: item.unitPrice,
-          original_price: item.originalPrice,
         }));
 
         const { error: detailError } = await supabase
