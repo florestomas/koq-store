@@ -247,56 +247,10 @@ export class SalesHistoryService {
 
   async cancelSale(saleId: string): Promise<boolean> {
     try {
-      const supabase = getSupabase();
-      const sale = this.salesSig().find((s) => s.id === saleId);
-      if (!sale || sale.status !== 'active') return false;
+      const { error } = await getSupabase().rpc('cancelar_venta', { p_sale_id: saleId });
 
-      const { error: updateError } = await supabase
-        .from('sales')
-        .update({ status: 'cancelled', cancelled_at: new Date().toISOString() })
-        .eq('id', saleId);
-
-      if (updateError) {
-        console.error('Error cancelling sale:', updateError);
-        return false;
-      }
-
-      const details = this.saleDetailsSig().filter((d) => d.idSale === saleId);
-      let stockRestoreFailed = false;
-
-      for (const detail of details) {
-        if (!detail.idProduct) continue;
-        const { data: stockRows } = await supabase
-          .from('stock_locations')
-          .select('*')
-          .eq('id_product', detail.idProduct)
-          .eq('id_location', sale.idLocation);
-
-        if (stockRows && stockRows.length > 0) {
-          const stock = stockRows[0];
-          const { error: stockError } = await supabase
-            .from('stock_locations')
-            .update({ current_stock: stock.current_stock + detail.quantity })
-            .eq('id', stock.id);
-
-          if (stockError) {
-            console.error('Error restoring stock on cancel:', stockError);
-            stockRestoreFailed = true;
-          }
-        }
-
-        await this.stockMovementService.logMovement(
-          'in',
-          detail.idProduct,
-          sale.idLocation,
-          detail.quantity,
-          'sale',
-          saleId,
-        );
-      }
-
-      if (stockRestoreFailed) {
-        console.error('Stock restoration partially failed for sale:', saleId);
+      if (error) {
+        console.error('Error cancelling sale:', error);
         return false;
       }
 
@@ -318,6 +272,7 @@ export class SalesHistoryService {
       const productIds = details.filter((d) => d.idProduct).map((d) => d.idProduct);
 
       if (productIds.length > 0) {
+        let stockRestoreFailed = false;
         if (sale && sale.status !== 'cancelled') {
           for (const detail of details) {
             if (!detail.idProduct) continue;
@@ -338,9 +293,15 @@ export class SalesHistoryService {
 
               if (stockError) {
                 console.error('Error restoring stock on delete:', stockError);
+                stockRestoreFailed = true;
               }
             }
           }
+        }
+
+        if (stockRestoreFailed) {
+          console.error('Stock restoration partially failed for sale:', saleId);
+          return false;
         }
 
         await supabase.from('stock_movements').delete().eq('reference_type', 'sale').eq('reference_id', saleId);

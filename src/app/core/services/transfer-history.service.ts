@@ -153,6 +153,7 @@ export class TransferHistoryService {
       const supabase = getSupabase();
       const details = this.transferDetailsSig().filter((d) => d.idTransfer === transferId);
       const productIds = details.map((d) => d.idProduct);
+      let stockRestoreFailed = false;
 
       if (productIds.length > 0) {
         await supabase
@@ -188,6 +189,7 @@ export class TransferHistoryService {
                   .eq('id', (stock as Record<string, unknown>)['id']);
                 if (stockError) {
                   console.error('Error restoring origin stock:', stockError);
+                  stockRestoreFailed = true;
                 }
               }
             }
@@ -205,15 +207,20 @@ export class TransferHistoryService {
                   .eq('id', (destStock as Record<string, unknown>)['id']);
                 if (destError) {
                   console.error('Error deducting destination stock:', destError);
+                  stockRestoreFailed = true;
                 }
               }
             }
           }
         }
-
-        await supabase.from('transfer_details').delete().eq('id_transfer', transferId);
       }
 
+      if (stockRestoreFailed) {
+        console.error('Stock restoration partially failed for transfer:', transferId);
+        return false;
+      }
+
+      await supabase.from('transfer_details').delete().eq('id_transfer', transferId);
       await supabase.from('transfers').delete().eq('id', transferId);
       this.refresh();
       return true;

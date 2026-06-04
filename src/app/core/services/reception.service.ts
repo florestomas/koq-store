@@ -213,66 +213,82 @@ export class ReceptionService {
     this.loadTransfers();
   }
 
-  async hardDeleteTransfer(transferId: string): Promise<void> {
-    const supabase = getSupabase();
-    const details = this.transferDetailsSig().filter((d) => d.idTransfer === transferId);
-    const productIds = details.map((d) => d.idProduct);
+  async hardDeleteTransfer(transferId: string): Promise<boolean> {
+    if (!window.confirm('¿Eliminar este traslado de stock definitivamente? Esta acción no se puede deshacer.')) return false;
+    try {
+      const supabase = getSupabase();
+      const details = this.transferDetailsSig().filter((d) => d.idTransfer === transferId);
+      const productIds = details.map((d) => d.idProduct);
 
-    if (productIds.length > 0) {
-      await supabase
-        .from('stock_movements')
-        .delete()
-        .eq('reference_type', 'transfer')
-        .eq('reference_id', transferId);
+      if (productIds.length > 0) {
+        await supabase
+          .from('stock_movements')
+          .delete()
+          .eq('reference_type', 'transfer')
+          .eq('reference_id', transferId);
 
-      const { data: stockRows } = await supabase
-        .from('stock_locations')
-        .select('*')
-        .in('id_product', productIds);
+        const { data: stockRows } = await supabase
+          .from('stock_locations')
+          .select('*')
+          .in('id_product', productIds);
 
-      if (stockRows) {
-        const transferData = this.transfersSig().find((t) => t.id === transferId);
-        const originId = transferData?.idOrigin;
-        const destId = transferData?.idDestination;
-        const isCancelled = transferData?.status === 'cancelled';
-        const isConfirmed = transferData?.status === 'confirmed';
+        let stockRestoreFailed = false;
 
-        for (const detail of details) {
-          if (!isCancelled && originId) {
-            const stock = stockRows.find(
-              (s: Record<string, unknown>) => s['id_product'] === detail.idProduct && s['id_location'] === originId,
-            );
-            if (stock) {
-              const { error: stockError } = await supabase
-                .from('stock_locations')
-                .update({ current_stock: (stock as Record<string, number>)['current_stock'] + detail.quantity })
-                .eq('id', (stock as Record<string, unknown>)['id']);
-              if (stockError) {
-                console.error('Error restoring origin stock:', stockError);
+        if (stockRows) {
+          const transferData = this.transfersSig().find((t) => t.id === transferId);
+          const originId = transferData?.idOrigin;
+          const destId = transferData?.idDestination;
+          const isCancelled = transferData?.status === 'cancelled';
+          const isConfirmed = transferData?.status === 'confirmed';
+
+          for (const detail of details) {
+            if (!isCancelled && originId) {
+              const stock = stockRows.find(
+                (s: Record<string, unknown>) => s['id_product'] === detail.idProduct && s['id_location'] === originId,
+              );
+              if (stock) {
+                const { error: stockError } = await supabase
+                  .from('stock_locations')
+                  .update({ current_stock: (stock as Record<string, number>)['current_stock'] + detail.quantity })
+                  .eq('id', (stock as Record<string, unknown>)['id']);
+                if (stockError) {
+                  console.error('Error restoring origin stock:', stockError);
+                  stockRestoreFailed = true;
+                }
               }
             }
-          }
 
-          if (isConfirmed && destId) {
-            const destStock = stockRows.find(
-              (s: Record<string, unknown>) => s['id_product'] === detail.idProduct && s['id_location'] === destId,
-            );
-            if (destStock) {
-              const newDestStock = Math.max(0, (destStock as Record<string, number>)['current_stock'] - detail.quantity);
-              const { error: destError } = await supabase
-                .from('stock_locations')
-                .update({ current_stock: newDestStock })
-                .eq('id', (destStock as Record<string, unknown>)['id']);
-              if (destError) {
-                console.error('Error deducting destination stock:', destError);
+            if (isConfirmed && destId) {
+              const destStock = stockRows.find(
+                (s: Record<string, unknown>) => s['id_product'] === detail.idProduct && s['id_location'] === destId,
+              );
+              if (destStock) {
+                const newDestStock = Math.max(0, (destStock as Record<string, number>)['current_stock'] - detail.quantity);
+                const { error: destError } = await supabase
+                  .from('stock_locations')
+                  .update({ current_stock: newDestStock })
+                  .eq('id', (destStock as Record<string, unknown>)['id']);
+                if (destError) {
+                  console.error('Error deducting destination stock:', destError);
+                  stockRestoreFailed = true;
+                }
               }
             }
           }
         }
+
+        if (stockRestoreFailed) {
+          console.error('Stock restoration partially failed for transfer:', transferId);
+          return false;
+        }
       }
+      await supabase.from('transfer_details').delete().eq('id_transfer', transferId);
+      await supabase.from('transfers').delete().eq('id', transferId);
+      this.refresh();
+      return true;
+    } catch (err) {
+      console.error('Error deleting transfer:', err);
+      return false;
     }
-    await supabase.from('transfer_details').delete().eq('id_transfer', transferId);
-    await supabase.from('transfers').delete().eq('id', transferId);
-    this.refresh();
   }
 }
