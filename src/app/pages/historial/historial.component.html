@@ -284,6 +284,13 @@
                             }
                             @if (event.sale.status === 'active') {
                               <button
+                                (click)="$event.stopPropagation(); editSale(event.sale.id)"
+                                class="flex flex-row items-center gap-1 px-3 py-2 rounded-full text-xs font-bold tracking-wider text-koq border border-koq hover:bg-koq/10 transition cursor-pointer"
+                              >
+                                <mat-icon class="text-sm">edit</mat-icon>
+                                EDITAR
+                              </button>
+                              <button
                                 (click)="$event.stopPropagation(); confirmCancel(event.sale.id)"
                                 class="flex flex-row items-center gap-1 px-3 py-2 rounded-full text-xs font-bold tracking-wider text-red-600 border border-red-200 hover:bg-red-50 transition cursor-pointer"
                               >

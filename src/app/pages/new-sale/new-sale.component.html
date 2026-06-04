@@ -4,7 +4,12 @@
     <!-- Header -->
     <div class="flex flex-row items-center gap-3">
       <mat-icon class="text-2xl md:text-3xl text-koq">point_of_sale</mat-icon>
-      <h1 class="text-2xl md:text-4xl text-black font-medium">{{ 'Nueva Venta' | uppercase }}</h1>
+      <div class="flex flex-col">
+        <h1 class="text-2xl md:text-4xl text-black font-medium">{{ isEditing() ? 'Editando Venta' : 'Nueva Venta' | uppercase }}</h1>
+        @if (isEditing()) {
+          <button (click)="cancelEdit()" class="text-xs text-zinc-400 hover:text-red-500 transition text-left cursor-pointer">Cancelar edición</button>
+        }
+      </div>
     </div>
 
     <!-- Success flash -->

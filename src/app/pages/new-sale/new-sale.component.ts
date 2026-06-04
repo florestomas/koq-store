@@ -2,10 +2,13 @@ import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, signa
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { UpperCasePipe, DecimalPipe } from '@angular/common';
 import { MatIcon } from '@angular/material/icon';
+import { ActivatedRoute, Router } from '@angular/router';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { CatalogService } from '../../core/services/catalog.service';
 import { SaleService, CartItem } from '../../core/services/sale.service';
+import { SalesHistoryService } from '../../core/services/sales-history.service';
+import { getSupabase } from '../../core/services/supabase.service';
 import { ClothingModel } from '../../interfaces/clothing-model';
 import { Category } from '../../interfaces/category';
 
@@ -38,6 +41,9 @@ export interface ModelSearchResult {
 export class NewSaleComponent {
   private readonly authService = inject(AuthService);
   private readonly saleService = inject(SaleService);
+  private readonly salesHistoryService = inject(SalesHistoryService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   readonly catalogService = inject(CatalogService);
 
   readonly searchControl = new FormControl('');
@@ -53,6 +59,8 @@ export class NewSaleComponent {
   readonly variantQuantities = signal<Record<string, number>>({});
   readonly showCanastoForm = signal(false);
   readonly canastoPrice = signal(0);
+  readonly editingSaleId = signal<string | null>(null);
+  readonly isEditing = computed(() => this.editingSaleId() !== null);
 
   readonly channels: ('local' | 'whatsapp')[] = [
     'local',
@@ -250,6 +258,70 @@ export class NewSaleComponent {
       });
 
     this.destroyRef.onDestroy(() => sub.unsubscribe());
+
+    const editId = this.route.snapshot.queryParamMap.get('edit');
+    if (editId) {
+      this.loadSaleForEditing(editId);
+    }
+  }
+
+  private async loadSaleForEditing(saleId: string): Promise<void> {
+    try {
+      const supabase = getSupabase();
+      const { data: sale } = await supabase.from('sales').select('*').eq('id', saleId).single();
+      if (!sale || sale.status !== 'active') return;
+
+      const { data: details } = await supabase.from('sale_details').select('*').eq('id_sale', saleId);
+      if (!details) return;
+
+      const products = this.catalogService.catalogProducts();
+      const models = this.catalogService.catalogModels();
+      const colors = this.catalogService.colors();
+      const modelColors = this.catalogService.catalogModelColors();
+
+      const items: CartItem[] = [];
+      for (const d of details) {
+        if (d.id_product) {
+          const product = products.find((p) => p.id === d.id_product);
+          const model = product ? models.find((m) => m.id === product.idClothingModel) : undefined;
+          const color = product ? colors.find((c) => c.id === product.idColor) : undefined;
+          const imageUrl = model
+            ? modelColors.find((mc) => mc.idClothingModel === model.id)?.imageUrl ?? ''
+            : '';
+          items.push({
+            productId: d.id_product,
+            modelName: model?.name ?? 'Producto',
+            colorName: color?.name ?? '',
+            size: product?.size ?? '',
+            quantity: d.quantity,
+            unitPrice: d.unit_price,
+            originalPrice: d.original_price ?? d.unit_price,
+            imageUrl,
+          });
+        } else {
+          items.push({
+            productId: '',
+            modelName: 'Canasto de ofertas',
+            colorName: '',
+            size: '',
+            quantity: d.quantity,
+            unitPrice: d.unit_price,
+            originalPrice: d.unit_price,
+            imageUrl: '',
+          });
+        }
+      }
+
+      this.cartItems.set(items);
+      this.channel.set(sale.channel);
+      this.editingSaleId.set(saleId);
+    } catch (err) {
+      console.error('Error loading sale for editing:', err);
+    }
+  }
+
+  cancelEdit(): void {
+    this.router.navigate(['/historial']);
   }
 
   selectModel(model: ClothingModel): void {
@@ -442,7 +514,16 @@ export class NewSaleComponent {
       }
     }
 
-    if (!window.confirm('¿Confirmar esta venta?')) return;
+    if (!window.confirm(this.isEditing() ? '¿Actualizar esta venta?' : '¿Confirmar esta venta?')) return;
+
+    const editingId = this.editingSaleId();
+    if (editingId) {
+      const cancelled = await this.salesHistoryService.cancelSale(editingId);
+      if (!cancelled) {
+        this.error.set('Error al cancelar la venta original.');
+        return;
+      }
+    }
 
     const ok = await this.saleService.confirmSale({
       items,
@@ -465,6 +546,10 @@ export class NewSaleComponent {
       this.showCanastoForm.set(false);
       this.canastoPrice.set(0);
       this.catalogService.triggerRefresh();
+      if (editingId) {
+        this.editingSaleId.set(null);
+        this.router.navigate(['/historial']);
+      }
       setTimeout(() => this.confirmed.set(false), 3000);
     } else {
       this.error.set('Error al procesar la venta. Intente nuevamente.');

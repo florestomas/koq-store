@@ -1,10 +1,12 @@
 import { TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
 import { HistorialComponent } from './historial.component';
 
 describe('HistorialComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [HistorialComponent],
+      providers: [{ provide: Router, useValue: { navigate: () => Promise.resolve(true) } }],
     }).compileComponents();
   });
 

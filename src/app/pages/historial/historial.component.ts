@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
+import { Router } from '@angular/router';
 import { MatIcon } from '@angular/material/icon';
 import { AuthService } from '../../core/services/auth.service';
 import { SalesHistoryService, SaleRow } from '../../core/services/sales-history.service';
@@ -38,6 +39,7 @@ export class HistorialComponent {
   readonly salesHistoryService = inject(SalesHistoryService);
   readonly transferHistoryService = inject(TransferHistoryService);
   readonly stockMovementService = inject(StockMovementService);
+  private readonly router = inject(Router);
 
   readonly today = new Date().toISOString().split('T')[0];
   readonly startOfWeek = this.getMonday().toISOString().split('T')[0];
@@ -281,6 +283,10 @@ export class HistorialComponent {
     if (window.confirm('¿Confirmar devolución de esta venta? Se restaurará el stock.')) {
       await this.salesHistoryService.cancelSale(saleId);
     }
+  }
+
+  editSale(saleId: string): void {
+    this.router.navigate(['/ventas/nueva'], { queryParams: { edit: saleId } });
   }
 
   async deleteSale(saleId: string): Promise<void> {
