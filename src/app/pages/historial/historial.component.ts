@@ -159,8 +159,10 @@ export class HistorialComponent {
       ventasRevenue: sales
         .filter((s) => s.status === 'active')
         .reduce((sum, s) => sum + s.totalAmount, 0),
-      transferenciasCount: transfers.length,
-      transferenciasValue: transfers.reduce((sum, t) => sum + t.totalValue, 0),
+      transferenciasCount: transfers.filter((t) => t.status !== 'cancelled').length,
+      transferenciasValue: transfers
+        .filter((t) => t.status !== 'cancelled')
+        .reduce((sum, t) => sum + t.totalValue, 0),
       ingresosCount: ingresos.length,
       ingresosUnits: ingresos.reduce((sum, g) => sum + g.totalUnits, 0),
     };
@@ -215,7 +217,7 @@ export class HistorialComponent {
           meta: statusMeta,
           metaClass: statusClass,
           amount: `$ ${Math.round(trf.totalValue).toLocaleString()}`,
-          amountClass: 'text-zinc-800',
+          amountClass: trf.status === 'cancelled' ? 'text-red-400 line-through' : 'text-zinc-800',
           rowClass: trf.status === 'cancelled' ? 'opacity-60' : '',
           transfer: trf,
         });

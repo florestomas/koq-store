@@ -168,20 +168,45 @@ export class TransferHistoryService {
 
         const transferData = this.transfersSig().find((t) => t.id === transferId);
         const originId = transferData?.idOrigin;
+        const destId = transferData?.idDestination;
+        const isCancelled = transferData?.status === 'cancelled';
+        const isConfirmed = transferData?.status === 'confirmed';
 
         if (stockRows && originId) {
           for (const detail of details) {
-            const stock = stockRows.find(
-              (s: Record<string, unknown>) =>
-                s['id_product'] === detail.idProduct && s['id_location'] === originId,
-            );
-            if (stock) {
-              await supabase
-                .from('stock_locations')
-                .update({
-                  current_stock: (stock as Record<string, number>)['current_stock'] + detail.quantity,
-                })
-                .eq('id', (stock as Record<string, unknown>)['id']);
+            if (!isCancelled) {
+              const stock = stockRows.find(
+                (s: Record<string, unknown>) =>
+                  s['id_product'] === detail.idProduct && s['id_location'] === originId,
+              );
+              if (stock) {
+                const { error: stockError } = await supabase
+                  .from('stock_locations')
+                  .update({
+                    current_stock: (stock as Record<string, number>)['current_stock'] + detail.quantity,
+                  })
+                  .eq('id', (stock as Record<string, unknown>)['id']);
+                if (stockError) {
+                  console.error('Error restoring origin stock:', stockError);
+                }
+              }
+            }
+
+            if (isConfirmed && destId) {
+              const destStock = stockRows.find(
+                (s: Record<string, unknown>) =>
+                  s['id_product'] === detail.idProduct && s['id_location'] === destId,
+              );
+              if (destStock) {
+                const newDestStock = Math.max(0, (destStock as Record<string, number>)['current_stock'] - detail.quantity);
+                const { error: destError } = await supabase
+                  .from('stock_locations')
+                  .update({ current_stock: newDestStock })
+                  .eq('id', (destStock as Record<string, unknown>)['id']);
+                if (destError) {
+                  console.error('Error deducting destination stock:', destError);
+                }
+              }
             }
           }
         }

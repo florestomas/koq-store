@@ -261,10 +261,14 @@ export class SalesHistoryService {
 
         if (stockRows && stockRows.length > 0) {
           const stock = stockRows[0];
-          await supabase
+          const { error: stockError } = await supabase
             .from('stock_locations')
             .update({ current_stock: stock.current_stock + detail.quantity })
             .eq('id', stock.id);
+
+          if (stockError) {
+            console.error('Error restoring stock on cancel:', stockError);
+          }
         }
 
         await this.stockMovementService.logMovement(
@@ -295,7 +299,7 @@ export class SalesHistoryService {
       const productIds = details.map((d) => d.idProduct);
 
       if (productIds.length > 0) {
-        if (sale) {
+        if (sale && sale.status !== 'cancelled') {
           for (const detail of details) {
             const { data: stockRows } = await supabase
               .from('stock_locations')
@@ -305,12 +309,16 @@ export class SalesHistoryService {
 
             if (stockRows && stockRows.length > 0) {
               const stock = stockRows[0];
-              await supabase
+              const { error: stockError } = await supabase
                 .from('stock_locations')
                 .update({
                   current_stock: stock['current_stock'] + detail.quantity,
                 })
                 .eq('id', stock['id']);
+
+              if (stockError) {
+                console.error('Error restoring stock on delete:', stockError);
+              }
             }
           }
         }
