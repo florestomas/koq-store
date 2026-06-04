@@ -1,6 +1,7 @@
 import { UpperCasePipe, DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MatIcon } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
 import {
@@ -23,11 +24,15 @@ import {
 export class TransferenciaComponent {
   readonly transferService = inject(TransferService);
   private readonly dialog = inject(MatDialog);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   readonly searchControl = new FormControl('');
   readonly confirmed = signal(false);
   readonly error = signal<string | null>(null);
   readonly isConfirming = signal(false);
+
+  readonly isEditing = this.transferService.isEditing;
 
   private readonly destroyRef = inject(DestroyRef);
 
@@ -36,6 +41,18 @@ export class TransferenciaComponent {
       this.transferService.searchTerm.set(v ?? ''),
     );
     this.destroyRef.onDestroy(() => sub.unsubscribe());
+
+    const editId = this.route.snapshot.queryParamMap.get('edit');
+    if (editId) {
+      this.transferService.loadTransferForEditing(editId);
+    }
+  }
+
+  cancelEdit(): void {
+    this.transferService.editingTransferId.set(null);
+    this.transferService.items.set([]);
+    this.transferService.destinationId.set('');
+    this.router.navigate(['/historial']);
   }
 
   openVariantPicker(model: SelectableModel): void {
@@ -61,15 +78,21 @@ export class TransferenciaComponent {
   async confirmTransfer(): Promise<void> {
     if (this.isConfirming()) return;
 
-    if (!window.confirm('¿Confirmar este traslado?')) return;
+    const editingId = this.transferService.editingTransferId();
+    if (!window.confirm(editingId ? '¿Actualizar este traslado?' : '¿Confirmar este traslado?')) return;
 
     this.error.set(null);
     this.isConfirming.set(true);
     try {
-      const ok = await this.transferService.confirmTransfer();
+      const ok = editingId
+        ? await this.transferService.editTransfer(editingId)
+        : await this.transferService.confirmTransfer();
       if (ok) {
         this.confirmed.set(true);
         setTimeout(() => this.confirmed.set(false), 3000);
+        if (editingId) {
+          this.router.navigate(['/historial']);
+        }
       } else {
         this.error.set('Error al confirmar el traslado. Verificá destino y stock.');
       }

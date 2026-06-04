@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { UpperCasePipe } from '@angular/common';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MatIcon } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
@@ -35,6 +36,8 @@ interface ModelSearchResult {
 export class IngresoComponent {
   private readonly catalogService = inject(CatalogService);
   private readonly ingresoService = inject(IngresoService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   readonly mode = signal<'search' | 'variants'>('search');
 
@@ -48,6 +51,8 @@ export class IngresoComponent {
   readonly confirmed = signal(false);
   readonly error = signal<string | null>(null);
   readonly isConfirming = signal(false);
+  readonly editingIngresoId = signal<string | null>(null);
+  readonly isEditing = computed(() => this.editingIngresoId() !== null);
 
   get categories() { return this.catalogService.categories(); }
   get locations() { return this.catalogService.locations(); }
@@ -150,6 +155,49 @@ export class IngresoComponent {
       .subscribe((value) => {
         this.searchTerm.set(value ?? '');
       });
+
+    this.loadEditIfNeeded();
+  }
+
+  private async loadEditIfNeeded(): Promise<void> {
+    const editId = this.route.snapshot.queryParamMap.get('edit');
+    if (!editId) return;
+
+    const data = await this.ingresoService.loadIngresoForEditing(editId);
+    if (!data) return;
+
+    const products = this.catalogService.catalogProducts();
+    const modelIds = new Set<string>();
+    const quantities: Record<string, number> = {};
+
+    for (const item of data.items) {
+      const product = products.find((p) => p.id === item.productId);
+      if (product) {
+        modelIds.add(product.idClothingModel);
+        quantities[item.productId] = (quantities[item.productId] ?? 0) + item.quantity;
+      }
+    }
+
+    if (modelIds.size === 0) return;
+
+    const models = this.catalogService.catalogModels();
+    const model = models.find((m) => modelIds.has(m.id) && m.active);
+    if (!model) return;
+
+    this.selectedLocationId.set(data.locationId);
+    this.variantQuantities.set(quantities);
+    this.selectedModel.set(model);
+    this.mode.set('variants');
+    this.editingIngresoId.set(data.referenceId);
+  }
+
+  cancelEdit(): void {
+    this.editingIngresoId.set(null);
+    this.variantQuantities.set({});
+    this.selectedModel.set(null);
+    this.selectedLocationId.set('');
+    this.mode.set('search');
+    this.router.navigate(['/historial']);
   }
 
   selectModel(model: ClothingModel): void {
@@ -212,7 +260,13 @@ export class IngresoComponent {
 
       if (items.length === 0) return;
 
-      const ok = await this.ingresoService.confirmIngreso(items, locationId);
+      let ok: boolean;
+      const editingId = this.editingIngresoId();
+      if (editingId) {
+        ok = await this.ingresoService.editIngreso(editingId, items, locationId);
+      } else {
+        ok = await this.ingresoService.confirmIngreso(items, locationId);
+      }
 
       if (ok) {
         this.confirmed.set(true);
@@ -225,6 +279,10 @@ export class IngresoComponent {
         this.searchTerm.set('');
         this.selectedCategoryId.set(null);
         this.catalogService.triggerRefresh();
+        if (editingId) {
+          this.editingIngresoId.set(null);
+          this.router.navigate(['/historial']);
+        }
         setTimeout(() => this.confirmed.set(false), 3000);
       } else {
         this.error.set('Error al registrar el ingreso. Intente nuevamente.');

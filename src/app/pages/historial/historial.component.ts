@@ -289,6 +289,14 @@ export class HistorialComponent {
     this.router.navigate(['/ventas/nueva'], { queryParams: { edit: saleId } });
   }
 
+  editTransfer(transferId: string): void {
+    this.router.navigate(['/trasladar-stock'], { queryParams: { edit: transferId } });
+  }
+
+  editIngreso(referenceId: string): void {
+    this.router.navigate(['/ingreso'], { queryParams: { edit: referenceId } });
+  }
+
   async deleteSale(saleId: string): Promise<void> {
     await this.salesHistoryService.hardDeleteSale(saleId);
   }

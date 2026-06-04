@@ -4,7 +4,12 @@
     <!-- Header -->
     <div class="flex flex-row items-center gap-3">
       <mat-icon class="text-2xl md:text-3xl text-koq">inventory</mat-icon>
-      <h1 class="text-2xl md:text-4xl text-black font-medium">{{ 'Ingreso de Stock' | uppercase }}</h1>
+      <div class="flex flex-col">
+        <h1 class="text-2xl md:text-4xl text-black font-medium">{{ isEditing() ? 'Editando Ingreso' : 'Ingreso de Stock' | uppercase }}</h1>
+        @if (isEditing()) {
+          <button (click)="cancelEdit()" class="text-xs text-zinc-400 hover:text-red-500 transition text-left cursor-pointer">Cancelar edición</button>
+        }
+      </div>
     </div>
 
     <!-- Success flash -->
@@ -182,7 +187,7 @@
           [disabled]="!canConfirm()"
           class="w-full py-3.5 rounded-full text-sm font-bold tracking-wider text-white transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed bg-koq hover:opacity-90"
         >
-          REGISTRAR INGRESO ({{ totalUnits() }} unidades)
+          {{ isEditing() ? 'ACTUALIZAR INGRESO' : 'REGISTRAR INGRESO' }} ({{ totalUnits() }} unidades)
         </button>
       </div>
     }

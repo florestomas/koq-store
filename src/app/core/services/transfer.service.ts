@@ -40,6 +40,8 @@ export class TransferService {
   readonly searchTerm = signal('');
   readonly categoryFilterId = signal<string | null>(null);
   readonly warning = signal<string | null>(null);
+  readonly editingTransferId = signal<string | null>(null);
+  readonly isEditing = computed(() => this.editingTransferId() !== null);
 
   private readonly authService = inject(AuthService);
   private readonly catalogService = inject(CatalogService);
@@ -284,6 +286,99 @@ export class TransferService {
     const currentItems = [...this.items()];
     currentItems.splice(index, 1);
     this.items.set(currentItems);
+  }
+
+  async loadTransferForEditing(transferId: string): Promise<boolean> {
+    try {
+      const supabase = getSupabase();
+      const { data: transfer } = await supabase.from('transfers').select('*').eq('id', transferId).single();
+      if (!transfer || transfer.status !== 'pending') return false;
+
+      const { data: details } = await supabase.from('transfer_details').select('*').eq('id_transfer', transferId);
+      if (!details || details.length === 0) return false;
+
+      const allProducts = this.catalogService.catalogProducts();
+      const allModels = this.catalogService.catalogModels();
+      const allColors = this.catalogService.colors();
+      const allModelColors = this.catalogService.catalogModelColors();
+      const allStocks = this.catalogService.catalogStocks();
+      const origin = this.originId();
+
+      const items: TransferItem[] = details.map((d) => {
+        const product = allProducts.find((p) => p.id === d.id_product);
+        const model = product ? allModels.find((m) => m.id === product.idClothingModel) : undefined;
+        const color = product ? allColors.find((c) => c.id === product.idColor) : undefined;
+        const imageUrl = model
+          ? allModelColors.find((mc) => mc.idClothingModel === model.id)?.imageUrl ?? ''
+          : '';
+        const stockAtOrigin = allStocks.find((s) => s.idProduct === d.id_product && s.idLocation === origin)?.currentStock ?? 0;
+
+        return {
+          modelId: model?.id ?? '',
+          modelName: model?.name ?? 'Producto',
+          imageUrl,
+          colorId: product?.idColor ?? '',
+          colorName: color?.name ?? '',
+          size: product?.size ?? '',
+          productId: d.id_product,
+          stockAtOrigin: stockAtOrigin + d.quantity,
+          quantity: d.quantity,
+          salePrice: d.unit_price ?? product?.salePrice ?? 0,
+        };
+      });
+
+      this.items.set(items);
+      this.destinationId.set(transfer.id_destination);
+      this.editingTransferId.set(transferId);
+      return true;
+    } catch (err) {
+      console.error('Error loading transfer for editing:', err);
+      return false;
+    }
+  }
+
+  async editTransfer(oldTransferId: string): Promise<boolean> {
+    const destId = this.destinationId();
+    const currentItems = this.items();
+    if (!destId || currentItems.length === 0) return false;
+
+    const user = this.authService.currentUser();
+    if (!user) return false;
+
+    const supabase = getSupabase();
+    const newTransferId = crypto.randomUUID();
+
+    try {
+      const p_items = currentItems.map((item) => ({
+        id_product: item.productId,
+        quantity: item.quantity,
+        unit_price: item.salePrice,
+      }));
+
+      const { error } = await supabase.rpc('editar_traslado', {
+        p_old_transfer_id: oldTransferId,
+        p_id: newTransferId,
+        p_id_origin: this.originId(),
+        p_id_destination: destId,
+        p_id_user_origin: user.id,
+        p_items,
+      });
+
+      if (error) {
+        console.error('Edit transfer error:', error);
+        return false;
+      }
+
+      this.items.set([]);
+      this.destinationId.set('');
+      this.editingTransferId.set(null);
+      this.catalogService.triggerRefresh();
+      this.receptionService.refresh();
+      return true;
+    } catch (err) {
+      console.error('Error in editTransfer:', err);
+      return false;
+    }
   }
 
   async confirmTransfer(): Promise<boolean> {

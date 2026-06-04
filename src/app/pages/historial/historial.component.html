@@ -327,8 +327,17 @@
                       <div class="flex justify-end text-xs border-t border-gray-100 pt-2 mt-1">
                         <span class="font-bold text-zinc-700">Total: $ {{ event.transfer.totalValue | number:'1.0-0' }}</span>
                       </div>
-                      @if (isAdmin()) {
-                        <div class="mt-3 flex justify-end">
+                      <div class="mt-3 flex justify-end gap-2">
+                        @if (event.transfer.status === 'pending') {
+                          <button
+                            (click)="$event.stopPropagation(); editTransfer(event.transfer.id)"
+                            class="flex flex-row items-center gap-1 px-3 py-2 rounded-full text-xs font-bold tracking-wider text-koq border border-koq hover:bg-koq/10 transition cursor-pointer"
+                          >
+                            <mat-icon class="text-sm">edit</mat-icon>
+                            EDITAR
+                          </button>
+                        }
+                        @if (isAdmin()) {
                           <button
                             (click)="$event.stopPropagation(); deleteTransfer(event.transfer.id)"
                             class="flex flex-row items-center gap-1 px-3 py-2 rounded-full text-xs font-bold tracking-wider text-white bg-red-500 border border-red-500 hover:bg-red-600 transition cursor-pointer"
@@ -336,8 +345,8 @@
                             <mat-icon class="text-sm">delete</mat-icon>
                             ELIMINAR
                           </button>
-                        </div>
-                      }
+                        }
+                      </div>
                     }
                   }
                   @case ('ingreso') {
@@ -363,7 +372,14 @@
                         </tbody>
                       </table>
                       @if (isAdmin()) {
-                        <div class="mt-3 flex justify-end">
+                        <div class="mt-3 flex justify-end gap-2">
+                          <button
+                            (click)="$event.stopPropagation(); editIngreso(event.ingreso.id)"
+                            class="flex flex-row items-center gap-1 px-3 py-2 rounded-full text-xs font-bold tracking-wider text-koq border border-koq hover:bg-koq/10 transition cursor-pointer"
+                          >
+                            <mat-icon class="text-sm">edit</mat-icon>
+                            EDITAR
+                          </button>
                           <button
                             (click)="$event.stopPropagation(); deleteIngresoGroup(event.ingreso.id)"
                             class="flex flex-row items-center gap-1 px-3 py-2 rounded-full text-xs font-bold tracking-wider text-white bg-red-500 border border-red-500 hover:bg-red-600 transition cursor-pointer"
