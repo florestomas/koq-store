@@ -1,7 +1,16 @@
 -- =============================================================================
 -- SEED CATÁLOGO KOQ STORE
--- Categorías, Colores, Modelos, Productos, Stock (locales 2,3,4), Model Colors
+-- Categorías, Colores, Modelos, Productos, Stock (4 ubicaciones), Model Colors
+-- LIMPIA datos existentes y recrea todo
 -- =============================================================================
+
+-- 0. CLEANUP
+DELETE FROM stock_locations;
+DELETE FROM products;
+DELETE FROM clothing_model_colors;
+DELETE FROM clothing_models;
+DELETE FROM colors;
+DELETE FROM categories;
 
 -- 1. CATEGORÍAS
 INSERT INTO categories (id, name) VALUES
@@ -129,6 +138,7 @@ DECLARE
   stock_luz integer;
   stock_santiago integer;
   stock_avellaneda integer;
+  stock_taller integer;
   model_name text;
 BEGIN
   models := '[
@@ -144,16 +154,16 @@ BEGIN
       "name": "Polera Morley Unisex",
       "colors": ["FUCSIA","ROJO","BEIGE","NEGRO","GRIS"],
       "tiers": [
-        {"sizes": [1,2,3], "price": 5500, "stock": 63},
-        {"sizes": [4,5,6,8,10], "price": 6500, "stock": 115}
+        {"sizes": [1,2,3], "price": 5500, "stock": 72},
+        {"sizes": [4,5,6,8,10], "price": 6500, "stock": 130}
       ]
     },
     {
       "name": "Polerón Morley Plush Bifaz",
       "colors": ["VERDE OLIVA","FUCSIA","ROSA","LILA","TERRACOTA"],
       "tiers": [
-        {"sizes": [2,4], "price": 13000, "stock": 27},
-        {"sizes": [6,8], "price": 13000, "stock": 27}
+        {"sizes": [2,4], "price": 13000, "stock": 40},
+        {"sizes": [6,8], "price": 13000, "stock": 40}
       ]
     },
     {
@@ -168,79 +178,79 @@ BEGIN
       "name": "Remera Manga Larga Cuello V Modal Viscosa",
       "colors": ["NEGRO","BLANCO","BORDO","TERRACOTA","AZUL PETROLEO","GRIS TOPO"],
       "tiers": [
-        {"sizes": [0,1,2,3], "price": 7000, "stock": 108},
-        {"sizes": [4,5,6,8,10], "price": 8000, "stock": 116}
+        {"sizes": [0,1,2,3], "price": 7000, "stock": 120},
+        {"sizes": [4,5,6,8,10], "price": 8000, "stock": 130}
       ]
     },
     {
       "name": "Suéter Clásico Cuello Redondo",
       "colors": ["NEGRO","ROSA","BEIGE","VERDE OLIVA","AZUL MARINO"],
       "tiers": [
-        {"sizes": [2,4], "price": 10000, "stock": 8},
-        {"sizes": [6,8], "price": 10000, "stock": 15}
+        {"sizes": [2,4], "price": 10000, "stock": 24},
+        {"sizes": [6,8], "price": 10000, "stock": 32}
       ]
     },
     {
       "name": "Calza Térmica",
       "colors": ["NEGRO","GRIS"],
       "tiers": [
-        {"sizes": [1,2,3,4], "price": 10000, "stock": 5},
-        {"sizes": [5,6,8], "price": 11000, "stock": 5}
+        {"sizes": [1,2,3,4], "price": 10000, "stock": 25},
+        {"sizes": [5,6,8], "price": 11000, "stock": 25}
       ]
     },
     {
       "name": "Remera Térmica",
       "colors": ["NEGRO","GRIS"],
       "tiers": [
-        {"sizes": [0,1,2,3], "price": 10000, "stock": 16},
-        {"sizes": [4,5,6,8], "price": 11000, "stock": 12}
+        {"sizes": [0,1,2,3], "price": 10000, "stock": 36},
+        {"sizes": [4,5,6,8], "price": 11000, "stock": 30}
       ]
     },
     {
       "name": "Buzo c/ Capucha Modal Soft",
       "colors": ["VERDE OSCURO","NEGRO","CAMEL","GRIS"],
       "tiers": [
-        {"sizes": [6,8,10], "price": 8000, "stock": 18}
+        {"sizes": [6,8,10], "price": 8000, "stock": 45}
       ]
     },
     {
       "name": "Camisa Poplin",
       "colors": ["NARANJA","ROJO","AZUL FRANCIA","NEGRO","BLANCO","VERDE AGUA","ROSA CLARO","BEIGE"],
       "tiers": [
-        {"sizes": [0,1,2], "price": 12000, "stock": 56},
-        {"sizes": [3,4,5,6,7,9,11], "price": 13000, "stock": 94}
+        {"sizes": [0,1,2], "price": 12000, "stock": 75},
+        {"sizes": [3,4,5,6,7,9,11], "price": 13000, "stock": 115}
       ]
     },
     {
       "name": "Camisa de Raso",
       "colors": ["NEGRO","ROSA VIEJO","BLANCO","CELESTE AGUA","CHAMPAGNE"],
       "tiers": [
-        {"sizes": [3], "price": 17000, "stock": 15},
-        {"sizes": [5,7], "price": 17000, "stock": 15}
+        {"sizes": [3], "price": 17000, "stock": 30},
+        {"sizes": [5,7], "price": 17000, "stock": 30}
       ]
     },
     {
       "name": "Camisola 3/4",
       "colors": ["NEGRO","BLANCO","ROSA","LILA","ESTAMPADO LILA/BLANCO","ESTAMPADO NEGRO/BLANCO"],
       "tiers": [
-        {"sizes": [1,2,3], "price": 12000, "stock": 29},
-        {"sizes": [4,6,8,10], "price": 13000, "stock": 92}
+        {"sizes": [1,2,3], "price": 12000, "stock": 50},
+        {"sizes": [4,6,8,10], "price": 13000, "stock": 110}
       ]
     },
     {
       "name": "Remera Manga Corta Modal Viscosa",
       "colors": ["NEGRO","BLANCO","AZUL FRANCIA","CELESTE","ROJO","BORDO","ROSA","BEIGE","MARRON"],
       "tiers": [
-        {"sizes": [0,1,2,3], "price": 5000, "stock": 48},
-        {"sizes": [4,5,6,8,10], "price": 6000, "stock": 105}
+        {"sizes": [0,1,2,3], "price": 5000, "stock": 70},
+        {"sizes": [4,5,6,8,10], "price": 6000, "stock": 130}
       ]
     },
     {
       "name": "Remera Manga Corta Cuello V Modal Viscosa",
       "colors": ["BLANCO","MOSTAZA","NEGRO","VIOLETA","AZUL","ROJO"],
       "tiers": [
-        {"sizes": [1,2,3], "price": 6000, "stock": 43},
-        {"sizes": [4,5,6,8,10], "price": 7000, "stock": 18}
+        {"sizes": [1,2,3], "price": 6000, "stock": 55},
+        {"sizes": [4,5,6,8,10], "price": 7000, "stock": 40}
       ]
     },
     {
@@ -255,16 +265,16 @@ BEGIN
       "name": "Musculosa Deportiva",
       "colors": ["NEGRO","GRIS","BLANCO","AMARILLO"],
       "tiers": [
-        {"sizes": [1,2,3], "price": 4500, "stock": 83},
-        {"sizes": [4,5,6,8,10], "price": 5500, "stock": 159}
+        {"sizes": [1,2,3], "price": 4500, "stock": 95},
+        {"sizes": [4,5,6,8,10], "price": 5500, "stock": 175}
       ]
     },
     {
       "name": "Musculosa Espalda Ancha",
       "colors": ["NEGRO","BEIGE","GRIS","BLANCO","AMARILLO","ROJO"],
       "tiers": [
-        {"sizes": [1,2,3], "price": 4500, "stock": 27},
-        {"sizes": [4,5,6,8,10], "price": 5500, "stock": 44}
+        {"sizes": [1,2,3], "price": 4500, "stock": 45},
+        {"sizes": [4,5,6,8,10], "price": 5500, "stock": 60}
       ]
     }
   ]'::jsonb;
@@ -290,7 +300,7 @@ BEGIN
       -- variant_count = colors × sizes
       variant_count := jsonb_array_length(m->'colors') * jsonb_array_length(tier->'sizes');
 
-      -- Stock per variant (floor), remainder goes to first variant
+      -- Stock per variant (floor), remainder distributed one-by-one
       variant_stock := total_stock / variant_count;
       remainder := total_stock - (variant_stock * variant_count);
 
@@ -313,23 +323,35 @@ BEGIN
         LOOP
           product_id := gen_random_uuid()::text;
 
-          -- Calculate stock for THIS specific variant
-          -- First variant gets remainder
+          -- Calculate stock for THIS variant (distribute remainder one-by-one)
           var_stock := variant_stock;
-          IF remainder > 0 AND color_name = (m->'colors'->>0) AND sz = (tier->'sizes'->>0)::int THEN
-            var_stock := var_stock + remainder;
+          IF remainder > 0 THEN
+            var_stock := var_stock + 1;
+            remainder := remainder - 1;
           END IF;
 
-          -- Distribute across 3 stores (~33/33/34 split)
-          stock_luz := var_stock / 3;
-          stock_santiago := var_stock / 3;
-          stock_avellaneda := var_stock - stock_luz - stock_santiago;
+          -- Distribute across 4 locations, similar but not identical
+          -- Each location gets base stock with ±25% random variation
+          stock_taller := var_stock + (random() * var_stock * 0.25 - var_stock * 0.125)::int;
+          stock_luz := var_stock + (random() * var_stock * 0.25 - var_stock * 0.125)::int;
+          stock_santiago := var_stock + (random() * var_stock * 0.25 - var_stock * 0.125)::int;
+          stock_avellaneda := var_stock + (random() * var_stock * 0.25 - var_stock * 0.125)::int;
+
+          -- Ensure no negative stock
+          IF stock_taller < 0 THEN stock_taller := 0; END IF;
+          IF stock_luz < 0 THEN stock_luz := 0; END IF;
+          IF stock_santiago < 0 THEN stock_santiago := 0; END IF;
+          IF stock_avellaneda < 0 THEN stock_avellaneda := 0; END IF;
 
           -- Insert product
           INSERT INTO products (id, id_clothing_model, size, id_color, cost_price, sale_price, active)
           VALUES (product_id, model_id, sz::text, color_id, price, price, true);
 
-          -- Insert stock in each store
+          -- Insert stock in each location
+          IF stock_taller > 0 THEN
+            INSERT INTO stock_locations (id, id_product, id_location, current_stock, minimum_stock)
+            VALUES (gen_random_uuid()::text, product_id, '1', stock_taller, 1);
+          END IF;
           IF stock_luz > 0 THEN
             INSERT INTO stock_locations (id, id_product, id_location, current_stock, minimum_stock)
             VALUES (gen_random_uuid()::text, product_id, '2', stock_luz, 1);
