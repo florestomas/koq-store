@@ -100,6 +100,14 @@
                   placeholder="Precio"
                 />
                 <button
+                  (click)="applyPriceToAll(size)"
+                  [disabled]="getPrice(size) <= 0"
+                  class="size-7 rounded-full flex items-center justify-center text-zinc-400 hover:text-koq hover:bg-koq/10 transition cursor-pointer disabled:opacity-20 disabled:cursor-not-allowed"
+                  title="Aplicar a todos los talles"
+                >
+                  <mat-icon class="text-sm">arrow_right_alt</mat-icon>
+                </button>
+                <button
                   (click)="removeSize(size)"
                   class="text-zinc-400 hover:text-red-500 transition text-lg leading-none"
                 >&times;</button>

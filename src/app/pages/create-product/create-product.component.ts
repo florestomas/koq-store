@@ -76,6 +76,18 @@ export class CreateProductComponent {
     return this.pricesBySize()[size] ?? 0;
   }
 
+  applyPriceToAll(fromSize: string): void {
+    const price = this.pricesBySize()[fromSize] ?? 0;
+    if (price <= 0) return;
+    this.pricesBySize.update((p) => {
+      const updated = { ...p };
+      for (const size of this.selectedSizes()) {
+        updated[size] = price;
+      }
+      return updated;
+    });
+  }
+
   getColorName(colorId: string): string {
     return this.COLORS.find((c) => c.id === colorId)?.name ?? colorId;
   }
