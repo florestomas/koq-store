@@ -80,11 +80,12 @@
       }
     </div>
 
-    <app-nav-item
-      [navLink]="'login'"
-      [iconName]="'logout'"
-      [navName]="'CERRAR SESION'"
-      (click)="close.emit()"
-    ></app-nav-item>
+    <button
+      (click)="logout()"
+      class="flex flex-row items-center justify-start gap-4 w-full px-5 py-3.5 md:py-2.5 whitespace-nowrap text-sm text-zinc-400 hover:text-red-500 hover:bg-red-50 transition cursor-pointer rounded-xl"
+    >
+      <mat-icon class="material-icons-outlined">logout</mat-icon>
+      <span>CERRAR SESION</span>
+    </button>
   </div>
 </div>
