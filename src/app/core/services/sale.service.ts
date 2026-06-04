@@ -34,7 +34,7 @@ export class SaleService {
     try {
       const saleId = crypto.randomUUID();
       const p_items = items.map((item) => ({
-        id_product: item.productId,
+        id_product: item.productId || null,
         quantity: item.quantity,
         unit_price: item.unitPrice,
       }));
@@ -71,7 +71,7 @@ export class SaleService {
     try {
       const newSaleId = crypto.randomUUID();
       const p_items = items.map((item) => ({
-        id_product: item.productId,
+        id_product: item.productId || null,
         quantity: item.quantity,
         unit_price: item.unitPrice,
       }));
