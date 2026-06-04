@@ -42,6 +42,8 @@ export class TransferService {
   readonly warning = signal<string | null>(null);
   readonly editingTransferId = signal<string | null>(null);
   readonly isEditing = computed(() => this.editingTransferId() !== null);
+  private lastTransferData = signal<{ destinationId: string; items: TransferItem[] } | null>(null);
+  readonly hasLastTransfer = computed(() => this.lastTransferData() !== null);
 
   private readonly authService = inject(AuthService);
   private readonly catalogService = inject(CatalogService);
@@ -369,6 +371,7 @@ export class TransferService {
         return false;
       }
 
+      this.saveLastTransfer();
       this.items.set([]);
       this.destinationId.set('');
       this.editingTransferId.set(null);
@@ -470,6 +473,7 @@ export class TransferService {
         );
       }
 
+      this.saveLastTransfer();
       this.items.set([]);
       this.destinationId.set('');
       this.catalogService.triggerRefresh();
@@ -485,5 +489,21 @@ export class TransferService {
 
   getLocations() {
     return this.catalogService.locations();
+  }
+
+  private saveLastTransfer(): void {
+    const items = this.items();
+    if (items.length === 0) return;
+    this.lastTransferData.set({
+      destinationId: this.destinationId(),
+      items: items.map((i) => ({ ...i })),
+    });
+  }
+
+  repeatLastTransfer(): void {
+    const data = this.lastTransferData();
+    if (!data) return;
+    this.destinationId.set(data.destinationId);
+    this.items.set(data.items.map((i) => ({ ...i })));
   }
 }

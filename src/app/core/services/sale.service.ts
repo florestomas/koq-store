@@ -1,7 +1,6 @@
-import { inject } from '@angular/core';
-import { Injectable } from '@angular/core';
-import { getSupabase } from './supabase.service';
+import { computed, inject, Injectable, signal } from '@angular/core';
 import { CatalogService } from './catalog.service';
+import { getSupabase } from './supabase.service';
 
 export interface CartItem {
   productId: string;
@@ -24,6 +23,9 @@ interface ConfirmSaleParams {
 @Injectable({ providedIn: 'root' })
 export class SaleService {
   private readonly catalogService = inject(CatalogService);
+
+  private lastSaleData = signal<{ items: CartItem[]; channel: 'local' | 'whatsapp' } | null>(null);
+  readonly hasLastSale = computed(() => this.lastSaleData() !== null);
 
   async confirmSale(data: ConfirmSaleParams): Promise<boolean> {
     const { items, idLocation, idUser, channel } = data;
@@ -96,6 +98,7 @@ export class SaleService {
         }
       }
 
+      this.saveLastSale(data);
       this.catalogService.triggerRefresh();
       return true;
     } catch (err) {
@@ -183,11 +186,24 @@ export class SaleService {
         }
       }
 
+      this.saveLastSale(data);
       this.catalogService.triggerRefresh();
       return true;
     } catch (err) {
       console.error('Edit sale error:', err);
       return false;
     }
+  }
+
+  private saveLastSale(data: ConfirmSaleParams): void {
+    const { items, channel } = data;
+    if (items.length === 0) return;
+    this.lastSaleData.set({ items: items.map((i) => ({ ...i })), channel });
+  }
+
+  repeatLastSale(): { items: CartItem[]; channel: 'local' | 'whatsapp' } | null {
+    const data = this.lastSaleData();
+    if (!data) return null;
+    return { items: data.items.map((i) => ({ ...i })), channel: data.channel };
   }
 }

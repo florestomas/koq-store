@@ -1,0 +1,5 @@
+id,user,email,id_location,role
+2,Galeria Luz,tiendakoq1@proton.me,2,operator
+3,Galeria Santiago,tienda-koq2@proton.me,3,operator
+4,Galeria Avellaneda,tienda-koq3@proton.me,4,operator
+5,Taller Carabobo,ofgoscar64@gmail.com,1,admin

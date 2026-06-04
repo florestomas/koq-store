@@ -39,7 +39,7 @@ export interface ModelSearchResult {
 })
 export class NewSaleComponent {
   private readonly authService = inject(AuthService);
-  private readonly saleService = inject(SaleService);
+  readonly saleService = inject(SaleService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   readonly catalogService = inject(CatalogService);
@@ -320,6 +320,13 @@ export class NewSaleComponent {
 
   cancelEdit(): void {
     this.router.navigate(['/historial']);
+  }
+
+  repeatLastSale(): void {
+    const data = this.saleService.repeatLastSale();
+    if (!data) return;
+    this.cartItems.set(data.items);
+    this.channel.set(data.channel);
   }
 
   selectModel(model: ClothingModel): void {

@@ -237,6 +237,15 @@
       @if (cartItems().length > 0) {
         <span class="ml-auto text-xs text-zinc-400">{{ cartItems().length }} {{ cartItems().length === 1 ? 'item' : 'items' }}</span>
       }
+      @if (!isEditing() && saleService.hasLastSale() && cartItems().length === 0) {
+        <button
+          (click)="repeatLastSale()"
+          class="ml-auto flex flex-row items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium text-zinc-500 border border-dashed border-zinc-300 hover:border-koq hover:text-koq transition cursor-pointer"
+        >
+          <mat-icon class="text-sm">replay</mat-icon>
+          Repetir última
+        </button>
+      }
     </div>
 
     <!-- Cart items area -->
