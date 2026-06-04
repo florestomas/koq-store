@@ -17,10 +17,10 @@
     >
       <div class="flex flex-row items-center gap-1.5 mb-1">
         <mat-icon class="text-koq text-sm">receipt_long</mat-icon>
-        <span class="text-[10px] text-zinc-400 font-semibold tracking-wider uppercase">Ventas</span>
+        <span class="text-xs text-zinc-400 font-semibold tracking-wider uppercase">Ventas</span>
       </div>
-      <p class="text-lg font-bold text-koq">$ {{ summary().ventasRevenue | number:'1.0-0' }}</p>
-      <p class="text-[10px] text-zinc-400">{{ summary().ventasCount }} venta{{ summary().ventasCount !== 1 ? 's' : '' }}</p>
+      <p class="text-2xl md:text-3xl font-bold text-koq">$ {{ summary().ventasRevenue | number:'1.0-0' }}</p>
+      <p class="text-xs text-zinc-400">{{ summary().ventasCount }} venta{{ summary().ventasCount !== 1 ? 's' : '' }}</p>
     </div>
     <div
       (click)="setActiveType('transferencia')"
@@ -32,10 +32,10 @@
     >
       <div class="flex flex-row items-center gap-1.5 mb-1">
         <mat-icon class="text-zinc-500 text-sm">swap_horiz</mat-icon>
-        <span class="text-[10px] text-zinc-400 font-semibold tracking-wider uppercase">Traslado Stock</span>
+        <span class="text-xs text-zinc-400 font-semibold tracking-wider uppercase">Traslado Stock</span>
       </div>
-      <p class="text-lg font-bold text-zinc-700">{{ summary().transferenciasCount }}</p>
-      <p class="text-[10px] text-zinc-400">$ {{ summary().transferenciasValue | number:'1.0-0' }}</p>
+      <p class="text-2xl md:text-3xl font-bold text-zinc-700">{{ summary().transferenciasCount }}</p>
+      <p class="text-xs text-zinc-400">$ {{ summary().transferenciasValue | number:'1.0-0' }}</p>
     </div>
     <div
       (click)="setActiveType('ingreso')"
@@ -47,10 +47,10 @@
     >
       <div class="flex flex-row items-center gap-1.5 mb-1">
         <mat-icon class="text-green-600 text-sm">add_shopping_cart</mat-icon>
-        <span class="text-[10px] text-zinc-400 font-semibold tracking-wider uppercase">Ingresos</span>
+        <span class="text-xs text-zinc-400 font-semibold tracking-wider uppercase">Ingresos</span>
       </div>
-      <p class="text-lg font-bold text-green-600">+{{ summary().ingresosUnits }}</p>
-      <p class="text-[10px] text-zinc-400">{{ summary().ingresosCount }} ingreso{{ summary().ingresosCount !== 1 ? 's' : '' }}</p>
+      <p class="text-2xl md:text-3xl font-bold text-green-600">+{{ summary().ingresosUnits }}</p>
+      <p class="text-xs text-zinc-400">{{ summary().ingresosCount }} ingreso{{ summary().ingresosCount !== 1 ? 's' : '' }}</p>
     </div>
   </div>
 
@@ -183,11 +183,11 @@
                 [class.rotate-90]="expandedId() === event.id"
               >chevron_right</mat-icon>
               <div class="flex flex-col min-w-0 w-16 md:w-24 shrink-0">
-                <span class="text-[10px] md:text-xs font-semibold text-zinc-800">{{ event.dateTime | date:'dd/MM' }}</span>
-                <span class="text-[10px] text-zinc-400">{{ event.dateTime | date:'HH:mm' }}</span>
+                <span class="text-xs md:text-sm font-semibold text-zinc-800">{{ event.dateTime | date:'dd/MM' }}</span>
+                <span class="text-xs text-zinc-400">{{ event.dateTime | date:'HH:mm' }}</span>
               </div>
               <mat-icon class="text-sm shrink-0" [class]="event.metaClass">{{ event.icon }}</mat-icon>
-              <span class="text-xs text-zinc-600 min-w-0 truncate">{{ event.summary }}</span>
+              <span class="text-sm text-zinc-600 min-w-0 truncate">{{ event.summary }}</span>
               <span class="flex-1 min-w-0"></span>
               <span class="text-[10px] font-medium shrink-0 px-2 py-0.5 rounded-full"
                 [class.bg-blue-50]="event.metaClass === 'text-blue-500'"
@@ -201,7 +201,7 @@
                 [class.bg-gray-100]="event.metaClass === 'text-zinc-500'"
                 [class.text-zinc-500]="event.metaClass === 'text-zinc-500'"
               >{{ event.meta }}</span>
-              <span class="text-sm font-bold shrink-0" [class]="event.amountClass">{{ event.amount }}</span>
+              <span class="text-base md:text-lg font-bold shrink-0" [class]="event.amountClass">{{ event.amount }}</span>
             </div>
             <div
               class="expandable-content"
