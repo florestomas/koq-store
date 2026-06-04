@@ -76,7 +76,7 @@
       </button>
     }
   </nav>
-  <div class="flex-1 overflow-y-auto min-h-0 grid grid-cols-1 gap-1 items-start content-start">
+  <div class="flex-1 overflow-y-auto min-h-0 grid grid-cols-1 gap-1.5 items-start content-start">
     @for (item of catalogService.filteredItems(); track item.modelId) {
       <app-product-card [item]="item"></app-product-card>
     } @empty {
