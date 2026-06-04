@@ -39,7 +39,8 @@ export class AlertasComponent {
           (a) =>
             a.modelName.toLowerCase().includes(term) ||
             a.size.includes(term) ||
-            a.colorName.toLowerCase().includes(term),
+            a.colorName.toLowerCase().includes(term) ||
+            a.locationName.toLowerCase().includes(term),
         )
       : alerts;
 
