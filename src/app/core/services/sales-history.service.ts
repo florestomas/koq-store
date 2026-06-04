@@ -113,7 +113,7 @@ export class SalesHistoryService {
             quantity: d.quantity,
             unitPrice: d.unitPrice,
             productId: d.idProduct,
-            isOffer: product ? d.unitPrice < (d.originalPrice ?? product.salePrice) : false,
+            isOffer: d.originalPrice != null ? d.unitPrice < d.originalPrice : false,
           };
         });
 
