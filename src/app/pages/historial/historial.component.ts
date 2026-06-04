@@ -40,7 +40,7 @@ export class HistorialComponent {
   readonly stockMovementService = inject(StockMovementService);
 
   readonly today = new Date().toISOString().split('T')[0];
-  readonly thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+  readonly startOfWeek = this.getMonday().toISOString().split('T')[0];
 
   readonly dateFrom = signal<string | null>(null);
   readonly dateTo = signal<string | null>(null);
@@ -65,9 +65,18 @@ export class HistorialComponent {
   readonly isAdmin = computed(() => this.authService.currentUser()?.role === 'admin');
 
   constructor() {
-    this.dateFrom.set(this.thirtyDaysAgo);
+    this.dateFrom.set(this.startOfWeek);
     this.dateTo.set(this.today);
     this.applyFilters();
+  }
+
+  private getMonday(): Date {
+    const now = new Date();
+    const day = now.getDay();
+    const offset = day === 0 ? -6 : 1 - day;
+    now.setDate(now.getDate() + offset);
+    now.setHours(0, 0, 0, 0);
+    return now;
   }
 
   private applyFilters(): void {
