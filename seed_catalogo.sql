@@ -73,14 +73,14 @@ DECLARE
   m_sueter_id text := gen_random_uuid()::text;
   m_calza_termica_id text := gen_random_uuid()::text;
 
-  cat_poleras text := (SELECT id FROM categories WHERE name = 'Poleras');
-  cat_polerones text := (SELECT id FROM categories WHERE name = 'Polerones');
-  cat_remeras text := (SELECT id FROM categories WHERE name = 'Remeras');
-  cat_musculosas text := (SELECT id FROM categories WHERE name = 'Musculosas');
-  cat_buzos text := (SELECT id FROM categories WHERE name = 'Buzos');
-  cat_camisas text := (SELECT id FROM categories WHERE name = 'Camisas');
-  cat_sueters text := (SELECT id FROM categories WHERE name = 'Suéters');
-  cat_calzas text := (SELECT id FROM categories WHERE name = 'Calzas');
+  cat_poleras text := (SELECT id FROM categories WHERE name = 'Poleras' LIMIT 1);
+  cat_polerones text := (SELECT id FROM categories WHERE name = 'Polerones' LIMIT 1);
+  cat_remeras text := (SELECT id FROM categories WHERE name = 'Remeras' LIMIT 1);
+  cat_musculosas text := (SELECT id FROM categories WHERE name = 'Musculosas' LIMIT 1);
+  cat_buzos text := (SELECT id FROM categories WHERE name = 'Buzos' LIMIT 1);
+  cat_camisas text := (SELECT id FROM categories WHERE name = 'Camisas' LIMIT 1);
+  cat_sueters text := (SELECT id FROM categories WHERE name = 'Suéters' LIMIT 1);
+  cat_calzas text := (SELECT id FROM categories WHERE name = 'Calzas' LIMIT 1);
 BEGIN
   -- =========================================================================
   -- CLOTHING MODELS
@@ -275,7 +275,7 @@ BEGIN
     model_name := m->>'name';
 
     -- Find the model ID
-    SELECT id INTO model_id FROM clothing_models WHERE name = model_name;
+    SELECT id INTO model_id FROM clothing_models WHERE name = model_name LIMIT 1;
     IF model_id IS NULL THEN
       RAISE NOTICE 'Model not found: %', model_name;
       CONTINUE;
@@ -297,7 +297,7 @@ BEGIN
       -- Process each color
       FOR color_name IN SELECT jsonb_array_elements_text(m->'colors')
       LOOP
-        SELECT id INTO color_id FROM colors WHERE name = color_name;
+        SELECT id INTO color_id FROM colors WHERE name = color_name LIMIT 1;
         IF color_id IS NULL THEN
           RAISE NOTICE 'Color not found: %', color_name;
           CONTINUE;
