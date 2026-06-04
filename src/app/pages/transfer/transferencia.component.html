@@ -25,18 +25,21 @@
         <span class="text-base font-bold text-koq">{{ getLocationName(transferService.originId()) }}</span>
       </div>
       <mat-icon class="text-2xl text-zinc-300 animate-pulse">arrow_forward</mat-icon>
-      <select
-        class="border-2 border-gray-200 rounded-2xl px-5 py-2 text-base font-bold outline-none focus:border-koq bg-white cursor-pointer"
-        [value]="transferService.destinationId()"
-        (change)="transferService.destinationId.set($any($event.target).value)"
-      >
-        <option value="" disabled selected>Seleccionar local...</option>
-        @for (loc of transferService.getLocations(); track loc.id) {
-          @if (loc.id !== transferService.originId()) {
-            <option [value]="loc.id">{{ loc.name }}</option>
+      <div class="flex flex-col items-center bg-white border-2 border-gray-200 rounded-2xl px-5 py-2 min-w-28 focus-within:border-koq transition">
+        <span class="text-xs text-zinc-400 tracking-wider mb-0.5">DESTINO</span>
+        <select
+          class="text-base font-bold outline-none bg-transparent cursor-pointer max-w-40"
+          [value]="transferService.destinationId()"
+          (change)="transferService.destinationId.set($any($event.target).value)"
+        >
+          <option value="" disabled selected>Seleccionar local...</option>
+          @for (loc of transferService.getLocations(); track loc.id) {
+            @if (loc.id !== transferService.originId()) {
+              <option [value]="loc.id">{{ loc.name }}</option>
+            }
           }
-        }
-      </select>
+        </select>
+      </div>
     </div>
 
     <!-- Search -->
