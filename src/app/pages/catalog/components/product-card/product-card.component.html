@@ -1,12 +1,12 @@
 <div
-  class="flex flex-col w-full border-2 rounded-3xl divide-y divide-gray-300/60 mt-4 hover:border-koq transition overflow-hidden"
+  class="flex flex-col w-full border-2 rounded-3xl divide-y divide-gray-300/60 hover:border-koq transition overflow-hidden"
   [class.border-gray-300/60]="item().stockAlerts.length === 0"
   [class.border-red-300]="item().stockAlerts.length > 0"
   [class.hover:border-red-400]="item().stockAlerts.length > 0"
 >
   <div
     (click)="cardExpanded.set(!cardExpanded())"
-    class="flex flex-row items-center justify-start bg-white rounded-t-3xl gap-2 w-full p-3 md:p-4 border-b border-gray-300/60 cursor-pointer"
+    class="flex flex-row items-center justify-start bg-white rounded-t-3xl gap-2 w-full p-2 md:p-3 border-b border-gray-300/60 cursor-pointer"
   >
     <img [src]="item().imageUrl" class="size-12 md:size-16 rounded-xl" />
     <div class="flex flex-col flex-1 mx-2 md:mx-6 min-w-0">
