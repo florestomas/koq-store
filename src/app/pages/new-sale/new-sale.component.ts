@@ -45,13 +45,14 @@ export class NewSaleComponent {
   readonly selectedCategoryId = signal<string | null>(null);
   readonly selectedModel = signal<ClothingModel | null>(null);
   readonly cartItems = signal<CartItem[]>([]);
-  readonly discountType = signal<'none' | 'percentage' | 'fixed_amount'>('none');
-  readonly discountValue = signal(0);
   readonly channel = signal<'local' | 'whatsapp' | null>(null);
-  readonly paymentTransfer = signal(false);
+  readonly surchargeMode = signal<'none' | 'percentage' | 'fixed'>('none');
+  readonly surchargeFixedValue = signal(0);
   readonly confirmed = signal(false);
   readonly error = signal<string | null>(null);
   readonly variantQuantities = signal<Record<string, number>>({});
+  readonly showCanastoForm = signal(false);
+  readonly canastoPrice = signal(0);
 
   readonly channels: ('local' | 'whatsapp')[] = [
     'local',
@@ -222,21 +223,15 @@ export class NewSaleComponent {
     ),
   );
 
-  readonly discountAmount = computed(() => {
-    const type = this.discountType();
-    const value = this.discountValue();
-    if (type === 'none' || !value) return 0;
-    if (type === 'percentage') return this.totalBeforeDiscount() * (value / 100);
-    return value;
-  });
-
   readonly surcharge = computed(() => {
-    if (!this.paymentTransfer()) return 0;
-    return Math.round(this.totalBeforeDiscount() * 0.1);
+    const mode = this.surchargeMode();
+    if (mode === 'none') return 0;
+    if (mode === 'percentage') return Math.round(this.totalBeforeDiscount() * 0.1);
+    return this.surchargeFixedValue();
   });
 
   readonly total = computed(() =>
-    Math.max(0, this.totalBeforeDiscount() - this.discountAmount() + this.surcharge()),
+    Math.max(0, this.totalBeforeDiscount() + this.surcharge()),
   );
 
   readonly canConfirm = computed(
@@ -350,10 +345,32 @@ export class NewSaleComponent {
     this.variantQuantities.set({});
   }
 
+  addCanasto(): void {
+    const price = this.canastoPrice();
+    if (price <= 0) return;
+    this.error.set(null);
+    this.cartItems.update((prev) => [
+      ...prev,
+      {
+        productId: '',
+        modelName: 'Canasto de ofertas',
+        colorName: '',
+        size: '',
+        quantity: 1,
+        unitPrice: price,
+        originalPrice: price,
+        imageUrl: '',
+      },
+    ]);
+    this.canastoPrice.set(0);
+    this.showCanastoForm.set(false);
+  }
+
   changeQuantity(index: number, delta: number): void {
     const items = [...this.cartItems()];
     const item = items[index];
     if (!item) return;
+    const isCanasto = item.productId === '';
 
     if (delta < 0) {
       const newQty = item.quantity + delta;
@@ -363,6 +380,7 @@ export class NewSaleComponent {
         items[index] = { ...item, quantity: newQty };
       }
     } else {
+      if (isCanasto) return;
       const stocks = this.catalogService.catalogStocks();
       const availableStock =
         stocks.find(
@@ -395,24 +413,8 @@ export class NewSaleComponent {
     this.cartItems.set(items);
   }
 
-  cycleDiscountMode(): void {
-    const modes: ('none' | 'percentage' | 'fixed_amount')[] = [
-      'none',
-      'percentage',
-      'fixed_amount',
-    ];
-    const current = this.discountType();
-    const nextIndex = (modes.indexOf(current) + 1) % modes.length;
-    this.discountType.set(modes[nextIndex]);
-    if (modes[nextIndex] === 'none') this.discountValue.set(0);
-  }
-
   selectChannel(ch: 'local' | 'whatsapp'): void {
     this.channel.set(ch);
-  }
-
-  togglePaymentTransfer(): void {
-    this.paymentTransfer.update((v) => !v);
   }
 
   parseNumber(value: string): number {
@@ -428,6 +430,7 @@ export class NewSaleComponent {
     const stocks = this.catalogService.catalogStocks();
     const cartQuantities = this.cartQuantities();
     for (const item of items) {
+      if (item.productId === '') continue;
       const dbStock =
         stocks.find(
           (s) => s.idProduct === item.productId && s.idLocation === user.idLocation,
@@ -446,12 +449,6 @@ export class NewSaleComponent {
       idLocation: user.idLocation,
       idUser: user.id,
       channel,
-      discountType:
-        this.discountType() === 'none'
-          ? undefined
-          : (this.discountType() as 'percentage' | 'fixed_amount'),
-      discountValue:
-        this.discountType() === 'none' ? undefined : this.discountValue(),
     });
 
     if (ok) {
@@ -461,11 +458,12 @@ export class NewSaleComponent {
       this.selectedModel.set(null);
       this.variantQuantities.set({});
       this.channel.set(null);
-      this.paymentTransfer.set(false);
-      this.discountType.set('none');
-      this.discountValue.set(0);
+      this.surchargeMode.set('none');
+      this.surchargeFixedValue.set(0);
       this.searchControl.setValue('');
       this.searchTerm.set('');
+      this.showCanastoForm.set(false);
+      this.canastoPrice.set(0);
       this.catalogService.triggerRefresh();
       setTimeout(() => this.confirmed.set(false), 3000);
     } else {

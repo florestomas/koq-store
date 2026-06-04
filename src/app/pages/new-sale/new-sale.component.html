@@ -63,6 +63,42 @@
       }
     </nav>
 
+    <!-- Canasto de ofertas -->
+    <div class="shrink-0">
+      @if (!showCanastoForm()) {
+        <button
+          (click)="showCanastoForm.set(true)"
+          class="flex flex-row items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold tracking-wider border-2 border-dashed border-amber-400 text-amber-600 hover:bg-amber-50 transition cursor-pointer"
+        >
+          <mat-icon class="text-sm">add</mat-icon>
+          CANASTO DE OFERTAS
+        </button>
+      } @else {
+        <div class="flex flex-row items-center gap-2 bg-amber-50 border border-amber-300 rounded-xl px-3 py-2">
+          <span class="text-xs font-semibold text-amber-700 shrink-0">Precio</span>
+          <span class="text-xs text-amber-600">$</span>
+          <input
+            type="number"
+            min="0"
+            class="w-20 text-xs font-bold text-amber-700 bg-transparent border border-amber-300 rounded px-2 py-1 outline-none focus:border-amber-500"
+            [value]="canastoPrice()"
+            (input)="canastoPrice.set(parseNumber($any($event.target).value))"
+            placeholder="0"
+          />
+          <button
+            (click)="addCanasto()"
+            [disabled]="canastoPrice() <= 0"
+            class="px-3 py-1 rounded-lg text-xs font-bold tracking-wider text-white bg-amber-500 hover:bg-amber-600 transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            AGREGAR
+          </button>
+          <button (click)="showCanastoForm.set(false); canastoPrice.set(0)" class="text-amber-400 hover:text-amber-600 transition cursor-pointer">
+            <mat-icon class="text-sm">close</mat-icon>
+          </button>
+        </div>
+      }
+    </div>
+
     <!-- Model cards -->
     @if (!selectedModel()) {
       @if (filteredModels().length > 0) {
@@ -209,6 +245,31 @@
 
       @if (cartItems().length > 0) {
         @for (item of cartItems(); track item.productId; let i = $index) {
+          @if (item.productId === '') {
+            <div class="flex flex-row items-center gap-3 bg-amber-50 border border-amber-200 rounded-2xl p-3 shrink-0">
+              <mat-icon class="text-amber-500 shrink-0">redeem</mat-icon>
+              <div class="flex flex-col flex-1 min-w-0">
+                <p class="text-sm font-semibold text-amber-800">Canasto de ofertas</p>
+                <div class="flex flex-row items-center gap-1 mt-0.5">
+                  <span class="text-xs text-amber-600">$</span>
+                  <input
+                    type="number"
+                    min="0"
+                    class="price-input w-16 text-xs text-amber-700 font-semibold bg-transparent border border-transparent focus:border-amber-400 focus:bg-white rounded px-1 py-0.5 outline-none"
+                    [value]="item.unitPrice"
+                    (input)="updateUnitPrice(i, parseNumber($any($event.target).value))"
+                  />
+                </div>
+              </div>
+              <p class="text-sm font-bold text-amber-700 shrink-0">$ {{ item.quantity * item.unitPrice | number:'1.0-0' }}</p>
+              <button
+                (click)="removeItem(i)"
+                class="size-7 rounded-full flex items-center justify-center text-amber-400 hover:bg-red-50 hover:text-red-400 transition cursor-pointer shrink-0"
+              >
+                <mat-icon class="text-base">close</mat-icon>
+              </button>
+            </div>
+          } @else {
           <div class="flex flex-row items-center gap-3 bg-gray-50 rounded-2xl p-3 shrink-0">
             <img [src]="item.imageUrl" class="size-10 rounded-lg object-cover shrink-0" />
             <div class="flex flex-col flex-1 min-w-0">
@@ -249,48 +310,13 @@
               <mat-icon class="text-base">close</mat-icon>
             </button>
           </div>
+          }
         }
       }
     </div>
 
-    <!-- Discount + Channel + Totals — always visible -->
+    <!-- Channel + Surcharge + Totals — always visible -->
     <div class="border-t border-gray-200 pt-4 flex flex-col gap-3 shrink-0">
-      <!-- Discount toggle -->
-      <div class="flex flex-row items-center justify-between">
-        <span class="text-xs font-semibold text-zinc-500 tracking-wider uppercase">Descuento</span>
-        <button
-          (click)="cycleDiscountMode()"
-          class="px-3 py-1 rounded-full text-xs font-medium transition border cursor-pointer"
-          [class.border-koq]="discountType() !== 'none'"
-          [class.text-koq]="discountType() !== 'none'"
-          [class.bg-koq/10]="discountType() !== 'none'"
-          [class.border-gray-300]="discountType() === 'none'"
-          [class.text-zinc-400]="discountType() === 'none'"
-        >
-          @if (discountType() === 'none') { Sin descuento }
-          @else if (discountType() === 'percentage') { Porcentaje }
-          @else { Monto fijo }
-        </button>
-      </div>
-
-      @if (discountType() !== 'none') {
-        <div class="flex flex-row items-center gap-2">
-          @if (discountType() === 'percentage') {
-            <span class="text-sm font-medium text-zinc-500">%</span>
-          } @else {
-            <span class="text-sm font-medium text-zinc-500">$</span>
-          }
-          <input
-            type="number"
-            min="0"
-            class="flex-1 border border-gray-300 rounded-xl px-4 py-2 text-sm outline-none focus:border-koq text-right"
-            [value]="discountValue()"
-            (input)="discountValue.set(parseNumber($any($event.target).value))"
-            placeholder="0"
-          />
-        </div>
-      }
-
       <!-- Channel selector -->
       <div class="flex flex-col gap-1.5">
         <span class="text-xs font-semibold text-zinc-500 tracking-wider uppercase">Canal de venta</span>
@@ -316,24 +342,63 @@
         </div>
       </div>
 
-      <!-- Payment transfer toggle -->
-      <div class="flex flex-row items-center justify-between">
+      <!-- Payment transfer mode -->
+      <div class="flex flex-col gap-1.5">
         <span class="text-xs font-semibold text-zinc-500 tracking-wider uppercase">Pago por transferencia</span>
-        <button
-          (click)="togglePaymentTransfer()"
-          class="relative inline-flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200"
-          [class.bg-koq]="paymentTransfer()"
-          [class.bg-gray-300]="!paymentTransfer()"
-        >
-          <span
-            class="inline-block size-5 rounded-full bg-white shadow-sm transition-transform duration-200"
-            [class.translate-x-6]="paymentTransfer()"
-            [class.translate-x-0.5]="!paymentTransfer()"
-          ></span>
-        </button>
+        <div class="flex flex-row gap-2">
+          <button
+            (click)="surchargeMode.set('none')"
+            class="flex-1 py-2 rounded-xl text-xs font-bold tracking-wider transition border-2 cursor-pointer"
+            [class.bg-koq]="surchargeMode() === 'none'"
+            [class.text-white]="surchargeMode() === 'none'"
+            [class.border-koq]="surchargeMode() === 'none'"
+            [class.bg-white]="surchargeMode() !== 'none'"
+            [class.text-zinc-400]="surchargeMode() !== 'none'"
+            [class.border-gray-200]="surchargeMode() !== 'none'"
+            [class.hover:border-koq]="surchargeMode() !== 'none'"
+          >
+            NO
+          </button>
+          <button
+            (click)="surchargeMode.set('percentage')"
+            class="flex-1 py-2 rounded-xl text-xs font-bold tracking-wider transition border-2 cursor-pointer"
+            [class.bg-koq]="surchargeMode() === 'percentage'"
+            [class.text-white]="surchargeMode() === 'percentage'"
+            [class.border-koq]="surchargeMode() === 'percentage'"
+            [class.bg-white]="surchargeMode() !== 'percentage'"
+            [class.text-zinc-400]="surchargeMode() !== 'percentage'"
+            [class.border-gray-200]="surchargeMode() !== 'percentage'"
+            [class.hover:border-koq]="surchargeMode() !== 'percentage'"
+          >
+            +10%
+          </button>
+          <button
+            (click)="surchargeMode.set('fixed')"
+            class="flex-1 py-2 rounded-xl text-xs font-bold tracking-wider transition border-2 cursor-pointer"
+            [class.bg-koq]="surchargeMode() === 'fixed'"
+            [class.text-white]="surchargeMode() === 'fixed'"
+            [class.border-koq]="surchargeMode() === 'fixed'"
+            [class.bg-white]="surchargeMode() !== 'fixed'"
+            [class.text-zinc-400]="surchargeMode() !== 'fixed'"
+            [class.border-gray-200]="surchargeMode() !== 'fixed'"
+            [class.hover:border-koq]="surchargeMode() !== 'fixed'"
+          >
+            +$
+          </button>
+        </div>
       </div>
-      @if (paymentTransfer()) {
-        <p class="text-xs text-koq font-semibold -mt-2">+10% de recargo sobre el subtotal</p>
+      @if (surchargeMode() === 'fixed') {
+        <div class="flex flex-row items-center gap-2 -mt-1">
+          <span class="text-sm font-medium text-zinc-500">$</span>
+          <input
+            type="number"
+            min="0"
+            class="flex-1 border border-gray-300 rounded-xl px-4 py-2 text-sm outline-none focus:border-koq text-right"
+            [value]="surchargeFixedValue()"
+            (input)="surchargeFixedValue.set(parseNumber($any($event.target).value))"
+            placeholder="0"
+          />
+        </div>
       }
 
       <!-- Totals -->
@@ -344,14 +409,8 @@
         </div>
         @if (surcharge() > 0) {
           <div class="flex flex-row justify-between text-sm">
-            <span class="text-koq">Recargo transf. (10%)</span>
+            <span class="text-koq">Recargo transf.</span>
             <span class="font-semibold text-koq">+ $ {{ surcharge() | number:'1.0-0' }}</span>
-          </div>
-        }
-        @if (discountAmount() > 0) {
-          <div class="flex flex-row justify-between text-sm">
-            <span class="text-green-600">Descuento</span>
-            <span class="font-semibold text-green-600">&minus; $ {{ discountAmount() | number:'1.0-0' }}</span>
           </div>
         }
         <div class="flex flex-row justify-between text-base font-bold border-t border-gray-200 pt-2 mt-1">

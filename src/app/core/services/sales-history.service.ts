@@ -98,6 +98,17 @@ export class SalesHistoryService {
       const details: SaleDetailRow[] = this.saleDetailsSig()
         .filter((d) => d.idSale === sale.id)
         .map((d) => {
+          if (!d.idProduct) {
+            return {
+              modelName: 'Canasto de ofertas',
+              size: '',
+              colorName: '',
+              quantity: d.quantity,
+              unitPrice: d.unitPrice,
+              productId: '',
+              isOffer: false,
+            };
+          }
           const product = allProducts.find((p) => p.id === d.idProduct);
           const model = product
             ? allModels.find((m) => m.id === product.idClothingModel)
@@ -253,6 +264,7 @@ export class SalesHistoryService {
       const details = this.saleDetailsSig().filter((d) => d.idSale === saleId);
 
       for (const detail of details) {
+        if (!detail.idProduct) continue;
         const { data: stockRows } = await supabase
           .from('stock_locations')
           .select('*')
@@ -296,11 +308,12 @@ export class SalesHistoryService {
       const supabase = getSupabase();
       const sale = this.salesSig().find((s) => s.id === saleId);
       const details = this.saleDetailsSig().filter((d) => d.idSale === saleId);
-      const productIds = details.map((d) => d.idProduct);
+      const productIds = details.filter((d) => d.idProduct).map((d) => d.idProduct);
 
       if (productIds.length > 0) {
         if (sale && sale.status !== 'cancelled') {
           for (const detail of details) {
+            if (!detail.idProduct) continue;
             const { data: stockRows } = await supabase
               .from('stock_locations')
               .select('*')
@@ -324,8 +337,9 @@ export class SalesHistoryService {
         }
 
         await supabase.from('stock_movements').delete().eq('reference_type', 'sale').eq('reference_id', saleId);
-        await supabase.from('sale_details').delete().eq('id_sale', saleId);
       }
+
+      await supabase.from('sale_details').delete().eq('id_sale', saleId);
 
       await supabase.from('sales').delete().eq('id', saleId);
       this.refresh();
