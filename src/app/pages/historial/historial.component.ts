@@ -49,6 +49,14 @@ export class HistorialComponent {
     new Set(['venta', 'transferencia', 'ingreso']),
   );
 
+  readonly activeTimelineType = computed<TimelineType | null>(() => {
+    const types = this.timelineTypes();
+    if (types.size === 1) {
+      return [...types][0];
+    }
+    return null;
+  });
+
   readonly page = signal(0);
   readonly pageSize = PAGE_SIZE;
 
@@ -101,11 +109,28 @@ export class HistorialComponent {
     this.page.set(0);
   }
 
+  setActiveType(type: TimelineType): void {
+    if (this.activeTimelineType() === type) {
+      this.showAllTypes();
+    } else {
+      this.timelineTypes.set(new Set([type]));
+    }
+    this.page.set(0);
+  }
+
+  showAllTypes(): void {
+    this.timelineTypes.set(new Set(['venta', 'transferencia', 'ingreso']));
+    this.page.set(0);
+  }
+
   toggleType(type: TimelineType): void {
     this.timelineTypes.update((types) => {
       const next = new Set(types);
-      if (next.has(type)) next.delete(type);
-      else next.add(type);
+      if (next.has(type)) {
+        next.delete(type);
+      } else {
+        next.add(type);
+      }
       return next;
     });
     this.page.set(0);
