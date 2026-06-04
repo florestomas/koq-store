@@ -4,4 +4,5 @@ export interface TransferDetail {
   idProduct: string;
   quantity: number;
   quantityReceived?: number;
+  unitPrice?: number;
 }

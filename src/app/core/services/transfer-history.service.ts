@@ -86,7 +86,7 @@ export class TransferHistoryService {
         .filter((d) => d.idTransfer === t.id)
         .map((d) => {
           const product = allProducts.find((p) => p.id === d.idProduct);
-          totalValue += d.quantity * (product?.salePrice ?? 0);
+          totalValue += d.quantity * (d.unitPrice ?? product?.salePrice ?? 0);
           const model = product
             ? allModels.find((m) => m.id === product.idClothingModel)
             : undefined;

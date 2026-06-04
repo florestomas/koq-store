@@ -7,7 +7,6 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { CatalogService } from '../../core/services/catalog.service';
 import { SaleService, CartItem } from '../../core/services/sale.service';
-import { SalesHistoryService } from '../../core/services/sales-history.service';
 import { getSupabase } from '../../core/services/supabase.service';
 import { ClothingModel } from '../../interfaces/clothing-model';
 import { Category } from '../../interfaces/category';
@@ -41,7 +40,6 @@ export interface ModelSearchResult {
 export class NewSaleComponent {
   private readonly authService = inject(AuthService);
   private readonly saleService = inject(SaleService);
-  private readonly salesHistoryService = inject(SalesHistoryService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   readonly catalogService = inject(CatalogService);
@@ -519,20 +517,22 @@ export class NewSaleComponent {
 
     if (!window.confirm(this.isEditing() ? '¿Actualizar esta venta?' : '¿Confirmar esta venta?')) return;
 
+    let ok: boolean;
     if (editingId) {
-      const cancelled = await this.salesHistoryService.cancelSale(editingId);
-      if (!cancelled) {
-        this.error.set('Error al cancelar la venta original.');
-        return;
-      }
+      ok = await this.saleService.editSale(editingId, {
+        items,
+        idLocation: user.idLocation,
+        idUser: user.id,
+        channel,
+      });
+    } else {
+      ok = await this.saleService.confirmSale({
+        items,
+        idLocation: user.idLocation,
+        idUser: user.id,
+        channel,
+      });
     }
-
-    const ok = await this.saleService.confirmSale({
-      items,
-      idLocation: user.idLocation,
-      idUser: user.id,
-      channel,
-    });
 
     if (ok) {
       this.confirmed.set(true);

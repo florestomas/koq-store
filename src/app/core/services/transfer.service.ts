@@ -329,6 +329,7 @@ export class TransferService {
             id_transfer: transferId,
             id_product: item.productId,
             quantity: item.quantity,
+            unit_price: item.salePrice,
           });
 
         if (detailError) {
