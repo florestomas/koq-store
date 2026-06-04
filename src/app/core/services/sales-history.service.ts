@@ -262,6 +262,7 @@ export class SalesHistoryService {
       }
 
       const details = this.saleDetailsSig().filter((d) => d.idSale === saleId);
+      let stockRestoreFailed = false;
 
       for (const detail of details) {
         if (!detail.idProduct) continue;
@@ -280,6 +281,7 @@ export class SalesHistoryService {
 
           if (stockError) {
             console.error('Error restoring stock on cancel:', stockError);
+            stockRestoreFailed = true;
           }
         }
 
@@ -291,6 +293,11 @@ export class SalesHistoryService {
           'sale',
           saleId,
         );
+      }
+
+      if (stockRestoreFailed) {
+        console.error('Stock restoration partially failed for sale:', saleId);
+        return false;
       }
 
       this.refresh();

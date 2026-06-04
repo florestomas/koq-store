@@ -501,22 +501,24 @@ export class NewSaleComponent {
 
     const stocks = this.catalogService.catalogStocks();
     const cartQuantities = this.cartQuantities();
-    for (const item of items) {
-      if (item.productId === '') continue;
-      const dbStock =
-        stocks.find(
-          (s) => s.idProduct === item.productId && s.idLocation === user.idLocation,
-        )?.currentStock ?? 0;
-      const cartTotal = cartQuantities.get(item.productId) ?? 0;
-      if (cartTotal > dbStock) {
-        this.error.set(`Stock insuficiente para "${item.modelName} T.${item.size} ${item.colorName}". Disponible: ${dbStock}.`);
-        return;
+    const editingId = this.editingSaleId();
+    if (!editingId) {
+      for (const item of items) {
+        if (item.productId === '') continue;
+        const dbStock =
+          stocks.find(
+            (s) => s.idProduct === item.productId && s.idLocation === user.idLocation,
+          )?.currentStock ?? 0;
+        const cartTotal = cartQuantities.get(item.productId) ?? 0;
+        if (cartTotal > dbStock) {
+          this.error.set(`Stock insuficiente para "${item.modelName} T.${item.size} ${item.colorName}". Disponible: ${dbStock}.`);
+          return;
+        }
       }
     }
 
     if (!window.confirm(this.isEditing() ? '¿Actualizar esta venta?' : '¿Confirmar esta venta?')) return;
 
-    const editingId = this.editingSaleId();
     if (editingId) {
       const cancelled = await this.salesHistoryService.cancelSale(editingId);
       if (!cancelled) {
