@@ -31,11 +31,12 @@ export class CategoriasComponent {
   }
 
   async add(): Promise<void> {
-    const name = this.newName().trim().toUpperCase();
-    if (!name) return;
+    const raw = this.newName().trim();
+    if (!raw) return;
     if (this.isSaving()) return;
 
-    if (this.categories().some((c) => c.name === name)) {
+    const name = raw.toUpperCase();
+    if (this.categories().some((c) => c.name.toUpperCase() === name)) {
       this.error.set('Ya existe una categoría con ese nombre');
       return;
     }
@@ -75,11 +76,12 @@ export class CategoriasComponent {
     const catId = this.editingId();
     if (!catId) return;
 
-    const name = this.editingName().trim().toUpperCase();
-    if (!name) return;
+    const raw = this.editingName().trim();
+    if (!raw) return;
     if (this.isRenaming()) return;
 
-    if (this.categories().some((c) => c.id !== catId && c.name === name)) {
+    const name = raw.toUpperCase();
+    if (this.categories().some((c) => c.id !== catId && c.name.toUpperCase() === name)) {
       this.error.set('Ya existe otra categoría con ese nombre');
       return;
     }
@@ -106,10 +108,15 @@ export class CategoriasComponent {
 
   async remove(catId: string): Promise<void> {
     const supabase = getSupabase();
-    const { count } = await supabase
+    const { count, error: countErr } = await supabase
       .from('clothing_models')
       .select('*', { count: 'exact', head: true })
       .eq('id_category', catId);
+
+    if (countErr) {
+      this.error.set('Error al verificar modelos asociados');
+      return;
+    }
 
     if (count && count > 0) {
       this.error.set('No se puede eliminar: hay modelos que usan esta categoría');
