@@ -24,7 +24,17 @@ const colorMap: Record<string, string> = {
   VIOLETA: '#8B00FF',
   TURQUESA: '#40E0D0',
   CREMA: '#FFFDD0',
+  NARANJA: '#FFA500',
+  AMARILLO: '#FFD700',
+  'ROSA CLARO': '#FFB6C1',
+  'VERDE AGUA': '#00CED1',
+  CAMEL: '#C19A6B',
+  'VERDE OSCURO': '#006400',
+  'AZUL MARINO': '#000080',
   'AZUL FRANCIA': '#318CE7',
+  CELESTE: '#ADD8E6',
+  'ESTAMPADO LILA/BLANCO': '#D8BFD8',
+  'ESTAMPADO NEGRO/BLANCO': '#999999',
 };
 
 export function getColorHex(name: string): string {
