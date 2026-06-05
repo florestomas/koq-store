@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { UpperCasePipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -153,11 +153,13 @@ export class IngresoComponent {
   );
 
   constructor() {
-    this.searchControl.valueChanges
+    const sub = this.searchControl.valueChanges
       .pipe(debounceTime(300), distinctUntilChanged())
       .subscribe((value) => {
         this.searchTerm.set(value ?? '');
       });
+
+    inject(DestroyRef).onDestroy(() => sub.unsubscribe());
 
     this.loadEditIfNeeded();
   }

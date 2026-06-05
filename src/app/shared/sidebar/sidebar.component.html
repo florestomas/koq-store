@@ -22,6 +22,12 @@
       [navName]="'CATALOGO'"
       (click)="refreshStock(); close.emit()"
     ></app-nav-item>
+    <app-nav-item
+      [navLink]="'ventas/nueva'"
+      [iconName]="'point_of_sale'"
+      [navName]="'VENTAS'"
+      (click)="refreshStock(); close.emit()"
+    ></app-nav-item>
     @if (isAdmin() || authService.currentUser()?.idLocation === '1') {
       <app-nav-item
         [navLink]="'crear-producto'"
@@ -36,19 +42,13 @@
         (click)="close.emit()"
       ></app-nav-item>
     }
-    <app-nav-item
-      [navLink]="'ventas/nueva'"
-      [iconName]="'point_of_sale'"
-      [navName]="'VENTAS'"
-      (click)="refreshStock(); close.emit()"
-    ></app-nav-item>
+    <app-nav-item [navLink]="'recepciones'" [iconName]="'archive'" [navName]="'RECEPCION'" [badge]="receptionCount()" [badgeColor]="'amber'" (click)="close.emit()"></app-nav-item>
     <app-nav-item
       [navLink]="'trasladar-stock'"
       [iconName]="'local_shipping'"
       [navName]="'TRASLADAR STOCK'"
       (click)="refreshStock(); close.emit()"
     ></app-nav-item>
-    <app-nav-item [navLink]="'recepciones'" [iconName]="'archive'" [navName]="'RECEPCION'" [badge]="receptionCount()" [badgeColor]="'amber'" (click)="close.emit()"></app-nav-item>
     <app-nav-item [navLink]="'alertas'" [iconName]="'warning'" [navName]="'ALERTAS'" [badge]="alertCount()" (click)="close.emit()"></app-nav-item>
     <app-nav-item
       [navLink]="'historial'"

@@ -1,5 +1,5 @@
 import { UpperCasePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatIcon } from '@angular/material/icon';
@@ -40,7 +40,8 @@ export class CreateProductComponent {
 
   constructor() {
     this.restoreFromCache();
-    this.form.valueChanges.subscribe(() => this.saveToCache());
+    const sub = this.form.valueChanges.subscribe(() => this.saveToCache());
+    inject(DestroyRef).onDestroy(() => sub.unsubscribe());
   }
 
   private saveToCache(): void {

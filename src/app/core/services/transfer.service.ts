@@ -142,13 +142,20 @@ export class TransferService {
           (a, b) => parseInt(a) - parseInt(b),
         );
 
-        const totalStock = allStocks
+        const rawStock = allStocks
           .filter(
             (s) =>
               s.idLocation === origin &&
               modelProducts.some((p) => p.id === s.idProduct),
           )
           .reduce((sum, s) => sum + s.currentStock, 0);
+
+        const productIds = modelProducts.map((p) => p.id);
+        const alreadyInTransfer = this.items()
+          .filter((i) => productIds.includes(i.productId))
+          .reduce((sum, i) => sum + i.quantity, 0);
+
+        const totalStock = Math.max(0, rawStock - alreadyInTransfer);
 
         const imageUrl =
           allModelColors.find((mc) => mc.idClothingModel === m.id)?.imageUrl ?? '';
