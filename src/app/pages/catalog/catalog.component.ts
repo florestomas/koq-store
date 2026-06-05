@@ -1,11 +1,13 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, inject } from '@angular/core';
 import { UpperCasePipe } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { MatDialog } from '@angular/material/dialog';
 import { MatIcon } from '@angular/material/icon';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { ProductCardComponent } from './components/product-card/product-card.component';
 import { CatalogService } from '../../core/services/catalog.service';
 import { AuthService } from '../../core/services/auth.service';
+import { CategoriasComponent } from '../categorias/categorias.component';
 
 @Component({
   selector: 'app-catalog.component',
@@ -17,12 +19,17 @@ import { AuthService } from '../../core/services/auth.service';
 export class CatalogComponent {
   protected readonly catalogService = inject(CatalogService);
   protected readonly authService = inject(AuthService);
+  private readonly dialog = inject(MatDialog);
 
   readonly searchControl = new FormControl('');
   readonly searchTerm = this.catalogService.searchTerm;
 
   get locations() { return this.catalogService.getLocations(); }
   readonly isAdmin = this.authService.isAdmin;
+
+  openCategoryManager(): void {
+    this.dialog.open(CategoriasComponent, { maxWidth: '90vw' });
+  }
 
   constructor() {
     const sub = this.searchControl.valueChanges

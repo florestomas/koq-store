@@ -11,7 +11,6 @@ import { AlertasComponent } from './pages/alertas/alertas.component';
 import { HistorialComponent } from './pages/historial/historial.component';
 import { RecepcionesComponent } from './pages/recepciones/recepciones.component';
 import { IngresoComponent } from './pages/ingreso/ingreso.component';
-
 export const routes: Routes = [
   {
     path: 'login',

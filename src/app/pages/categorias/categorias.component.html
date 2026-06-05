@@ -1,0 +1,102 @@
+<div class="min-w-[420px] max-w-[520px]">
+  <div mat-dialog-title class="flex flex-row items-center gap-3">
+    <mat-icon class="text-koq">category</mat-icon>
+    <span class="text-xl font-bold">Categorías</span>
+    <button (click)="close()" class="ml-auto size-8 rounded-full flex items-center justify-center text-zinc-400 hover:text-zinc-700 hover:bg-gray-100 transition cursor-pointer">
+      <mat-icon class="text-base">close</mat-icon>
+    </button>
+  </div>
+
+  <mat-dialog-content>
+    <div class="flex flex-col gap-4 py-2">
+      <!-- Error flash -->
+      @if (error(); as err) {
+        <div class="flex items-center gap-2 px-4 py-3 rounded-2xl bg-red-100 text-red-700 text-sm font-medium">
+          <mat-icon class="text-lg">error</mat-icon>
+          {{ err }}
+        </div>
+      }
+
+      <!-- Add new -->
+      <div class="flex flex-row items-center gap-2">
+        <input
+          type="text"
+          placeholder="NOMBRE DE LA CATEGORÍA"
+          class="flex-1 border border-gray-300 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-koq bg-white uppercase"
+          [value]="newName()"
+          (input)="newName.set($any($event.target).value.toUpperCase())"
+          (keydown.enter)="$event.preventDefault(); add()"
+        />
+        <button
+          (click)="add()"
+          [disabled]="isSaving() || !newName().trim()"
+          class="px-5 py-2.5 rounded-xl text-xs font-bold tracking-wider text-white transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed bg-koq hover:opacity-90 shrink-0"
+        >
+          @if (isSaving()) {
+            CREANDO...
+          } @else {
+            CREAR
+          }
+        </button>
+      </div>
+
+      <!-- Category list -->
+      <div class="flex flex-col gap-1.5 max-h-72 overflow-y-auto pr-1">
+        @for (cat of categories(); track cat.id) {
+          <div class="flex flex-row items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-3 shrink-0">
+            <mat-icon class="text-zinc-300 shrink-0 text-sm">label</mat-icon>
+
+            @if (editingId() === cat.id) {
+              <input
+                type="text"
+                class="flex-1 border border-koq rounded-lg px-3 py-1.5 text-sm outline-none bg-white uppercase"
+                [value]="editingName()"
+                (input)="editingName.set($any($event.target).value.toUpperCase())"
+                (keydown.enter)="$event.preventDefault(); saveRename()"
+                (keydown.escape)="cancelEdit()"
+              />
+              <button
+                (click)="saveRename()"
+                [disabled]="isRenaming() || !editingName().trim()"
+                class="px-3 py-1.5 rounded-lg text-xs font-bold tracking-wider text-white transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed bg-koq hover:opacity-90"
+              >
+                @if (isRenaming()) {
+                  GUARDANDO...
+                } @else {
+                  GUARDAR
+                }
+              </button>
+              <button
+                (click)="cancelEdit()"
+                class="px-3 py-1.5 rounded-lg text-xs font-semibold border border-gray-300 text-zinc-500 hover:bg-gray-50 transition cursor-pointer"
+              >
+                CANCELAR
+              </button>
+            } @else {
+              <span class="flex-1 text-sm font-semibold">{{ cat.name | uppercase }}</span>
+              <button
+                (click)="startEdit(cat.id, cat.name)"
+                class="size-7 rounded-full flex items-center justify-center text-zinc-400 hover:text-koq hover:bg-koq/10 transition cursor-pointer"
+                title="Editar nombre"
+              >
+                <mat-icon class="text-sm">edit</mat-icon>
+              </button>
+              <button
+                (click)="remove(cat.id)"
+                class="size-7 rounded-full flex items-center justify-center text-zinc-400 hover:text-red-500 hover:bg-red-50 transition cursor-pointer"
+                title="Eliminar categoría"
+              >
+                <mat-icon class="text-sm">delete</mat-icon>
+              </button>
+            }
+          </div>
+        } @empty {
+          <div class="flex flex-col items-center justify-center py-10 text-zinc-400">
+            <mat-icon class="text-4xl mb-2">category</mat-icon>
+            <p class="text-sm font-medium">No hay categorías</p>
+          </div>
+        }
+      </div>
+    </div>
+  </mat-dialog-content>
+</div>

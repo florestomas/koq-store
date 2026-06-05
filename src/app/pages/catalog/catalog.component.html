@@ -54,7 +54,7 @@
     </div>
   </div>
 
-  <nav class="flex flex-row border-b border-gray-300 overflow-x-auto shrink-0">
+  <nav class="flex flex-row border-b mb-1.5 border-gray-300 overflow-x-auto shrink-0">
     <button
       (click)="catalogService.setSelectedCategory(null)"
       class="py-2.5 px-6 md:px-8 whitespace-nowrap text-zinc-500 font-medium tracking-widest text-sm md:text-base border-b-4 border-transparent hover:border-b-4 hover:text-koq hover:border-koq transition"
@@ -73,6 +73,16 @@
         [class.text-zinc-500]="catalogService.selectedCategoryId() !== cat.id"
       >
         {{ cat.name | uppercase }}
+      </button>
+    }
+    @if (isAdmin()) {
+      <span class="w-px h-6 bg-gray-300 self-center mx-1 shrink-0"></span>
+      <button
+        (click)="openCategoryManager()"
+        class="py-2.5 px-3 whitespace-nowrap text-zinc-400 hover:text-koq transition shrink-0 cursor-pointer"
+        title="Gestionar categorías"
+      >
+        <mat-icon class="text-lg">settings</mat-icon>
       </button>
     }
   </nav>
