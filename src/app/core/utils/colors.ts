@@ -24,6 +24,7 @@ const colorMap: Record<string, string> = {
   VIOLETA: '#8B00FF',
   TURQUESA: '#40E0D0',
   CREMA: '#FFFDD0',
+  'AZUL FRANCIA': '#318CE7',
 };
 
 export function getColorHex(name: string): string {
