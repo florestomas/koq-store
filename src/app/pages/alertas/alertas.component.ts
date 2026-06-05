@@ -33,14 +33,15 @@ export class AlertasComponent {
 
   readonly groupedAlerts = computed(() => {
     const alerts = this.alertService.alerts();
-    const term = this.searchTerm().toLowerCase().trim();
+    const rawTerm = this.searchTerm().toLowerCase().trim();
+    const term = rawTerm.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     const filtered = term
       ? alerts.filter(
           (a) =>
-            a.modelName.toLowerCase().includes(term) ||
-            a.size.includes(term) ||
-            a.colorName.toLowerCase().includes(term) ||
-            a.locationName.toLowerCase().includes(term),
+            a.modelName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(term) ||
+            a.size.normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(term) ||
+            a.colorName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(term) ||
+            a.locationName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(term),
         )
       : alerts;
 

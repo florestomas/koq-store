@@ -262,7 +262,8 @@ export class HistorialComponent {
 
     const term = this.searchTerm();
     if (term) {
-      return events.filter((e) => e.summary.toLowerCase().includes(term));
+      const normalized = term.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      return events.filter((e) => e.summary.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(normalized));
     }
     return events;
   });

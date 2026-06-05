@@ -73,12 +73,13 @@ export class IngresoComponent {
   });
 
   readonly filteredModels = computed<ModelSearchResult[]>(() => {
-    const term = this.searchTerm().toLowerCase().trim();
+    const rawTerm = this.searchTerm().toLowerCase().trim();
+    const term = rawTerm.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     const catId = this.selectedCategoryId();
     let results = this.allModels();
     if (term) {
       results = results.filter((r) =>
-        r.model.name.toLowerCase().includes(term),
+        r.model.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(term),
       );
     }
     if (catId) {

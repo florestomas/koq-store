@@ -50,7 +50,8 @@ export class CatalogService {
     const user = this.authService.currentUser();
     const isAdmin = this.authService.isAdmin();
 
-    const term = this.searchTerm().toLowerCase().trim();
+    const rawTerm = this.searchTerm().toLowerCase().trim();
+    const term = rawTerm.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     const catId = this.selectedCategoryId();
     const stockF = this.stockFilter();
     const locId = isAdmin ? this.locationFilterId() : (user?.idLocation ?? null);
@@ -66,7 +67,7 @@ export class CatalogService {
     let models = allModels.filter((m) => m.active);
 
     if (term) {
-      models = models.filter((m) => m.name.toLowerCase().includes(term));
+      models = models.filter((m) => m.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(term));
     }
 
     if (catId) {

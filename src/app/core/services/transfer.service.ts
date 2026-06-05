@@ -103,7 +103,8 @@ export class TransferService {
   readonly categories = computed(() => this.catalogService.categories());
 
   readonly selectableModels = computed<SelectableModel[]>(() => {
-    const term = this.searchTerm().toLowerCase().trim();
+    const rawTerm = this.searchTerm().toLowerCase().trim();
+    const term = rawTerm.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     const catId = this.categoryFilterId();
     const origin = this.originId();
 
@@ -116,7 +117,7 @@ export class TransferService {
 
     return allModels
       .filter((m) => m.active)
-      .filter((m) => (term ? m.name.toLowerCase().includes(term) : true))
+      .filter((m) => (term ? m.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(term) : true))
       .filter((m) => (catId ? m.idCategory === catId : true))
       .map((m) => {
         const modelProducts = allProducts.filter(
