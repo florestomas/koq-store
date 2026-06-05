@@ -193,12 +193,9 @@
                     class="absolute -top-2 -right-2 size-5 rounded-full bg-red-400 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
                   >&times;</button>
                 }
-                <div class="size-16 rounded-xl bg-gray-100 flex items-center justify-center border-2 border-gray-200">
-                  <span class="inline-block rounded-full size-4 shrink-0 mb-1" [style.background]="getColorHex(color.name)"></span>
+                <div class="size-16 rounded-xl bg-gray-100 flex items-center justify-center border-2" [style.borderColor]="getColorHex(color.name)">
                   <span class="text-xs text-zinc-500 text-center px-1">{{ color.name }}</span>
                 </div>
-                <span class="inline-block rounded-full size-2.5 shrink-0 mr-1 align-middle" [style.background]="getColorHex(color.name)"></span>
-                <span class="text-xs text-zinc-500">{{ color.name | uppercase }}</span>
               </div>
             }
             @if (data.isAdmin) {

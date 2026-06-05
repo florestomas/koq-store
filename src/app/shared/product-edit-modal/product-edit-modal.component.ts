@@ -143,10 +143,15 @@ export class ProductEditModalComponent {
   });
 
   readonly availableColors = computed(() => {
-    const mc = this.modelColors();
-    const used = this.usedColorIds();
+    const modelId = this.data.item.modelId;
+    const linkedIds = new Set(
+      this.allModelColors()
+        .filter((mc) => mc.idClothingModel === modelId)
+        .map((mc) => mc.idColor),
+    );
+    const usedInProducts = this.usedColorIds();
     return this.allColors().filter(
-      (c) => used.has(c.id) && !mc.some((m) => m.id === c.id),
+      (c) => usedInProducts.has(c.id) && !linkedIds.has(c.id),
     );
   });
 
