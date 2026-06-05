@@ -6,6 +6,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { AlertService } from '../../core/services/alert.service';
 import { AuthService } from '../../core/services/auth.service';
 import { CatalogService } from '../../core/services/catalog.service';
+import { getColorHex } from '../../core/utils/colors';
 
 @Component({
   selector: 'app-alertas',
@@ -26,6 +27,7 @@ export class AlertasComponent {
 
   readonly isAdmin = this.authService.isAdmin;
   readonly selectedLocationId = this.alertService.selectedLocationId;
+  readonly getColorHex = getColorHex;
 
   readonly zeroStockCount = this.alertService.zeroStockCount;
   readonly lowStockCount = this.alertService.lowStockCount;

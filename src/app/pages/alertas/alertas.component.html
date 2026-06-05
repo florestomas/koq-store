@@ -125,7 +125,10 @@
               >
                 <td class="py-3.5 px-5"></td>
                 <td class="py-3.5 px-5 text-zinc-600">T. {{ alert.size }}</td>
-                <td class="py-3.5 px-5 text-zinc-600">{{ alert.colorName }}</td>
+                <td class="py-3.5 px-5 text-zinc-600">
+                  <span class="inline-block rounded-full size-3 shrink-0 mr-1.5 align-middle" [style.background]="getColorHex(alert.colorName)"></span>
+                  {{ alert.colorName }}
+                </td>
                 <td class="py-3.5 px-5 text-zinc-600">{{ alert.locationName }}</td>
                 <td class="py-3.5 px-5 text-right font-bold" [class.text-red-600]="alert.currentStock === 0">{{ alert.currentStock }}</td>
                 <td class="py-3.5 px-5 text-right text-zinc-500">{{ alert.minimumStock }}</td>
