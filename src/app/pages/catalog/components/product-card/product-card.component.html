@@ -99,31 +99,27 @@
       }
     </div>
     @if (authService.isAdmin()) {
-      <div class="flex-1 flex flex-col justify-center">
+      <div class="flex-1 flex flex-col">
         <span class="flex items-center gap-x-1.5 text-xs font-medium tracking-wider"
           ><mat-icon class="text-base">store</mat-icon>STOCK POR UBICACION</span
         >
 
-        <div class="flex flex-row w-full items-center justify-center gap-2 md:gap-0">
-          @for (ls of item().locationStocks; track ls.locationId) {
-            <div
-              (click)="selectedLocationId.set(selectedLocationId() === ls.locationId ? null : ls.locationId)"
-              class="flex flex-col items-center justify-center mx-1 md:mx-6 cursor-pointer rounded-xl px-2 md:px-4 py-2 md:py-4 transition"
-              [class.bg-koq]="selectedLocationId() === ls.locationId"
-              [class.text-white]="selectedLocationId() === ls.locationId"
-              [class.ring-2]="selectedLocationId() === ls.locationId"
-              [class.ring-koq]="selectedLocationId() === ls.locationId"
-              [class.hover:bg-koq]="selectedLocationId() !== ls.locationId"
-              [class.hover:bg-opacity-10]="selectedLocationId() !== ls.locationId"
-            >
-              <h1 class="text-2xl md:text-4xl font-bold text-center">
-                {{ ls.stock }}
-              </h1>
-              <h2 class="text-center text-[10px] md:text-xs">
-                {{ ls.locationName | uppercase }}
-              </h2>
-            </div>
-          }
+        <div class="flex-1 flex items-center justify-center">
+          <div class="flex flex-row flex-wrap items-center justify-center gap-x-5">
+            @for (ls of item().locationStocks; track ls.locationId) {
+              <div
+                (click)="selectedLocationId.set(selectedLocationId() === ls.locationId ? null : ls.locationId)"
+                class="flex flex-col items-center justify-center cursor-pointer rounded-xl px-2 py-1 transition"
+                [class.bg-koq]="selectedLocationId() === ls.locationId"
+                [class.text-white]="selectedLocationId() === ls.locationId"
+                [class.hover:bg-koq]="selectedLocationId() !== ls.locationId"
+                [class.hover:bg-opacity-10]="selectedLocationId() !== ls.locationId"
+              >
+                <span class="text-2xl md:text-4xl font-bold leading-tight">{{ ls.stock }}</span>
+                <span class="text-center text-[10px] md:text-xs leading-tight" [class.text-white/70]="selectedLocationId() === ls.locationId" [class.text-zinc-400]="selectedLocationId() !== ls.locationId">{{ ls.locationName | uppercase }}</span>
+              </div>
+            }
+          </div>
         </div>
 
 
