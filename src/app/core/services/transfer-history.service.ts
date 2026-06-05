@@ -76,10 +76,12 @@ export class TransferHistoryService {
     }
 
     if (from) {
-      transfers = transfers.filter((t) => t.dateTime >= from);
+      const fromUtc = new Date(from + 'T00:00:00').toISOString();
+      transfers = transfers.filter((t) => t.dateTime >= fromUtc);
     }
     if (to) {
-      transfers = transfers.filter((t) => t.dateTime <= to + 'T23:59:59.999Z');
+      const toUtc = new Date(to + 'T23:59:59.999').toISOString();
+      transfers = transfers.filter((t) => t.dateTime <= toUtc);
     }
 
     const result: TransferRow[] = transfers.map((t) => {

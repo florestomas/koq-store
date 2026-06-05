@@ -43,8 +43,8 @@ export class HistorialComponent {
   readonly stockMovementService = inject(StockMovementService);
   private readonly router = inject(Router);
 
-  readonly today = new Date().toISOString().split('T')[0];
-  readonly startOfWeek = this.getMonday().toISOString().split('T')[0];
+  readonly today = this.formatLocalDate(new Date());
+  readonly startOfWeek = this.formatLocalDate(this.getMonday());
 
   readonly dateFrom = signal<string | null>(null);
   readonly dateTo = signal<string | null>(null);
@@ -84,6 +84,10 @@ export class HistorialComponent {
       });
 
     this.destroyRef.onDestroy(() => sub.unsubscribe());
+  }
+
+  private formatLocalDate(d: Date): string {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   }
 
   private getMonday(): Date {

@@ -78,10 +78,12 @@ export class StockMovementService {
     }
 
     if (from) {
-      movements = movements.filter((m) => m.dateTime >= from);
+      const fromUtc = new Date(from + 'T00:00:00').toISOString();
+      movements = movements.filter((m) => m.dateTime >= fromUtc);
     }
     if (to) {
-      movements = movements.filter((m) => m.dateTime <= to + 'T23:59:59.999Z');
+      const toUtc = new Date(to + 'T23:59:59.999').toISOString();
+      movements = movements.filter((m) => m.dateTime <= toUtc);
     }
 
     const result: MovementRow[] = movements.map((m) => {
@@ -160,10 +162,12 @@ export class StockMovementService {
     }
 
     if (from) {
-      movements = movements.filter((m) => m.dateTime >= from);
+      const fromUtc = new Date(from + 'T00:00:00').toISOString();
+      movements = movements.filter((m) => m.dateTime >= fromUtc);
     }
     if (to) {
-      movements = movements.filter((m) => m.dateTime <= to + 'T23:59:59.999Z');
+      const toUtc = new Date(to + 'T23:59:59.999').toISOString();
+      movements = movements.filter((m) => m.dateTime <= toUtc);
     }
 
     const groups = new Map<string, { dateTime: string; locationId: string; items: StockMovement[] }>();

@@ -87,10 +87,12 @@ export class SalesHistoryService {
     }
 
     if (from) {
-      sales = sales.filter((s) => s.dateTime >= from);
+      const fromUtc = new Date(from + 'T00:00:00').toISOString();
+      sales = sales.filter((s) => s.dateTime >= fromUtc);
     }
     if (to) {
-      sales = sales.filter((s) => s.dateTime <= to + 'T23:59:59.999Z');
+      const toUtc = new Date(to + 'T23:59:59.999').toISOString();
+      sales = sales.filter((s) => s.dateTime <= toUtc);
     }
 
     const result: SaleRow[] = sales.map((sale) => {
