@@ -22,7 +22,7 @@
       [navName]="'CATALOGO'"
       (click)="close.emit()"
     ></app-nav-item>
-    @if (isAdmin()) {
+    @if (isAdmin() || authService.currentUser()?.idLocation === '1') {
       <app-nav-item
         [navLink]="'crear-producto'"
         [iconName]="'add_box'"

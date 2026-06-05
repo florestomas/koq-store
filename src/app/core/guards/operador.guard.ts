@@ -8,7 +8,7 @@ export const operadorGuard: CanActivateFn = async () => {
 
   await auth.waitForInit();
 
-  if (auth.isAdmin()) {
+  if (auth.isAdmin() || auth.currentUser()?.idLocation === '1') {
     return true;
   }
   return router.createUrlTree(['/catalogo']);

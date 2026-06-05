@@ -33,26 +33,68 @@ export class SaleService {
 
     try {
       const saleId = crypto.randomUUID();
-      const p_items = items.map((item) => ({
-        id_product: item.productId || null,
-        quantity: item.quantity,
-        unit_price: item.unitPrice,
-      }));
 
-      const { error } = await getSupabase().rpc('confirmar_venta', {
-        p_id: saleId,
-        p_id_location: idLocation,
-        p_id_user: idUser,
-        p_channel: channel,
-        p_discount_type: null,
-        p_discount_value: null,
-        p_note: null,
-        p_items,
-      });
+      const regularItems = items.filter((item) => item.productId);
+      const canastoItems = items.filter((item) => !item.productId);
 
-      if (error) {
-        console.error('Sale error:', error);
-        return false;
+      if (regularItems.length > 0) {
+        const p_items = regularItems.map((item) => ({
+          id_product: item.productId,
+          quantity: item.quantity,
+          unit_price: item.unitPrice,
+        }));
+
+        const { error } = await getSupabase().rpc('confirmar_venta', {
+          p_id: saleId,
+          p_id_location: idLocation,
+          p_id_user: idUser,
+          p_channel: channel,
+          p_discount_type: null,
+          p_discount_value: null,
+          p_note: null,
+          p_items,
+        });
+
+        if (error) {
+          console.error('Sale error:', error);
+          return false;
+        }
+      }
+
+      if (canastoItems.length > 0) {
+        const supabase = getSupabase();
+
+        if (regularItems.length === 0) {
+          const { error: saleError } = await supabase.from('sales').insert({
+            id: saleId,
+            date_time: new Date().toISOString(),
+            id_location: idLocation,
+            id_user: idUser,
+            channel,
+            status: 'active',
+          });
+          if (saleError) {
+            console.error('Error creating sale:', saleError);
+            return false;
+          }
+        }
+
+        const details = canastoItems.map((item) => ({
+          id: crypto.randomUUID(),
+          id_sale: saleId,
+          id_product: null,
+          quantity: item.quantity,
+          unit_price: item.unitPrice,
+        }));
+
+        const { error: detailsError } = await supabase
+          .from('sale_details')
+          .insert(details);
+
+        if (detailsError) {
+          console.error('Error inserting canasto details:', detailsError);
+          return false;
+        }
       }
 
       this.saveLastSale(data);
