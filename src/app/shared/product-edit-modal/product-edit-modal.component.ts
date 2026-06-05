@@ -297,19 +297,21 @@ export class ProductEditModalComponent {
       );
       if (entries.length > 0) {
         for (const entry of entries) {
-          await supabase
+          const { error } = await supabase
             .from('stock_locations')
             .update({ current_stock: newStock })
             .eq('id', entry.id);
+          if (error) console.error('Error updating stock:', error);
         }
       } else if (productIds.length > 0) {
-        await supabase.from('stock_locations').insert({
+        const { error } = await supabase.from('stock_locations').insert({
           id: crypto.randomUUID(),
           id_product: productIds[0],
           id_location: locationId,
           current_stock: newStock,
           minimum_stock: 1,
         });
+        if (error) console.error('Error inserting stock:', error);
       }
       await this.catalogService.triggerRefresh();
     } finally {
@@ -340,10 +342,11 @@ export class ProductEditModalComponent {
         (s) => productIds.includes(s.idProduct) && s.idLocation === locationId,
       );
       for (const entry of entries) {
-        await supabase
+        const { error } = await supabase
           .from('stock_locations')
           .update({ minimum_stock: newMin })
           .eq('id', entry.id);
+        if (error) console.error('Error updating min stock:', error);
       }
       await this.catalogService.triggerRefresh();
     } finally {

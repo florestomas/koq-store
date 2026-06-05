@@ -131,19 +131,19 @@
                         {{ color.name | uppercase }}
                       </td>
                       @for (size of uniqueSizes(); track size) {
-                        @let stock = getStockForColorSizeInLocation(color.id, size, loc.id);
-                        @let minStock = getMinStockForColorSizeInLocation(color.id, size, loc.id);
                         <td class="text-center py-2 px-3">
                           @if (data.isAdmin) {
                             <div class="flex flex-col items-center gap-0.5">
                               <input
                                 type="number"
                                 min="0"
-                                class="size-7 rounded-full text-[10px] text-center border border-gray-300 outline-none focus:border-koq bg-gray-100"
-                                [class.bg-red-50]="stock === 0"
-                                [class.text-red-400]="stock === 0"
-                                [class.border-red-200]="stock === 0"
-                                [value]="stock"
+                                class="size-7 rounded-full text-[10px] text-center border outline-none focus:border-koq"
+                                [class.bg-gray-100]="getStockForColorSizeInLocation(color.id, size, loc.id) > 0"
+                                [class.bg-red-50]="getStockForColorSizeInLocation(color.id, size, loc.id) === 0"
+                                [class.text-red-400]="getStockForColorSizeInLocation(color.id, size, loc.id) === 0"
+                                [class.border-gray-300]="getStockForColorSizeInLocation(color.id, size, loc.id) > 0"
+                                [class.border-red-200]="getStockForColorSizeInLocation(color.id, size, loc.id) === 0"
+                                [value]="getStockForColorSizeInLocation(color.id, size, loc.id)"
                                 (change)="setCellCurrentStock(loc.id, color.id, size, $any($event.target).value)"
                                 title="Stock actual"
                               />
@@ -152,7 +152,7 @@
                                 type="number"
                                 min="0"
                                 class="size-5 rounded-full text-[8px] text-center border border-dashed border-zinc-300 outline-none focus:border-koq bg-white text-zinc-500"
-                                [value]="minStock"
+                                [value]="getMinStockForColorSizeInLocation(color.id, size, loc.id)"
                                 (change)="setCellMinStock(loc.id, color.id, size, $any($event.target).value)"
                                 title="Stock mínimo"
                               />
@@ -160,10 +160,10 @@
                           } @else {
                             <span
                               class="inline-flex items-center justify-center size-8 rounded-full text-xs"
-                              [class.bg-gray-100]="stock > 0"
-                              [class.bg-red-50]="stock === 0"
-                              [class.text-red-400]="stock === 0"
-                            >{{ stock }}</span>
+                              [class.bg-gray-100]="getStockForColorSizeInLocation(color.id, size, loc.id) > 0"
+                              [class.bg-red-50]="getStockForColorSizeInLocation(color.id, size, loc.id) === 0"
+                              [class.text-red-400]="getStockForColorSizeInLocation(color.id, size, loc.id) === 0"
+                            >{{ getStockForColorSizeInLocation(color.id, size, loc.id) }}</span>
                           }
                         </td>
                       }
