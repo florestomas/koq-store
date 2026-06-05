@@ -159,6 +159,7 @@
             <div class="flex flex-col flex-1 min-w-0">
               <p class="text-sm font-semibold truncate">{{ item.modelName }}</p>
               <p class="text-xs text-zinc-400">
+                <span class="inline-block rounded-full size-2.5 shrink-0 mr-1 align-middle" [style.background]="getColorHex(item.colorName)"></span>
                 {{ item.colorName | uppercase }} &middot; Talle {{ item.size }}
               </p>
             </div>

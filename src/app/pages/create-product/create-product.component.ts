@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { MatIcon } from '@angular/material/icon';
 import { CatalogService } from '../../core/services/catalog.service';
 import { getSupabase, uploadProductImage } from '../../core/services/supabase.service';
+import { getColorHex } from '../../core/utils/colors';
 
 @Component({
   selector: 'app-create-product',
@@ -77,6 +78,8 @@ export class CreateProductComponent {
   private clearCache(): void {
     sessionStorage.removeItem(CreateProductComponent.CACHE_KEY);
   }
+
+  readonly getColorHex = getColorHex;
 
   readonly duplicateName = computed(() => {
     const name = this.form.controls.name.value.trim().toLowerCase();

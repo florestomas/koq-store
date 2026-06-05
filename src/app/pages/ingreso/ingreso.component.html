@@ -139,7 +139,10 @@
             <tbody>
               @for (row of variantGrid(); track row.colorName) {
                 <tr class="border-b border-gray-100 last:border-b-0">
-                  <td class="py-2.5 px-4 font-medium text-sm">{{ row.colorName }}</td>
+                  <td class="py-2.5 px-4 font-medium text-sm">
+                    <span class="inline-block rounded-full size-3 shrink-0 mr-1.5 align-middle" [style.background]="getColorHex(row.colorName)"></span>
+                    {{ row.colorName }}
+                  </td>
                   @for (cell of row.cells; track cell.productId ?? cell.size) {
                     <td class="py-2.5 px-3 text-center">
                       @if (cell.productId) {

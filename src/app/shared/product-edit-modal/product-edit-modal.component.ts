@@ -9,6 +9,7 @@ import { Category } from '../../interfaces/category';
 import { Location } from '../../interfaces/location';
 import { CatalogService } from '../../core/services/catalog.service';
 import { getSupabase, uploadProductImage } from '../../core/services/supabase.service';
+import { getColorHex } from '../../core/utils/colors';
 
 type TabName = 'basic' | 'stock' | 'variants' | 'prices';
 
@@ -30,6 +31,8 @@ export class ProductEditModalComponent {
   readonly data: ProductEditModalData = inject(MAT_DIALOG_DATA);
   readonly dialogRef = inject(MatDialogRef<ProductEditModalComponent>);
   private readonly catalogService = inject(CatalogService);
+
+  readonly getColorHex = getColorHex;
 
   readonly activeTab = signal<TabName>('basic');
 

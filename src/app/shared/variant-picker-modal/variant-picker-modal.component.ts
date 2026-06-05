@@ -4,6 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { UpperCasePipe } from '@angular/common';
 import { SelectableModel, TransferItem } from '../../core/services/transfer.service';
 import { CatalogService } from '../../core/services/catalog.service';
+import { getColorHex } from '../../core/utils/colors';
 
 export interface VariantPickerData {
   model: SelectableModel;
@@ -26,6 +27,8 @@ export class VariantPickerModalComponent {
   readonly data: VariantPickerData = inject(MAT_DIALOG_DATA);
   readonly dialogRef = inject<MatDialogRef<VariantPickerModalComponent, VariantPickerResult>>(MatDialogRef);
   private readonly catalog = inject(CatalogService);
+
+  readonly getColorHex = getColorHex;
 
   readonly quantities = signal<Record<string, Record<string, number>>>({});
   readonly warning = signal<string | null>(null);

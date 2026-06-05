@@ -27,7 +27,10 @@
         <tbody>
           @for (colorId of data.model.colors; track colorId.id) {
             <tr class="border-b border-gray-100">
-              <td class="py-3 px-4 font-medium">{{ getColorName(colorId.id) | uppercase }}</td>
+              <td class="py-3 px-4 font-medium">
+                <span class="inline-block rounded-full size-3 shrink-0 mr-1.5 align-middle" [style.background]="getColorHex(getColorName(colorId.id))"></span>
+                {{ getColorName(colorId.id) | uppercase }}
+              </td>
               @for (size of data.model.sizes; track size) {
                 @let stock = getStock(colorId.id, size);
                 @let qty = getQty(colorId.id, size);

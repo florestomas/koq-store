@@ -176,7 +176,10 @@
               <tbody>
                 @for (row of variantGrid(); track row.colorId) {
                   <tr class="border-b border-gray-100 last:border-b-0">
-                    <td class="py-2.5 px-4 font-medium text-sm">{{ row.colorName }}</td>
+                    <td class="py-2.5 px-4 font-medium text-sm">
+                      <span class="inline-block rounded-full size-3 shrink-0 mr-1.5 align-middle" [style.background]="getColorHex(row.colorName)"></span>
+                      {{ row.colorName }}
+                    </td>
                     @for (cell of row.cells; track cell.productId ?? cell.size) {
                       <td class="py-2.5 px-3 text-center">
                         @if (cell.productId && cell.stock > 0) {
@@ -292,6 +295,7 @@
             <div class="flex flex-col flex-1 min-w-0">
               <p class="text-sm font-semibold truncate leading-tight">{{ item.modelName }}</p>
               <p class="text-xs text-zinc-400 leading-tight mt-0.5">
+                <span class="inline-block rounded-full size-2.5 shrink-0 mr-1 align-middle" [style.background]="getColorHex(item.colorName)"></span>
                 {{ item.colorName | uppercase }} &middot; Talle {{ item.size }}
               </p>
               <div class="flex flex-row items-center gap-1 mt-0.5">

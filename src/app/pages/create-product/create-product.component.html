@@ -48,6 +48,7 @@
         <div class="flex flex-row flex-wrap gap-2 items-center">
           @for (colorId of selectedColors(); track colorId) {
             <span class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-koq/10 text-koq text-sm font-medium">
+              <span class="inline-block rounded-full size-3 shrink-0" [style.background]="getColorHex(getColorName(colorId))"></span>
               {{ getColorName(colorId) | uppercase }}
               <button (click)="removeColor(colorId)" class="hover:text-red-500 transition">&times;</button>
             </span>
@@ -155,7 +156,10 @@
               <tbody>
                 @for (colorId of selectedColors(); track colorId) {
                   <tr class="border-b border-gray-100">
-                    <td class="py-2 px-4 font-medium">{{ getColorName(colorId) | uppercase }}</td>
+                    <td class="py-2 px-4 font-medium">
+                      <span class="inline-block rounded-full size-3 shrink-0 mr-1.5 align-middle" [style.background]="getColorHex(getColorName(colorId))"></span>
+                      {{ getColorName(colorId) | uppercase }}
+                    </td>
                     @for (size of sortedSizes(); track size) {
                       <td class="py-2 px-4 text-center">
                         <div class="flex flex-col items-center gap-0.5">

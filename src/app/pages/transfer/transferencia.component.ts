@@ -13,6 +13,7 @@ import {
   VariantPickerData,
   VariantPickerResult,
 } from '../../shared/variant-picker-modal/variant-picker-modal.component';
+import { getColorHex } from '../../core/utils/colors';
 
 @Component({
   selector: 'app-transferencia',
@@ -33,6 +34,7 @@ export class TransferenciaComponent {
   readonly isConfirming = signal(false);
 
   readonly isEditing = this.transferService.isEditing;
+  readonly getColorHex = getColorHex;
 
   private readonly destroyRef = inject(DestroyRef);
 

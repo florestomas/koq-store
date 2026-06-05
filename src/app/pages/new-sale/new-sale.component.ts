@@ -8,6 +8,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { CatalogService } from '../../core/services/catalog.service';
 import { SaleService, CartItem } from '../../core/services/sale.service';
 import { getSupabase } from '../../core/services/supabase.service';
+import { getColorHex } from '../../core/utils/colors';
 import { ClothingModel } from '../../interfaces/clothing-model';
 import { Category } from '../../interfaces/category';
 
@@ -178,6 +179,8 @@ export class NewSaleComponent {
 
     return results;
   });
+
+  readonly getColorHex = getColorHex;
 
   readonly categories = computed<Category[]>(() => {
     const categories = this.catalogService.categories();

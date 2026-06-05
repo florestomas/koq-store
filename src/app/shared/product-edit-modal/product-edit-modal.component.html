@@ -128,7 +128,10 @@
                 <tbody>
                   @for (color of modelColors(); track color.id) {
                     <tr class="border-b border-gray-100">
-                      <td class="py-2 px-3 font-medium">{{ color.name | uppercase }}</td>
+                      <td class="py-2 px-3 font-medium">
+                        <span class="inline-block rounded-full size-3 shrink-0 mr-1.5 align-middle" [style.background]="getColorHex(color.name)"></span>
+                        {{ color.name | uppercase }}
+                      </td>
                       @for (size of uniqueSizes(); track size) {
                         @let stock = getStockForColorSizeInLocation(color.id, size, loc.id);
                         @let minStock = getMinStockForColorSizeInLocation(color.id, size, loc.id);
@@ -191,8 +194,10 @@
                   >&times;</button>
                 }
                 <div class="size-16 rounded-xl bg-gray-100 flex items-center justify-center border-2 border-gray-200">
+                  <span class="inline-block rounded-full size-4 shrink-0 mb-1" [style.background]="getColorHex(color.name)"></span>
                   <span class="text-xs text-zinc-500 text-center px-1">{{ color.name }}</span>
                 </div>
+                <span class="inline-block rounded-full size-2.5 shrink-0 mr-1 align-middle" [style.background]="getColorHex(color.name)"></span>
                 <span class="text-xs text-zinc-500">{{ color.name | uppercase }}</span>
               </div>
             }

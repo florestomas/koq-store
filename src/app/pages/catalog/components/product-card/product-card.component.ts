@@ -6,6 +6,7 @@ import { StockBadgeComponent } from '../stock-badge.component/stock-badge.compon
 import { CatalogItem, ColorSizeRow } from '../../../../interfaces/catalog-item';
 import { CatalogService } from '../../../../core/services/catalog.service';
 import { AuthService } from '../../../../core/services/auth.service';
+import { getColorHex } from '../../../../core/utils/colors';
 import {
   ProductEditModalComponent,
   ProductEditModalData,
@@ -43,6 +44,7 @@ export class ProductCardComponent {
     this.dialog.open(ProductEditModalComponent, { data, maxWidth: '90vw' });
   }
 
+  readonly getColorHex = getColorHex;
   readonly colors = this.catalogService.colors;
 
   readonly currentGrid = computed<ColorSizeRow[]>(() => {

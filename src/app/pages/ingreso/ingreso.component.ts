@@ -7,6 +7,7 @@ import { RouterLink } from '@angular/router';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { CatalogService } from '../../core/services/catalog.service';
 import { IngresoService, IngresoItem } from '../../core/services/ingreso.service';
+import { getColorHex } from '../../core/utils/colors';
 import { StockMovementService } from '../../core/services/stock-movement.service';
 import { ClothingModel } from '../../interfaces/clothing-model';
 import { Category } from '../../interfaces/category';
@@ -151,6 +152,8 @@ export class IngresoComponent {
   readonly canConfirm = computed(
     () => this.totalUnits() > 0 && this.selectedLocationId() !== '',
   );
+
+  readonly getColorHex = getColorHex;
 
   constructor() {
     const sub = this.searchControl.valueChanges
