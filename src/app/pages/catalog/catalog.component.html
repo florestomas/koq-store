@@ -54,38 +54,39 @@
     </div>
   </div>
 
-  <nav class="flex flex-row border-b mb-1.5 border-gray-300 overflow-x-auto shrink-0">
-    <button
-      (click)="catalogService.setSelectedCategory(null)"
-      class="py-2.5 px-6 md:px-8 whitespace-nowrap text-zinc-500 font-medium tracking-widest text-sm md:text-base border-b-4 border-transparent hover:border-b-4 hover:text-koq hover:border-koq transition"
-      [class.text-koq]="!catalogService.selectedCategoryId()"
-      [class.border-koq]="!catalogService.selectedCategoryId()"
-      [class.border-b-4]="!catalogService.selectedCategoryId()"
-    >
-      TODOS
-    </button>
-    @for (cat of catalogService.categories(); track cat.id) {
+  <div class="flex flex-row items-center border-b mb-1.5 border-gray-300 shrink-0">
+    <nav class="flex flex-row overflow-x-auto flex-1">
       <button
-        (click)="catalogService.setSelectedCategory(cat.id)"
-        class="py-2.5 px-6 md:px-8 whitespace-nowrap font-medium tracking-widest text-sm md:text-base border-b-4 border-transparent hover:border-b-4 hover:text-koq hover:border-koq transition"
-        [class.text-koq]="catalogService.selectedCategoryId() === cat.id"
-        [class.border-koq]="catalogService.selectedCategoryId() === cat.id"
-        [class.text-zinc-500]="catalogService.selectedCategoryId() !== cat.id"
+        (click)="catalogService.setSelectedCategory(null)"
+        class="py-2.5 px-6 md:px-8 whitespace-nowrap text-zinc-500 font-medium tracking-widest text-sm md:text-base border-b-4 border-transparent hover:border-b-4 hover:text-koq hover:border-koq transition"
+        [class.text-koq]="!catalogService.selectedCategoryId()"
+        [class.border-koq]="!catalogService.selectedCategoryId()"
+        [class.border-b-4]="!catalogService.selectedCategoryId()"
       >
-        {{ cat.name | uppercase }}
+        TODOS
       </button>
-    }
+      @for (cat of catalogService.categories(); track cat.id) {
+        <button
+          (click)="catalogService.setSelectedCategory(cat.id)"
+          class="py-2.5 px-6 md:px-8 whitespace-nowrap font-medium tracking-widest text-sm md:text-base border-b-4 border-transparent hover:border-b-4 hover:text-koq hover:border-koq transition"
+          [class.text-koq]="catalogService.selectedCategoryId() === cat.id"
+          [class.border-koq]="catalogService.selectedCategoryId() === cat.id"
+          [class.text-zinc-500]="catalogService.selectedCategoryId() !== cat.id"
+        >
+          {{ cat.name | uppercase }}
+        </button>
+      }
+    </nav>
     @if (isAdmin()) {
-      <span class="w-px h-6 bg-gray-300 self-center mx-1 shrink-0"></span>
       <button
         (click)="openCategoryManager()"
-        class="py-2.5 px-3 whitespace-nowrap text-zinc-400 hover:text-koq transition shrink-0 cursor-pointer"
+        class="size-10 mr-2 rounded-full flex items-center justify-center text-zinc-400 hover:text-koq hover:bg-koq/10 transition cursor-pointer shrink-0"
         title="Gestionar categorías"
       >
         <mat-icon class="text-lg">settings</mat-icon>
       </button>
     }
-  </nav>
+  </div>
   <div class="flex-1 overflow-y-auto min-h-0 grid grid-cols-1 gap-1.5 items-start content-start">
     @for (item of catalogService.filteredItems(); track item.modelId) {
       <app-product-card [item]="item"></app-product-card>
