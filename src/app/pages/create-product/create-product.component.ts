@@ -14,6 +14,8 @@ import { getSupabase, uploadProductImage } from '../../core/services/supabase.se
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CreateProductComponent {
+  private static readonly CACHE_KEY = 'koq-create-product';
+
   private readonly router = inject(Router);
   private readonly catalogService = inject(CatalogService);
 
@@ -35,6 +37,45 @@ export class CreateProductComponent {
   readonly isSaving = signal(false);
   readonly isAddingColor = signal(false);
   readonly isAddingSize = signal(false);
+
+  constructor() {
+    this.restoreFromCache();
+    this.form.valueChanges.subscribe(() => this.saveToCache());
+  }
+
+  private saveToCache(): void {
+    const data = {
+      name: this.form.controls.name.value,
+      categoryId: this.form.controls.categoryId.value,
+      selectedColors: this.selectedColors(),
+      selectedSizes: this.selectedSizes(),
+      pricesBySize: this.pricesBySize(),
+      stockValues: this.stockValues(),
+      minStockValues: this.minStockValues(),
+    };
+    sessionStorage.setItem(CreateProductComponent.CACHE_KEY, JSON.stringify(data));
+  }
+
+  private restoreFromCache(): void {
+    const raw = sessionStorage.getItem(CreateProductComponent.CACHE_KEY);
+    if (!raw) return;
+    try {
+      const data = JSON.parse(raw);
+      if (data.name) this.form.controls.name.setValue(data.name);
+      if (data.categoryId) this.form.controls.categoryId.setValue(data.categoryId);
+      if (Array.isArray(data.selectedColors)) this.selectedColors.set(data.selectedColors);
+      if (Array.isArray(data.selectedSizes)) this.selectedSizes.set(data.selectedSizes);
+      if (data.pricesBySize) this.pricesBySize.set(data.pricesBySize);
+      if (data.stockValues) this.stockValues.set(data.stockValues);
+      if (data.minStockValues) this.minStockValues.set(data.minStockValues);
+    } catch {
+      sessionStorage.removeItem(CreateProductComponent.CACHE_KEY);
+    }
+  }
+
+  private clearCache(): void {
+    sessionStorage.removeItem(CreateProductComponent.CACHE_KEY);
+  }
 
   readonly duplicateName = computed(() => {
     const name = this.form.controls.name.value.trim().toLowerCase();
@@ -70,6 +111,7 @@ export class CreateProductComponent {
   setPrice(size: string, value: string): void {
     const price = parseInt(value) || 0;
     this.pricesBySize.update((p) => ({ ...p, [size]: price }));
+    this.saveToCache();
   }
 
   getPrice(size: string): number {
@@ -86,6 +128,7 @@ export class CreateProductComponent {
       }
       return updated;
     });
+    this.saveToCache();
   }
 
   getColorName(colorId: string): string {
@@ -100,6 +143,7 @@ export class CreateProductComponent {
       next[colorId] = { ...next[colorId], [size]: qty };
       return next;
     });
+    this.saveToCache();
   }
 
   getStock(colorId: string, size: string): number {
@@ -114,6 +158,7 @@ export class CreateProductComponent {
       next[colorId] = { ...next[colorId], [size]: qty };
       return next;
     });
+    this.saveToCache();
   }
 
   getMinStock(colorId: string, size: string): number {
@@ -146,6 +191,7 @@ export class CreateProductComponent {
 
       if (!this.selectedColors().includes(colorId)) {
         this.selectedColors.update((colors) => [...colors, colorId]);
+        this.saveToCache();
       }
       this.newColorName.set('');
     } finally {
@@ -164,6 +210,7 @@ export class CreateProductComponent {
 
   async removeColor(colorId: string): Promise<void> {
     this.selectedColors.update((colors) => colors.filter((c) => c !== colorId));
+    this.saveToCache();
     const modelColors = this.catalogService.catalogModelColors();
     const products = this.catalogService.catalogProducts();
     const usedInModelColor = modelColors.some((mc) => mc.idColor === colorId);
@@ -177,6 +224,7 @@ export class CreateProductComponent {
     const size = this.newSizeInput().trim();
     if (size && !this.selectedSizes().includes(size)) {
       this.selectedSizes.update((sizes) => [...sizes, size]);
+      this.saveToCache();
     }
     this.newSizeInput.set('');
   }
@@ -188,6 +236,7 @@ export class CreateProductComponent {
       delete next[size];
       return next;
     });
+    this.saveToCache();
   }
 
   async save(): Promise<void> {
@@ -284,6 +333,7 @@ export class CreateProductComponent {
       }
 
       this.catalogService.triggerRefresh();
+      this.clearCache();
       this.router.navigate(['/catalogo']);
     } finally {
       this.isSaving.set(false);
