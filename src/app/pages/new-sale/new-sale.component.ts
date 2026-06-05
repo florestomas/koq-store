@@ -308,6 +308,8 @@ export class NewSaleComponent {
     } else {
       this.restoreFromCache();
     }
+
+    this.catalogService.triggerRefresh();
   }
 
   private async loadSaleForEditing(saleId: string): Promise<void> {
@@ -629,7 +631,7 @@ export class NewSaleComponent {
       }
       setTimeout(() => this.confirmed.set(false), 3000);
     } else {
-      this.error.set('Error al procesar la venta. Intente nuevamente.');
+      this.error.set('Stock insuficiente o error al procesar la venta. Verificá disponibilidad e intentá de nuevo.');
     }
   }
 }

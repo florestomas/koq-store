@@ -8,6 +8,7 @@ import {
   TransferService,
   SelectableModel,
 } from '../../core/services/transfer.service';
+import { CatalogService } from '../../core/services/catalog.service';
 import {
   VariantPickerModalComponent,
   VariantPickerData,
@@ -24,6 +25,7 @@ import { getColorHex } from '../../core/utils/colors';
 })
 export class TransferenciaComponent {
   readonly transferService = inject(TransferService);
+  private readonly catalogService = inject(CatalogService);
   private readonly dialog = inject(MatDialog);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -48,6 +50,8 @@ export class TransferenciaComponent {
     if (editId) {
       this.transferService.loadTransferForEditing(editId);
     }
+
+    this.catalogService.triggerRefresh();
   }
 
   cancelEdit(): void {
