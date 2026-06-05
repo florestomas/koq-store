@@ -474,6 +474,7 @@ export class TransferService {
 
       if (error) {
         console.error('Transfer error:', error);
+        console.error('Transfer error message:', (error as Record<string, unknown>)?.message ?? 'no message');
         return false;
       }
 
