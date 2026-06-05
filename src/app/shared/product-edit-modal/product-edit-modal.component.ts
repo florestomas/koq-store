@@ -282,16 +282,39 @@ export class ProductEditModalComponent {
     this.isSaving.set(true);
     try {
       const newStock = Math.max(0, parseInt(value) || 0);
-      const productIds = this.allProducts()
+      const modelId = this.data.item.modelId;
+      const supabase = getSupabase();
+
+      let productIds = this.allProducts()
         .filter(
           (p) =>
-            p.idClothingModel === this.data.item.modelId &&
+            p.idClothingModel === modelId &&
             p.active &&
             p.idColor === colorId &&
             p.size === size,
         )
         .map((p) => p.id);
-      const supabase = getSupabase();
+
+      if (productIds.length === 0) {
+        const existing = this.allProducts().find(
+          (p) => p.idClothingModel === modelId && p.active,
+        );
+        if (existing) {
+          const newId = crypto.randomUUID();
+          const { error: pErr } = await supabase.from('products').insert({
+            id: newId,
+            id_clothing_model: modelId,
+            size,
+            id_color: colorId,
+            cost_price: existing.costPrice,
+            sale_price: existing.salePrice,
+            active: true,
+          });
+          if (pErr) { console.error('Error creating product:', pErr); alert('Error al crear producto: ' + pErr.message); }
+          else productIds = [newId];
+        }
+      }
+
       const entries = this.allStocks().filter(
         (s) => productIds.includes(s.idProduct) && s.idLocation === locationId,
       );
@@ -301,7 +324,7 @@ export class ProductEditModalComponent {
             .from('stock_locations')
             .update({ current_stock: newStock })
             .eq('id', entry.id);
-          if (error) console.error('Error updating stock:', error);
+          if (error) { console.error('Error updating stock:', error); alert('Error al actualizar stock: ' + error.message); }
         }
       } else if (productIds.length > 0) {
         const { error } = await supabase.from('stock_locations').insert({
@@ -311,7 +334,7 @@ export class ProductEditModalComponent {
           current_stock: newStock,
           minimum_stock: 1,
         });
-        if (error) console.error('Error inserting stock:', error);
+        if (error) { console.error('Error inserting stock:', error); alert('Error al insertar stock: ' + error.message); }
       }
       await this.catalogService.triggerRefresh();
     } finally {

@@ -215,14 +215,14 @@ export class CatalogService {
         { data: rawLocations },
         { data: rawUsers },
       ] = await Promise.all([
-        supabase.from('categories').select('*'),
-        supabase.from('clothing_models').select('*'),
-        supabase.from('products').select('*'),
-        supabase.from('stock_locations').select('*'),
-        supabase.from('colors').select('*'),
-        supabase.from('clothing_model_colors').select('*'),
-        supabase.from('locations').select('*'),
-        supabase.from('users').select('*'),
+        supabase.from('categories').select('*').limit(100000),
+        supabase.from('clothing_models').select('*').limit(100000),
+        supabase.from('products').select('*').limit(100000),
+        supabase.from('stock_locations').select('*').limit(100000),
+        supabase.from('colors').select('*').limit(100000),
+        supabase.from('clothing_model_colors').select('*').limit(100000),
+        supabase.from('locations').select('*').limit(100000),
+        supabase.from('users').select('*').limit(100000),
       ]);
 
       if (rawCategories) this.categoriesSig.set(rawCategories.map((r: Record<string, unknown>) => toCamelCase<Category>(r)));
