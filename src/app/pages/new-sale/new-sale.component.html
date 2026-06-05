@@ -296,7 +296,7 @@
               <p class="text-sm font-semibold truncate leading-tight">{{ item.modelName }}</p>
               <p class="text-xs text-zinc-400 leading-tight mt-0.5">
                 <span class="inline-block rounded-full size-2.5 shrink-0 mr-1 align-middle" [style.background]="getColorHex(item.colorName)"></span>
-                {{ item.colorName | uppercase }} &middot; Talle {{ item.size }}
+                <strong>{{ item.colorName | uppercase }}</strong> &middot; Talle <strong>{{ item.size }}</strong>
               </p>
               <div class="flex flex-row items-center gap-1 mt-0.5">
                 <span class="text-xs text-zinc-400">$</span>

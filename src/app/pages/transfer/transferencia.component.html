@@ -160,7 +160,7 @@
               <p class="text-sm font-semibold truncate">{{ item.modelName }}</p>
               <p class="text-xs text-zinc-400">
                 <span class="inline-block rounded-full size-2.5 shrink-0 mr-1 align-middle" [style.background]="getColorHex(item.colorName)"></span>
-                {{ item.colorName | uppercase }} &middot; Talle {{ item.size }}
+                <strong>{{ item.colorName | uppercase }}</strong> &middot; Talle <strong>{{ item.size }}</strong>
               </p>
             </div>
             <div class="flex flex-row items-center gap-1">
