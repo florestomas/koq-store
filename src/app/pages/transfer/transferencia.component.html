@@ -38,15 +38,22 @@
           }
         </select>
       </div>
-      @if (transferService.hasLastTransfer()) {
         <button
           (click)="transferService.repeatLastTransfer()"
-          class="flex flex-row items-center gap-1 px-3 py-2 rounded-full text-xs font-medium text-zinc-500 border border-dashed border-zinc-300 hover:border-koq hover:text-koq transition cursor-pointer whitespace-nowrap"
+          [disabled]="!transferService.hasLastTransfer()"
+          class="flex flex-row items-center gap-1 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition border border-dashed"
+          [class.text-zinc-500]="transferService.hasLastTransfer()"
+          [class.border-zinc-300]="transferService.hasLastTransfer()"
+          [class.hover:border-koq]="transferService.hasLastTransfer()"
+          [class.hover:text-koq]="transferService.hasLastTransfer()"
+          [class.cursor-pointer]="transferService.hasLastTransfer()"
+          [class.text-zinc-300]="!transferService.hasLastTransfer()"
+          [class.border-zinc-200]="!transferService.hasLastTransfer()"
+          [class.cursor-not-allowed]="!transferService.hasLastTransfer()"
         >
           <mat-icon class="text-sm">replay</mat-icon>
           Repetir último
         </button>
-      }
     </div>
 
     <!-- Search -->

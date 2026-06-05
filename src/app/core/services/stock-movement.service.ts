@@ -39,6 +39,8 @@ export class StockMovementService {
   private readonly authService = inject(AuthService);
   private readonly catalog = inject(CatalogService);
 
+  readonly deleting = signal(false);
+
   readonly dateFrom = signal<string | null>(null);
   readonly dateTo = signal<string | null>(null);
   readonly locationId = signal<string | null>(null);
@@ -262,6 +264,7 @@ export class StockMovementService {
 
   async deleteIngresoGroup(referenceId: string): Promise<boolean> {
     if (!window.confirm('¿Eliminar este ingreso definitivamente? Esta acción no se puede deshacer.')) return false;
+    this.deleting.set(true);
     try {
       const supabase = getSupabase();
       const movements = this.movementsSig().filter(
@@ -292,6 +295,8 @@ export class StockMovementService {
     } catch (err) {
       console.error('Error deleting ingreso group:', err);
       return false;
+    } finally {
+      this.deleting.set(false);
     }
   }
 }

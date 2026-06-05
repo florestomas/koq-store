@@ -45,6 +45,8 @@ export class SalesHistoryService {
   private readonly stockMovementService = inject(StockMovementService);
   private readonly catalog = inject(CatalogService);
 
+  readonly deleting = signal(false);
+
   readonly dateFrom = signal<string | null>(null);
   readonly dateTo = signal<string | null>(null);
   readonly channel = signal<'all' | 'local' | 'whatsapp'>('all');
@@ -246,6 +248,7 @@ export class SalesHistoryService {
   }
 
   async cancelSale(saleId: string): Promise<boolean> {
+    this.deleting.set(true);
     try {
       const { error } = await getSupabase().rpc('cancelar_venta', { p_sale_id: saleId });
 
@@ -260,11 +263,14 @@ export class SalesHistoryService {
     } catch (err) {
       console.error('Error in cancelSale:', err);
       return false;
+    } finally {
+      this.deleting.set(false);
     }
   }
 
   async hardDeleteSale(saleId: string): Promise<boolean> {
     if (!window.confirm('¿Eliminar esta venta definitivamente? Esta acción no se puede deshacer.')) return false;
+    this.deleting.set(true);
     try {
       const supabase = getSupabase();
       const sale = this.salesSig().find((s) => s.id === saleId);
@@ -316,6 +322,8 @@ export class SalesHistoryService {
     } catch (err) {
       console.error('Error deleting sale:', err);
       return false;
+    } finally {
+      this.deleting.set(false);
     }
   }
 

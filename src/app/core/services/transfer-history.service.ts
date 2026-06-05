@@ -32,6 +32,8 @@ export class TransferHistoryService {
   private readonly authService = inject(AuthService);
   private readonly catalog = inject(CatalogService);
 
+  readonly deleting = signal(false);
+
   readonly dateFrom = signal<string | null>(null);
   readonly dateTo = signal<string | null>(null);
   readonly locationId = signal<string | null>(null);
@@ -149,6 +151,7 @@ export class TransferHistoryService {
 
   async hardDeleteTransfer(transferId: string): Promise<boolean> {
     if (!window.confirm('¿Eliminar este traslado de stock definitivamente? Esta acción no se puede deshacer.')) return false;
+    this.deleting.set(true);
     try {
       const supabase = getSupabase();
       const details = this.transferDetailsSig().filter((d) => d.idTransfer === transferId);
@@ -227,6 +230,8 @@ export class TransferHistoryService {
     } catch (err) {
       console.error('Error deleting transfer:', err);
       return false;
+    } finally {
+      this.deleting.set(false);
     }
   }
 }

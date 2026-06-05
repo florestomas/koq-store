@@ -11,7 +11,7 @@ npm run deploy         # npx vercel --prod
 npm run preview        # npx vercel dev
 ```
 
-No `vitest.config` — Angular builder manages Vitest. Use `--include` for filtering (not vitest CLI flags). No CI, no ESLint — only Prettier (100w, single quotes, Angular HTML parser in `package.json`).
+No `vitest.config` — Angular builder manages Vitest. Use `--include` for filtering (not vitest CLI flags). No CI, no ESLint — only Prettier (config in `package.json` `"prettier"` key, not `.prettierrc`): 100w, single quotes, Angular HTML parser.
 
 ## Stack
 
@@ -50,14 +50,16 @@ Routes are Spanish slugs, all guarded by `authGuard` at the layout shell level:
 | `/login` | `pages/auth/` | — |
 | `/catalogo` (default) | `pages/catalog/` | |
 | `/trasladar-stock` | `pages/transfer/` **(dir mismatch)** | |
-| `/crear-producto` | `pages/create-product/` | yes |
-| `/ingreso` | `pages/ingreso/` | yes |
+| `/crear-producto` | `pages/create-product/` | yes (admin OR operator at location 1) |
+| `/ingreso` | `pages/ingreso/` | yes (admin OR operator at location 1) |
 | `/ventas/nueva` | `pages/new-sale/` | |
 | `/alertas` | `pages/alertas/` | |
 | `/historial` | `pages/historial/` | |
 | `/recepciones` | `pages/recepciones/` | |
 
 `withComponentInputBinding()` enabled (route params as `@Input()`). `**` redirects to `/login`.
+
+`pages/categorias/` has a component but no route — stale/abandoned.
 
 ## Auth
 

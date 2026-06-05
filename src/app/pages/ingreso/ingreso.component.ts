@@ -7,6 +7,7 @@ import { RouterLink } from '@angular/router';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { CatalogService } from '../../core/services/catalog.service';
 import { IngresoService, IngresoItem } from '../../core/services/ingreso.service';
+import { StockMovementService } from '../../core/services/stock-movement.service';
 import { ClothingModel } from '../../interfaces/clothing-model';
 import { Category } from '../../interfaces/category';
 
@@ -36,6 +37,7 @@ interface ModelSearchResult {
 export class IngresoComponent {
   private readonly catalogService = inject(CatalogService);
   private readonly ingresoService = inject(IngresoService);
+  private readonly stockMovementService = inject(StockMovementService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -280,6 +282,7 @@ export class IngresoComponent {
         this.searchTerm.set('');
         this.selectedCategoryId.set(null);
         this.catalogService.triggerRefresh();
+        this.stockMovementService.refresh();
         if (editingId) {
           this.editingIngresoId.set(null);
           this.router.navigate(['/historial']);

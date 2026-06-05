@@ -236,10 +236,24 @@
                             @if (isAdmin()) {
                               <button
                                 (click)="$event.stopPropagation(); deleteSale(event.sale.id)"
-                                class="flex flex-row items-center gap-1 px-3 py-2 rounded-full text-xs font-bold tracking-wider text-white bg-red-500 border border-red-500 hover:bg-red-600 transition cursor-pointer"
+                                [disabled]="salesHistoryService.deleting()"
+                                class="flex flex-row items-center gap-1 px-3 py-2 rounded-full text-xs font-bold tracking-wider transition"
+                                [class.text-white]="!salesHistoryService.deleting()"
+                                [class.bg-red-500]="!salesHistoryService.deleting()"
+                                [class.border-red-500]="!salesHistoryService.deleting()"
+                                [class.hover:bg-red-600]="!salesHistoryService.deleting()"
+                                [class.cursor-pointer]="!salesHistoryService.deleting()"
+                                [class.bg-red-200]="salesHistoryService.deleting()"
+                                [class.border-red-200]="salesHistoryService.deleting()"
+                                [class.text-red-300]="salesHistoryService.deleting()"
+                                [class.cursor-not-allowed]="salesHistoryService.deleting()"
                               >
-                                <mat-icon class="text-sm">delete</mat-icon>
-                                ELIMINAR
+                                @if (salesHistoryService.deleting()) {
+                                  <mat-icon class="text-sm animate-spin">hourglass_top</mat-icon>
+                                } @else {
+                                  <mat-icon class="text-sm">delete</mat-icon>
+                                }
+                                {{ salesHistoryService.deleting() ? 'ELIMINANDO...' : 'ELIMINAR' }}
                               </button>
                             }
                             @if (event.sale.status === 'active') {
@@ -252,10 +266,22 @@
                               </button>
                               <button
                                 (click)="$event.stopPropagation(); confirmCancel(event.sale.id)"
-                                class="flex flex-row items-center gap-1 px-3 py-2 rounded-full text-xs font-bold tracking-wider text-red-600 border border-red-200 hover:bg-red-50 transition cursor-pointer"
+                                [disabled]="salesHistoryService.deleting()"
+                                class="flex flex-row items-center gap-1 px-3 py-2 rounded-full text-xs font-bold tracking-wider transition"
+                                [class.text-red-600]="!salesHistoryService.deleting()"
+                                [class.border-red-200]="!salesHistoryService.deleting()"
+                                [class.hover:bg-red-50]="!salesHistoryService.deleting()"
+                                [class.cursor-pointer]="!salesHistoryService.deleting()"
+                                [class.text-red-300]="salesHistoryService.deleting()"
+                                [class.border-red-100]="salesHistoryService.deleting()"
+                                [class.cursor-not-allowed]="salesHistoryService.deleting()"
                               >
-                                <mat-icon class="text-sm">undo</mat-icon>
-                                HACER DEVOLUCIÓN
+                                @if (salesHistoryService.deleting()) {
+                                  <mat-icon class="text-sm animate-spin">hourglass_top</mat-icon>
+                                } @else {
+                                  <mat-icon class="text-sm">undo</mat-icon>
+                                }
+                                {{ salesHistoryService.deleting() ? 'DEVOLVIENDO...' : 'HACER DEVOLUCIÓN' }}
                               </button>
                             }
                           </div>
@@ -300,10 +326,24 @@
                         @if (isAdmin()) {
                           <button
                             (click)="$event.stopPropagation(); deleteTransfer(event.transfer.id)"
-                            class="flex flex-row items-center gap-1 px-3 py-2 rounded-full text-xs font-bold tracking-wider text-white bg-red-500 border border-red-500 hover:bg-red-600 transition cursor-pointer"
+                            [disabled]="transferHistoryService.deleting()"
+                            class="flex flex-row items-center gap-1 px-3 py-2 rounded-full text-xs font-bold tracking-wider transition"
+                            [class.text-white]="!transferHistoryService.deleting()"
+                            [class.bg-red-500]="!transferHistoryService.deleting()"
+                            [class.border-red-500]="!transferHistoryService.deleting()"
+                            [class.hover:bg-red-600]="!transferHistoryService.deleting()"
+                            [class.cursor-pointer]="!transferHistoryService.deleting()"
+                            [class.bg-red-200]="transferHistoryService.deleting()"
+                            [class.border-red-200]="transferHistoryService.deleting()"
+                            [class.text-red-300]="transferHistoryService.deleting()"
+                            [class.cursor-not-allowed]="transferHistoryService.deleting()"
                           >
-                            <mat-icon class="text-sm">delete</mat-icon>
-                            ELIMINAR
+                            @if (transferHistoryService.deleting()) {
+                              <mat-icon class="text-sm animate-spin">hourglass_top</mat-icon>
+                            } @else {
+                              <mat-icon class="text-sm">delete</mat-icon>
+                            }
+                            {{ transferHistoryService.deleting() ? 'ELIMINANDO...' : 'ELIMINAR' }}
                           </button>
                         }
                       </div>
@@ -342,10 +382,24 @@
                           </button>
                           <button
                             (click)="$event.stopPropagation(); deleteIngresoGroup(event.ingreso.id)"
-                            class="flex flex-row items-center gap-1 px-3 py-2 rounded-full text-xs font-bold tracking-wider text-white bg-red-500 border border-red-500 hover:bg-red-600 transition cursor-pointer"
+                            [disabled]="stockMovementService.deleting()"
+                            class="flex flex-row items-center gap-1 px-3 py-2 rounded-full text-xs font-bold tracking-wider transition"
+                            [class.text-white]="!stockMovementService.deleting()"
+                            [class.bg-red-500]="!stockMovementService.deleting()"
+                            [class.border-red-500]="!stockMovementService.deleting()"
+                            [class.hover:bg-red-600]="!stockMovementService.deleting()"
+                            [class.cursor-pointer]="!stockMovementService.deleting()"
+                            [class.bg-red-200]="stockMovementService.deleting()"
+                            [class.border-red-200]="stockMovementService.deleting()"
+                            [class.text-red-300]="stockMovementService.deleting()"
+                            [class.cursor-not-allowed]="stockMovementService.deleting()"
                           >
-                            <mat-icon class="text-sm">delete</mat-icon>
-                            ELIMINAR
+                            @if (stockMovementService.deleting()) {
+                              <mat-icon class="text-sm animate-spin">hourglass_top</mat-icon>
+                            } @else {
+                              <mat-icon class="text-sm">delete</mat-icon>
+                            }
+                            {{ stockMovementService.deleting() ? 'ELIMINANDO...' : 'ELIMINAR' }}
                           </button>
                         </div>
                       }
