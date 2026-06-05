@@ -71,14 +71,15 @@
               >{{ isTransferOld(transfer.dateTime) ? 'RETRASADO' : 'EN CAMINO' }}</span>
             </div>
             </div>
-            <!-- Date/time + origin -->
+            <!-- Date/time -->
             <div class="flex flex-row items-center gap-2 text-xs text-zinc-400">
               <mat-icon class="text-sm text-zinc-300">schedule</mat-icon>
               <span>{{ transfer.dateTime | date:'dd/MM/yyyy HH:mm' }}</span>
             </div>
+            <!-- Route: origin → destination -->
             <div class="flex flex-row items-center gap-2 text-xs text-zinc-500">
               <mat-icon class="text-sm text-zinc-300">location_on</mat-icon>
-              <span>{{ transfer.originLocationName }}</span>
+              <span>{{ transfer.originLocationName }} → {{ transfer.destinationLocationName }}</span>
             </div>
             <!-- SKUs count -->
             <div class="flex flex-row items-center gap-1 mt-1">
@@ -115,7 +116,7 @@
             rows="2"
             placeholder="Observación (opcional) — Ej: faltaron 2 unidades, caja dañada..."
             [value]="note()"
-            (input)="note.set($any($event.target).value)"
+            (input)="setNote($any($event.target).value)"
           ></textarea>
 
           <!-- Item grid -->

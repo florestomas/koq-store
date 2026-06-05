@@ -30,6 +30,8 @@ export interface SelectableModel {
 
 @Injectable({ providedIn: 'root' })
 export class TransferService {
+  private static readonly CACHE_KEY = 'koq-transfer-cache';
+
   readonly originId = computed(() => {
     const user = this.authService.currentUser();
     if (user?.role === 'operator') return user.idLocation;
@@ -49,6 +51,46 @@ export class TransferService {
   private readonly catalogService = inject(CatalogService);
   private readonly stockMovementService = inject(StockMovementService);
   private readonly receptionService = inject(ReceptionService);
+
+  constructor() {
+    this.restoreFromCache();
+  }
+
+  setDestinationId(id: string): void {
+    this.destinationId.set(id);
+    this.saveToCache();
+  }
+
+  clearCache(): void {
+    sessionStorage.removeItem(TransferService.CACHE_KEY);
+  }
+
+  private saveToCache(): void {
+    const items = this.items();
+    const destinationId = this.destinationId();
+    if (items.length === 0 || !destinationId) {
+      sessionStorage.removeItem(TransferService.CACHE_KEY);
+      return;
+    }
+    sessionStorage.setItem(TransferService.CACHE_KEY, JSON.stringify({ items, destinationId }));
+  }
+
+  private restoreFromCache(): void {
+    if (this.editingTransferId()) return;
+    const raw = sessionStorage.getItem(TransferService.CACHE_KEY);
+    if (!raw) return;
+    try {
+      const data = JSON.parse(raw);
+      if (Array.isArray(data.items) && data.items.length > 0 && data.destinationId) {
+        this.items.set(data.items);
+        this.destinationId.set(data.destinationId);
+      } else {
+        sessionStorage.removeItem(TransferService.CACHE_KEY);
+      }
+    } catch {
+      sessionStorage.removeItem(TransferService.CACHE_KEY);
+    }
+  }
 
   readonly totalItems = computed(() => this.items().length);
   readonly totalQuantity = computed(() =>
@@ -194,6 +236,7 @@ export class TransferService {
         },
       ]);
     }
+    this.saveToCache();
   }
 
   addItemsFromPicker(
@@ -264,6 +307,7 @@ export class TransferService {
 
     this.items.set(items);
     if (Object.keys(quantities).length > 0) this.warning.set(null);
+    this.saveToCache();
   }
 
   changeQuantity(index: number, delta: number): void {
@@ -282,12 +326,14 @@ export class TransferService {
       setTimeout(() => this.warning.set(null), 4000);
     }
     this.items.set(currentItems);
+    this.saveToCache();
   }
 
   removeItem(index: number): void {
     const currentItems = [...this.items()];
     currentItems.splice(index, 1);
     this.items.set(currentItems);
+    this.saveToCache();
   }
 
   async loadTransferForEditing(transferId: string): Promise<boolean> {
@@ -372,6 +418,7 @@ export class TransferService {
       }
 
       this.saveLastTransfer();
+      this.clearCache();
       this.items.set([]);
       this.destinationId.set('');
       this.editingTransferId.set(null);
@@ -474,6 +521,7 @@ export class TransferService {
       }
 
       this.saveLastTransfer();
+      this.clearCache();
       this.items.set([]);
       this.destinationId.set('');
       this.catalogService.triggerRefresh();

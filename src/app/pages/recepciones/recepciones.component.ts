@@ -2,8 +2,13 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { DatePipe, UpperCasePipe } from '@angular/common';
 import { MatIcon } from '@angular/material/icon';
 import { AuthService } from '../../core/services/auth.service';
-import { ReceptionService } from '../../core/services/reception.service';
-import { DetailRow } from '../../core/services/reception.service';
+import { ReceptionService, DetailRow } from '../../core/services/reception.service';
+
+interface ReceptionCache {
+  selectedTransferId: string | null;
+  receivedQty: Record<string, number>;
+  note: string;
+}
 
 @Component({
   selector: 'app-recepciones',
@@ -13,6 +18,8 @@ import { DetailRow } from '../../core/services/reception.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RecepcionesComponent {
+  private static readonly CACHE_KEY = 'koq-reception-cache';
+
   readonly receptionService = inject(ReceptionService);
   readonly authService = inject(AuthService);
 
@@ -21,6 +28,42 @@ export class RecepcionesComponent {
   readonly confirmed = signal(false);
   readonly error = signal<string | null>(null);
   readonly note = signal('');
+
+  private saveToCache(): void {
+    try {
+      sessionStorage.setItem(
+        RecepcionesComponent.CACHE_KEY,
+        JSON.stringify({
+          selectedTransferId: this.selectedTransferId(),
+          receivedQty: this.receivedQty(),
+          note: this.note(),
+        } satisfies ReceptionCache),
+      );
+    } catch {}
+  }
+
+  private restoreFromCache(): void {
+    try {
+      const raw = sessionStorage.getItem(RecepcionesComponent.CACHE_KEY);
+      if (!raw) return;
+      const cached: ReceptionCache = JSON.parse(raw);
+      if (cached.selectedTransferId) {
+        this.selectedTransferId.set(cached.selectedTransferId);
+        this.receivedQty.set(cached.receivedQty ?? {});
+        this.note.set(cached.note ?? '');
+      }
+    } catch {}
+  }
+
+  private clearCache(): void {
+    try {
+      sessionStorage.removeItem(RecepcionesComponent.CACHE_KEY);
+    } catch {}
+  }
+
+  constructor() {
+    this.restoreFromCache();
+  }
 
   readonly selectedTransfer = computed(() => {
     const id = this.selectedTransferId();
@@ -38,6 +81,7 @@ export class RecepcionesComponent {
     this.error.set(null);
     this.confirmed.set(false);
     this.note.set('');
+    this.saveToCache();
   }
 
   isTransferOld(dateTime: string): boolean {
@@ -65,6 +109,7 @@ export class RecepcionesComponent {
       ...map,
       [`${transfer.id}:${productId}`]: value,
     }));
+    this.saveToCache();
   }
 
   getReceivedQty(productId: string, defaultQty: number): number {
@@ -77,6 +122,11 @@ export class RecepcionesComponent {
 
   hasDiscrepancy(detail: DetailRow): boolean {
     return this.getReceivedQty(detail.productId, detail.quantitySent) !== detail.quantitySent;
+  }
+
+  setNote(value: string): void {
+    this.note.set(value);
+    this.saveToCache();
   }
 
   async confirmCurrentReception(): Promise<void> {
@@ -105,6 +155,7 @@ export class RecepcionesComponent {
     );
 
     if (ok) {
+      this.clearCache();
       this.confirmed.set(true);
       this.error.set(null);
       this.selectedTransferId.set(null);

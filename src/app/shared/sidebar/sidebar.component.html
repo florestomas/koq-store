@@ -7,7 +7,7 @@
     <mat-icon>close</mat-icon>
   </button>
 
-  <div class="flex flex-row w-full justify-between p-6 cursor-pointer" routerLink="" (click)="close.emit()">
+  <div class="flex flex-row w-full justify-between p-6 cursor-pointer" routerLink="" (click)="refreshStock(); close.emit()">
     <div class="flex flex-col">
       <h1 class="text-2xl text-koq">Koq Store</h1>
       <h2 class="text-sm text-gray-900/60">INVENTARIO</h2>
@@ -20,7 +20,7 @@
       [navLink]="'catalogo'"
       [iconName]="'inventory_2'"
       [navName]="'CATALOGO'"
-      (click)="close.emit()"
+      (click)="refreshStock(); close.emit()"
     ></app-nav-item>
     @if (isAdmin() || authService.currentUser()?.idLocation === '1') {
       <app-nav-item
@@ -40,13 +40,13 @@
       [navLink]="'ventas/nueva'"
       [iconName]="'point_of_sale'"
       [navName]="'VENTAS'"
-      (click)="close.emit()"
+      (click)="refreshStock(); close.emit()"
     ></app-nav-item>
     <app-nav-item
       [navLink]="'trasladar-stock'"
       [iconName]="'local_shipping'"
       [navName]="'TRASLADAR STOCK'"
-      (click)="close.emit()"
+      (click)="refreshStock(); close.emit()"
     ></app-nav-item>
     <app-nav-item [navLink]="'recepciones'" [iconName]="'archive'" [navName]="'RECEPCION'" [badge]="receptionCount()" [badgeColor]="'amber'" (click)="close.emit()"></app-nav-item>
     <app-nav-item [navLink]="'alertas'" [iconName]="'warning'" [navName]="'ALERTAS'" [badge]="alertCount()" (click)="close.emit()"></app-nav-item>

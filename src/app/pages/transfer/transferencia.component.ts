@@ -52,6 +52,7 @@ export class TransferenciaComponent {
     this.transferService.editingTransferId.set(null);
     this.transferService.items.set([]);
     this.transferService.destinationId.set('');
+    this.transferService.clearCache();
     this.router.navigate(['/historial']);
   }
 

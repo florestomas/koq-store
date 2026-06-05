@@ -28,7 +28,7 @@
         <select
           class="text-base font-bold outline-none bg-transparent cursor-pointer max-w-40"
           [value]="transferService.destinationId()"
-          (change)="transferService.destinationId.set($any($event.target).value)"
+          (change)="transferService.setDestinationId($any($event.target).value)"
         >
           <option value="" disabled selected>Seleccionar local...</option>
           @for (loc of transferService.getLocations(); track loc.id) {

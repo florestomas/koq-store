@@ -23,6 +23,13 @@ interface VariantRow {
   cells: VariantCell[];
 }
 
+interface SaleCache {
+  cartItems: CartItem[];
+  channel: 'local' | 'whatsapp' | null;
+  surchargeMode: 'none' | 'percentage' | 'fixed';
+  surchargeFixedValue: number;
+}
+
 export interface ModelSearchResult {
   model: ClothingModel;
   imageUrl: string;
@@ -38,6 +45,40 @@ export interface ModelSearchResult {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NewSaleComponent {
+  private static readonly CACHE_KEY = 'koq-sale-cache';
+
+  private saveToCache(): void {
+    try {
+      sessionStorage.setItem(
+        NewSaleComponent.CACHE_KEY,
+        JSON.stringify({
+          cartItems: this.cartItems(),
+          channel: this.channel(),
+          surchargeMode: this.surchargeMode(),
+          surchargeFixedValue: this.surchargeFixedValue(),
+        } satisfies SaleCache),
+      );
+    } catch {}
+  }
+
+  private restoreFromCache(): void {
+    try {
+      const raw = sessionStorage.getItem(NewSaleComponent.CACHE_KEY);
+      if (!raw) return;
+      const cached: SaleCache = JSON.parse(raw);
+      if (cached.cartItems?.length) this.cartItems.set(cached.cartItems);
+      if (cached.channel) this.channel.set(cached.channel);
+      if (cached.surchargeMode) this.surchargeMode.set(cached.surchargeMode);
+      this.surchargeFixedValue.set(cached.surchargeFixedValue ?? 0);
+    } catch {}
+  }
+
+  private clearCache(): void {
+    try {
+      sessionStorage.removeItem(NewSaleComponent.CACHE_KEY);
+    } catch {}
+  }
+
   private readonly authService = inject(AuthService);
   readonly saleService = inject(SaleService);
   private readonly route = inject(ActivatedRoute);
@@ -260,6 +301,8 @@ export class NewSaleComponent {
     const editId = this.route.snapshot.queryParamMap.get('edit');
     if (editId) {
       this.loadSaleForEditing(editId);
+    } else {
+      this.restoreFromCache();
     }
   }
 
@@ -327,6 +370,7 @@ export class NewSaleComponent {
     if (!data) return;
     this.cartItems.set(data.items);
     this.channel.set(data.channel);
+    this.saveToCache();
   }
 
   selectModel(model: ClothingModel): void {
@@ -420,6 +464,7 @@ export class NewSaleComponent {
     }
 
     this.variantQuantities.set({});
+    this.saveToCache();
   }
 
   addCanasto(): void {
@@ -441,6 +486,7 @@ export class NewSaleComponent {
     ]);
     this.canastoPrice.set(0);
     this.showCanastoForm.set(false);
+    this.saveToCache();
   }
 
   changeQuantity(index: number, delta: number): void {
@@ -475,12 +521,14 @@ export class NewSaleComponent {
       }
     }
     this.cartItems.set(items);
+    this.saveToCache();
   }
 
   removeItem(index: number): void {
     const items = [...this.cartItems()];
     items.splice(index, 1);
     this.cartItems.set(items);
+    this.saveToCache();
   }
 
   updateUnitPrice(index: number, newPrice: number): void {
@@ -488,10 +536,25 @@ export class NewSaleComponent {
     if (newPrice <= 0) return;
     items[index] = { ...items[index], unitPrice: newPrice };
     this.cartItems.set(items);
+    this.saveToCache();
   }
 
   selectChannel(ch: 'local' | 'whatsapp'): void {
     this.channel.set(ch);
+    this.saveToCache();
+  }
+
+  setSurchargeMode(mode: 'none' | 'percentage' | 'fixed', fixedValue?: number): void {
+    this.surchargeMode.set(mode);
+    if (mode === 'fixed' && fixedValue !== undefined) {
+      this.surchargeFixedValue.set(fixedValue);
+    }
+    this.saveToCache();
+  }
+
+  setSurchargeFixedValue(value: number): void {
+    this.surchargeFixedValue.set(value);
+    this.saveToCache();
   }
 
   parseNumber(value: string): number {
@@ -542,6 +605,7 @@ export class NewSaleComponent {
     }
 
     if (ok) {
+      this.clearCache();
       this.confirmed.set(true);
       this.error.set(null);
       this.cartItems.set([]);
