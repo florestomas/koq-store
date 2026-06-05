@@ -38,6 +38,7 @@ export class CreateProductComponent {
   readonly isSaving = signal(false);
   readonly isAddingColor = signal(false);
   readonly isAddingSize = signal(false);
+  readonly errorMsg = signal<string | null>(null);
 
   constructor() {
     this.restoreFromCache();
@@ -252,6 +253,7 @@ export class CreateProductComponent {
     if (!this.allSizesHavePrice()) return;
     if (this.isSaving()) return;
 
+    this.errorMsg.set(null);
     this.isSaving.set(true);
     try {
       const supabase = getSupabase();
@@ -279,6 +281,7 @@ export class CreateProductComponent {
       });
 
       if (modelError) {
+        this.errorMsg.set('Error al crear el modelo. Intente de nuevo.');
         console.error('Error creating model:', modelError);
         return;
       }
@@ -294,6 +297,7 @@ export class CreateProductComponent {
           });
 
         if (mcError) {
+          this.errorMsg.set('Error al vincular color. Intente de nuevo.');
           console.error('Error linking color:', mcError);
           return;
         }
@@ -314,33 +318,62 @@ export class CreateProductComponent {
             });
 
           if (prodError) {
+            this.errorMsg.set('Error al crear variante de talle/color. Intente de nuevo.');
             console.error('Error creating product:', prodError);
             return;
           }
 
           const qty = stockRec[colorId]?.[size] ?? 0;
-          const { error: stockError } = await supabase
-            .from('stock_locations')
-            .insert({
-              id: crypto.randomUUID(),
-              id_product: productId,
-              id_location: '1',
-              current_stock: qty,
-              minimum_stock: minStockRec[colorId]?.[size] ?? 1,
-            });
-
-          if (stockError) {
-            console.error('Error creating stock record:', stockError);
-            return;
-          }
+          const ok = await this.upsertStock(productId, qty, minStockRec[colorId]?.[size] ?? 1);
+          if (!ok) return;
         }
       }
 
-      this.catalogService.triggerRefresh();
+      await this.catalogService.triggerRefresh();
       this.clearCache();
       this.router.navigate(['/catalogo']);
     } finally {
       this.isSaving.set(false);
     }
+  }
+
+  private async upsertStock(productId: string, qty: number, minStock: number): Promise<boolean> {
+    const supabase = getSupabase();
+    const { data: existing } = await supabase
+      .from('stock_locations')
+      .select('*')
+      .eq('id_product', productId)
+      .eq('id_location', '1')
+      .single();
+
+    if (existing) {
+      const { error } = await supabase
+        .from('stock_locations')
+        .update({ current_stock: existing.current_stock + qty })
+        .eq('id', existing.id);
+
+      if (error) {
+        this.errorMsg.set('Error al actualizar stock existente.');
+        console.error('Error updating stock:', error);
+        return false;
+      }
+    } else {
+      const { error } = await supabase
+        .from('stock_locations')
+        .insert({
+          id: crypto.randomUUID(),
+          id_product: productId,
+          id_location: '1',
+          current_stock: qty,
+          minimum_stock: minStock,
+        });
+
+      if (error) {
+        this.errorMsg.set(`Error al crear stock (${error.message || 'desconocido'}). Verificá la base de datos.`);
+        console.error('Error creating stock record:', error);
+        return false;
+      }
+    }
+    return true;
   }
 }
