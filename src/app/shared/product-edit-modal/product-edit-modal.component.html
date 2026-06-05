@@ -1,7 +1,15 @@
 <div class="flex flex-col min-w-0 md:min-w-[720px] max-h-[85vh]">
-  <h2 mat-dialog-title class="text-2xl font-medium flex items-center gap-3">
-    <img [src]="displayImageUrl()" class="size-12 rounded-xl" />
-    {{ data.item.modelName }}
+  <h2 mat-dialog-title class="text-2xl font-medium">
+    <div class="flex items-center gap-3">
+      <img [src]="displayImageUrl()" class="size-12 rounded-xl" />
+      <span>{{ data.item.modelName }}</span>
+      @if (isSaving()) {
+        <span class="ml-auto flex items-center gap-2 text-sm text-koq animate-pulse">
+          <mat-icon class="animate-spin text-base">sync</mat-icon>
+          Guardando...
+        </span>
+      }
+    </div>
   </h2>
 
   <nav class="flex flex-row border-b border-gray-200 px-6">
@@ -95,22 +103,12 @@
               <mat-icon class="text-zinc-400 text-base">store</mat-icon>
               <span class="text-sm font-semibold">{{ loc.name | uppercase }}</span>
                 @if (data.isAdmin) {
-                <div class="flex flex-row items-center gap-3 ml-auto">
-                  <span class="text-xs text-zinc-400"
-                    >Stock actual: <strong class="text-zinc-700">{{ getStockForLocation(loc.id) }}</strong></span
-                  >
-                  <label class="text-xs text-zinc-400">Stock mínimo:</label>
-                  <input
-                    type="number"
-                    class="border border-gray-300 rounded-lg px-2 py-1 text-sm w-20 text-center outline-none focus:border-koq bg-white"
-                    [value]="getMinStockForLocation(loc.id)"
-                    (input)="setMinStockForLocation(loc.id, $any($event.target).value)"
-                    min="0"
-                  />
-                </div>
+                <span class="text-xs text-zinc-400 ml-auto">
+                  Stock total: <strong class="text-zinc-700">{{ getStockForLocation(loc.id) }}</strong>
+                </span>
               } @else {
                 <span class="text-xs text-zinc-400 ml-auto">
-                  Total: {{ getStockForLocation(loc.id) }} / Mínimo: {{ getMinStockForLocation(loc.id) }}
+                  Total: {{ getStockForLocation(loc.id) }}
                 </span>
               }
             </div>

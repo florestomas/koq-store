@@ -39,6 +39,7 @@ export class ProductEditModalComponent {
   readonly isUploading = signal(false);
   readonly isAddingColor = signal(false);
   readonly isAddingSize = signal(false);
+  readonly isSaving = signal(false);
   readonly displayImageUrl = signal(this.data.item.imageUrl);
 
   readonly tabs: { key: TabName; label: string }[] = [
@@ -98,23 +99,28 @@ export class ProductEditModalComponent {
   });
 
   async updateSizePrice(size: string, value: string): Promise<void> {
-    const newPrice = Math.max(0, parseInt(value) || 0);
-    const productIds = this.allProducts()
-      .filter(
-        (p) =>
-          p.idClothingModel === this.data.item.modelId && p.size === size && p.active,
-      )
-      .map((p) => p.id);
+    this.isSaving.set(true);
+    try {
+      const newPrice = Math.max(0, parseInt(value) || 0);
+      const productIds = this.allProducts()
+        .filter(
+          (p) =>
+            p.idClothingModel === this.data.item.modelId && p.size === size && p.active,
+        )
+        .map((p) => p.id);
 
-    const supabase = getSupabase();
-    for (const pid of productIds) {
-      await supabase
-        .from('products')
-        .update({ sale_price: newPrice, cost_price: newPrice })
-        .eq('id', pid);
+      const supabase = getSupabase();
+      for (const pid of productIds) {
+        await supabase
+          .from('products')
+          .update({ sale_price: newPrice, cost_price: newPrice })
+          .eq('id', pid);
+      }
+      this.pricesVersion.update((v) => v + 1);
+      await this.catalogService.triggerRefresh();
+    } finally {
+      this.isSaving.set(false);
     }
-    this.pricesVersion.update((v) => v + 1);
-    await this.catalogService.triggerRefresh();
   }
 
   readonly modelColors = computed(() => {
@@ -201,42 +207,26 @@ export class ProductEditModalComponent {
       .reduce((sum, s) => sum + s.currentStock, 0);
   }
 
-  getMinStockForLocation(locationId: string): number {
-    return this.getLocationStockEntry(locationId).reduce(
-      (sum, s) => sum + s.minimumStock,
-      0,
-    );
-  }
-
-  async setMinStockForLocation(locationId: string, value: string): Promise<void> {
-    const newMin = parseInt(value) || 0;
-    const entries = this.getLocationStockEntry(locationId);
-    if (entries.length === 0) return;
-    const perProduct = Math.max(1, Math.floor(newMin / entries.length));
-    for (const entry of entries) {
-      await getSupabase()
-        .from('stock_locations')
-        .update({ minimum_stock: perProduct })
-        .eq('id', entry.id);
-    }
-    await this.catalogService.triggerRefresh();
-  }
-
   async setCurrentStockForLocation(locationId: string, value: string): Promise<void> {
-    const newTotal = parseInt(value) || 0;
-    const entries = this.getLocationStockEntry(locationId);
-    if (entries.length === 0) return;
-    const perProduct = Math.floor(newTotal / entries.length);
-    let remainder = newTotal % entries.length;
-    for (const entry of entries) {
-      const newStock = perProduct + (remainder > 0 ? 1 : 0);
-      await getSupabase()
-        .from('stock_locations')
-        .update({ current_stock: newStock })
-        .eq('id', entry.id);
-      if (remainder > 0) remainder--;
+    this.isSaving.set(true);
+    try {
+      const newTotal = parseInt(value) || 0;
+      const entries = this.getLocationStockEntry(locationId);
+      if (entries.length === 0) return;
+      const perProduct = Math.floor(newTotal / entries.length);
+      let remainder = newTotal % entries.length;
+      for (const entry of entries) {
+        const newStock = perProduct + (remainder > 0 ? 1 : 0);
+        await getSupabase()
+          .from('stock_locations')
+          .update({ current_stock: newStock })
+          .eq('id', entry.id);
+        if (remainder > 0) remainder--;
+      }
+      await this.catalogService.triggerRefresh();
+    } finally {
+      this.isSaving.set(false);
     }
-    await this.catalogService.triggerRefresh();
   }
 
   getStockForColorSizeInLocation(
@@ -289,37 +279,42 @@ export class ProductEditModalComponent {
     size: string,
     value: string,
   ): Promise<void> {
-    const newStock = Math.max(0, parseInt(value) || 0);
-    const productIds = this.allProducts()
-      .filter(
-        (p) =>
-          p.idClothingModel === this.data.item.modelId &&
-          p.active &&
-          p.idColor === colorId &&
-          p.size === size,
-      )
-      .map((p) => p.id);
-    const supabase = getSupabase();
-    const entries = this.allStocks().filter(
-      (s) => productIds.includes(s.idProduct) && s.idLocation === locationId,
-    );
-    if (entries.length > 0) {
-      for (const entry of entries) {
-        await supabase
-          .from('stock_locations')
-          .update({ current_stock: newStock })
-          .eq('id', entry.id);
+    this.isSaving.set(true);
+    try {
+      const newStock = Math.max(0, parseInt(value) || 0);
+      const productIds = this.allProducts()
+        .filter(
+          (p) =>
+            p.idClothingModel === this.data.item.modelId &&
+            p.active &&
+            p.idColor === colorId &&
+            p.size === size,
+        )
+        .map((p) => p.id);
+      const supabase = getSupabase();
+      const entries = this.allStocks().filter(
+        (s) => productIds.includes(s.idProduct) && s.idLocation === locationId,
+      );
+      if (entries.length > 0) {
+        for (const entry of entries) {
+          await supabase
+            .from('stock_locations')
+            .update({ current_stock: newStock })
+            .eq('id', entry.id);
+        }
+      } else if (productIds.length > 0) {
+        await supabase.from('stock_locations').insert({
+          id: crypto.randomUUID(),
+          id_product: productIds[0],
+          id_location: locationId,
+          current_stock: newStock,
+          minimum_stock: 1,
+        });
       }
-    } else if (productIds.length > 0) {
-      await supabase.from('stock_locations').insert({
-        id: crypto.randomUUID(),
-        id_product: productIds[0],
-        id_location: locationId,
-        current_stock: newStock,
-        minimum_stock: 1,
-      });
+      await this.catalogService.triggerRefresh();
+    } finally {
+      this.isSaving.set(false);
     }
-    await this.catalogService.triggerRefresh();
   }
 
   async setCellMinStock(
@@ -328,27 +323,32 @@ export class ProductEditModalComponent {
     size: string,
     value: string,
   ): Promise<void> {
-    const newMin = Math.max(0, parseInt(value) || 0);
-    const productIds = this.allProducts()
-      .filter(
-        (p) =>
-          p.idClothingModel === this.data.item.modelId &&
-          p.active &&
-          p.idColor === colorId &&
-          p.size === size,
-      )
-      .map((p) => p.id);
-    const supabase = getSupabase();
-    const entries = this.allStocks().filter(
-      (s) => productIds.includes(s.idProduct) && s.idLocation === locationId,
-    );
-    for (const entry of entries) {
-      await supabase
-        .from('stock_locations')
-        .update({ minimum_stock: newMin })
-        .eq('id', entry.id);
+    this.isSaving.set(true);
+    try {
+      const newMin = Math.max(0, parseInt(value) || 0);
+      const productIds = this.allProducts()
+        .filter(
+          (p) =>
+            p.idClothingModel === this.data.item.modelId &&
+            p.active &&
+            p.idColor === colorId &&
+            p.size === size,
+        )
+        .map((p) => p.id);
+      const supabase = getSupabase();
+      const entries = this.allStocks().filter(
+        (s) => productIds.includes(s.idProduct) && s.idLocation === locationId,
+      );
+      for (const entry of entries) {
+        await supabase
+          .from('stock_locations')
+          .update({ minimum_stock: newMin })
+          .eq('id', entry.id);
+      }
+      await this.catalogService.triggerRefresh();
+    } finally {
+      this.isSaving.set(false);
     }
-    await this.catalogService.triggerRefresh();
   }
 
   async onImageSelected(event: Event): Promise<void> {
@@ -616,24 +616,29 @@ export class ProductEditModalComponent {
 
   async save(): Promise<void> {
     if (this.duplicateName()) return;
-    const modelId = this.data.item.modelId;
-    const supabase = getSupabase();
+    this.isSaving.set(true);
+    try {
+      const modelId = this.data.item.modelId;
+      const supabase = getSupabase();
 
-    const { error } = await supabase
-      .from('clothing_models')
-      .update({
-        name: this.form.controls.name.value,
-        id_category: this.form.controls.categoryId.value,
-      })
-      .eq('id', modelId);
+      const { error } = await supabase
+        .from('clothing_models')
+        .update({
+          name: this.form.controls.name.value,
+          id_category: this.form.controls.categoryId.value,
+        })
+        .eq('id', modelId);
 
-    if (error) {
-      console.error('Error saving model:', error);
-      return;
+      if (error) {
+        console.error('Error saving model:', error);
+        return;
+      }
+
+      await this.catalogService.triggerRefresh();
+      this.dialogRef.close();
+    } finally {
+      this.isSaving.set(false);
     }
-
-    await this.catalogService.triggerRefresh();
-    this.dialogRef.close();
   }
 
   close(): void {
