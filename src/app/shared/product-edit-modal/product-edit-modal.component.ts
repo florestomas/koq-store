@@ -217,10 +217,11 @@ export class ProductEditModalComponent {
       let remainder = newTotal % entries.length;
       for (const entry of entries) {
         const newStock = perProduct + (remainder > 0 ? 1 : 0);
-        await getSupabase()
+        const { error } = await getSupabase()
           .from('stock_locations')
           .update({ current_stock: newStock })
           .eq('id', entry.id);
+        if (!error) this.catalogService.setStockLocal(entry.id, newStock);
         if (remainder > 0) remainder--;
       }
       await this.catalogService.triggerRefresh();
@@ -325,6 +326,7 @@ export class ProductEditModalComponent {
             .update({ current_stock: newStock })
             .eq('id', entry.id);
           if (error) { console.error('Error updating stock:', error); alert('Error al actualizar stock: ' + error.message); }
+          else this.catalogService.setStockLocal(entry.id, newStock);
         }
       } else if (productIds.length > 0) {
         const { error } = await supabase.from('stock_locations').insert({
@@ -370,6 +372,7 @@ export class ProductEditModalComponent {
           .update({ minimum_stock: newMin })
           .eq('id', entry.id);
         if (error) console.error('Error updating min stock:', error);
+        else this.catalogService.setStockLocal(entry.id, newMin, 'minimumStock');
       }
       await this.catalogService.triggerRefresh();
     } finally {

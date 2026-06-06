@@ -318,4 +318,13 @@ export class CatalogService {
     this.refreshCounter.set(this.refreshCounter() + 1);
     return this.loadData();
   }
+
+  /** Actualiza una entrada de stock en el signal local (sin esperar DB), para feedback visual inmediato */
+  setStockLocal(entryId: string, stockValue: number, field: 'currentStock' | 'minimumStock' = 'currentStock'): void {
+    this.stocksSig.update((stocks) =>
+      stocks.map((s) =>
+        s.id === entryId ? { ...s, [field]: stockValue } : s,
+      ),
+    );
+  }
 }
