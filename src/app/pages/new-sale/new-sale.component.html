@@ -2,11 +2,11 @@
   <!-- Left column — Search + Variant selector -->
   <div class="flex-[2] flex flex-col gap-4 min-w-0">
     <!-- Header -->
-    <div class="flex flex-row items-center gap-3 w-full justify-between shrink-0">
-      <div class="flex flex-row items-center gap-3">
+    <div class="flex flex-row items-center gap-2 w-full justify-between shrink-0 flex-wrap">
+      <div class="flex flex-row items-center gap-2">
         <mat-icon class="text-3xl md:text-4xl text-koq">point_of_sale</mat-icon>
-        <div class="flex flex-col">
-          <h1 class="text-2xl md:text-4xl text-black font-medium">{{ isEditing() ? 'Editando Venta' : 'Nueva Venta' | uppercase }}</h1>
+        <div class="flex flex-col min-w-0">
+          <h1 class="text-xl md:text-4xl text-black font-medium truncate">{{ (isEditing() ? 'Editando Venta' : 'Nueva Venta') | uppercase }}</h1>
           @if (isEditing()) {
             <button (click)="cancelEdit()" class="text-xs text-zinc-400 hover:text-red-500 transition text-left cursor-pointer">Cancelar edición</button>
           }
@@ -235,7 +235,7 @@
   </div>
 
   <!-- Right column — Cart Summary -->
-  <div class="flex-1 flex flex-col bg-white border border-gray-200 rounded-3xl p-4 md:p-6 shadow-sm min-w-0 h-full">
+  <div class="flex-1 flex flex-col bg-white border border-gray-200 rounded-3xl p-4 md:p-6 shadow-sm min-w-0 md:h-full">
     <div class="flex flex-row items-center gap-2 mb-4 shrink-0">
       <mat-icon class="text-koq">shopping_cart</mat-icon>
       <h2 class="text-lg font-bold">Resumen de venta</h2>

@@ -53,11 +53,11 @@
               <button (click)="removeColor(colorId)" class="hover:text-red-500 transition">&times;</button>
             </span>
           }
-          <div class="flex flex-row items-center gap-2">
+          <div class="flex flex-row items-center gap-2 flex-wrap w-full sm:w-auto">
             <input
               type="text"
-              placeholder="NOMBRE DEL COLOR"
-              class="border border-gray-300 rounded-full px-3 py-1.5 text-sm w-36 text-center outline-none focus:border-koq bg-white uppercase"
+              placeholder="NOMBRE"
+              class="border border-gray-300 rounded-full px-3 py-1.5 text-sm w-full sm:w-36 text-center outline-none focus:border-koq bg-white uppercase"
               [value]="newColorName()"
               (input)="newColorName.set($any($event.target).value.toUpperCase())"
               (keydown.enter)="$event.preventDefault(); addColor()"
@@ -71,7 +71,7 @@
             <button
               (click)="addColor()"
               [disabled]="isAddingColor()"
-              class="px-3 py-1.5 rounded-full text-xs font-medium transition disabled:opacity-30"
+              class="px-3 py-1.5 rounded-full text-xs font-medium transition disabled:opacity-30 flex-1 sm:flex-initial"
               [class.bg-koq]="!isAddingColor()"
               [class.text-white]="!isAddingColor()"
               [class.hover:opacity-90]="!isAddingColor()"
@@ -121,21 +121,21 @@
       }
 
       <!-- Agregar talle -->
-      <div class="flex flex-row items-center gap-2">
+      <div class="flex flex-row items-center gap-2 flex-wrap">
         <span class="text-xs font-semibold text-zinc-500">AGREGAR TALLE</span>
         <input
           type="number"
           min="0"
           max="14"
           placeholder="Talle"
-          class="border border-gray-300 rounded-full px-3 py-1.5 text-sm w-24 text-center outline-none focus:border-koq bg-white"
+          class="border border-gray-300 rounded-full px-3 py-1.5 text-sm w-full sm:w-24 text-center outline-none focus:border-koq bg-white"
           [value]="newSizeInput()"
           (input)="newSizeInput.set($any($event.target).value)"
           (keydown.enter)="$event.preventDefault(); addSize()"
         />
         <button
           (click)="addSize()"
-          class="px-3 py-1.5 rounded-full text-xs font-medium bg-koq text-white hover:opacity-90 transition"
+          class="px-4 sm:px-3 py-1.5 rounded-full text-xs font-medium bg-koq text-white hover:opacity-90 transition"
         >+ Agregar</button>
       </div>
 

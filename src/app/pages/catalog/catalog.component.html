@@ -1,6 +1,6 @@
 <div class="flex flex-col w-full h-full p-3 md:p-8">
   <!-- Top row: everything in one line -->
-  <div class="flex flex-row items-center gap-3 flex-wrap w-full justify-between shrink-0 mb-2">
+  <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full justify-between shrink-0 mb-2">
     <div class="flex flex-row items-center gap-2 shrink-0">
       <mat-icon class="text-3xl md:text-4xl text-koq">inventory_2</mat-icon>
       <div class="flex flex-col">
@@ -9,7 +9,7 @@
       </div>
     </div>
 
-    <div class="flex flex-row items-center gap-2 flex-wrap min-w-0">
+    <div class="flex flex-row items-center gap-2 flex-wrap w-full sm:w-auto sm:min-w-0">
       @if (isAdmin()) {
         <div class="flex flex-row items-center gap-1.5">
           <span class="text-[10px] text-zinc-400 font-semibold tracking-wider uppercase shrink-0">Ubicación</span>
@@ -37,10 +37,10 @@
           <option value="out">Sin stock</option>
         </select>
       </div>
-      <div class="flex flex-row items-center gap-1.5 bg-gray-100 rounded-full px-3 py-1.5 border border-transparent focus-within:border-koq min-w-0">
+      <div class="flex flex-row items-center gap-1.5 bg-gray-100 rounded-full px-3 py-1.5 border border-transparent focus-within:border-koq min-w-0 flex-1 sm:flex-initial">
         <mat-icon class="text-zinc-400 text-sm shrink-0">search</mat-icon>
         <input
-          class="bg-transparent outline-none text-xs flex-1 min-w-0 w-32"
+          class="bg-transparent outline-none text-xs flex-1 min-w-0 w-full sm:w-32"
           type="text"
           placeholder="Buscar..."
           [formControl]="searchControl"

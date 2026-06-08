@@ -2,14 +2,14 @@
   <!-- Left Column (50%) -->
   <div class="flex-[2] flex flex-col gap-4 min-w-0">
     <!-- Header -->
-    <div class="flex flex-row w-full justify-between items-center">
-      <div class="flex flex-row items-center gap-3">
+    <div class="flex flex-row w-full justify-between items-center flex-wrap gap-2">
+      <div class="flex flex-row items-center gap-2">
         <mat-icon class="text-2xl md:text-3xl text-koq">local_shipping</mat-icon>
-        <div class="flex flex-col">
-          <h1 class="text-2xl md:text-4xl text-black font-medium">{{ isEditing() ? 'Editando Traslado' : 'Trasladar Stock' | uppercase }}</h1>
+        <div class="flex flex-col min-w-0">
+          <h1 class="text-xl md:text-4xl text-black font-medium truncate">{{ (isEditing() ? 'Editando Traslado' : 'Trasladar Stock') | uppercase }}</h1>
           <div class="flex flex-row items-center text-zinc-500 gap-2 mt-1">
             @if (isEditing()) {
-              <button (click)="cancelEdit()" class="text-xs text-zinc-400 hover:text-red-500 transition cursor-pointer ml-2">Cancelar edición</button>
+              <button (click)="cancelEdit()" class="text-xs text-zinc-400 hover:text-red-500 transition cursor-pointer">Cancelar edición</button>
             }
           </div>
         </div>
@@ -17,16 +17,16 @@
     </div>
 
     <!-- Origin → Destination -->
-    <div class="flex flex-row items-center gap-3">
-      <div class="flex flex-col items-center bg-white border-2 border-koq rounded-2xl px-5 py-2 min-w-28">
-        <span class="text-xs text-zinc-400 tracking-wider mb-0.5">ORIGEN</span>
-        <span class="text-base font-bold text-koq">{{ getLocationName(transferService.originId()) }}</span>
+    <div class="flex flex-row items-center gap-2 flex-wrap">
+      <div class="flex flex-col items-center bg-white border-2 border-koq rounded-xl md:rounded-2xl px-3 md:px-5 py-1.5 md:py-2 min-w-20 md:min-w-28">
+        <span class="text-[10px] md:text-xs text-zinc-400 tracking-wider mb-0.5">ORIGEN</span>
+        <span class="text-sm md:text-base font-bold text-koq truncate max-w-20 md:max-w-none">{{ getLocationName(transferService.originId()) }}</span>
       </div>
-      <mat-icon class="text-2xl text-zinc-300 animate-pulse">arrow_forward</mat-icon>
-      <div class="flex flex-col items-center bg-white border-2 border-gray-200 rounded-2xl px-5 py-2 min-w-28 focus-within:border-koq transition">
-        <span class="text-xs text-zinc-400 tracking-wider mb-0.5">DESTINO</span>
+      <mat-icon class="text-lg md:text-2xl text-zinc-300 animate-pulse">arrow_forward</mat-icon>
+      <div class="flex flex-col items-center bg-white border-2 border-gray-200 rounded-xl md:rounded-2xl px-3 md:px-5 py-1.5 md:py-2 min-w-20 md:min-w-28 focus-within:border-koq transition flex-1 md:flex-initial">
+        <span class="text-[10px] md:text-xs text-zinc-400 tracking-wider mb-0.5">DESTINO</span>
         <select
-          class="text-base font-bold outline-none bg-transparent cursor-pointer max-w-40"
+          class="text-sm md:text-base font-bold outline-none bg-transparent cursor-pointer max-w-24 md:max-w-40 w-full"
           [value]="transferService.destinationId()"
           (change)="transferService.setDestinationId($any($event.target).value)"
         >
@@ -41,7 +41,7 @@
         <button
           (click)="transferService.repeatLastTransfer()"
           [disabled]="!transferService.hasLastTransfer()"
-          class="flex flex-row items-center gap-1 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition border border-dashed"
+          class="flex flex-row items-center gap-1 px-2.5 md:px-3 py-1.5 md:py-2 rounded-full text-[10px] md:text-xs font-medium whitespace-nowrap transition border border-dashed"
           [class.text-zinc-500]="transferService.hasLastTransfer()"
           [class.border-zinc-300]="transferService.hasLastTransfer()"
           [class.hover:border-koq]="transferService.hasLastTransfer()"
@@ -52,7 +52,7 @@
           [class.cursor-not-allowed]="!transferService.hasLastTransfer()"
         >
           <mat-icon class="text-sm">replay</mat-icon>
-          Repetir último
+          Repetir
         </button>
     </div>
 
@@ -130,7 +130,7 @@
   </div>
 
   <!-- Right Column (50%) — Summary -->
-  <div class="flex-1 flex flex-col bg-white border border-gray-200 rounded-3xl p-6 shadow-sm min-w-0 h-full">
+  <div class="flex-1 flex flex-col bg-white border border-gray-200 rounded-2xl md:rounded-3xl p-4 md:p-6 shadow-sm min-w-0 md:h-full">
     <div class="flex flex-row items-center justify-between mb-4">
       <div class="flex flex-row items-center gap-2">
         <mat-icon class="text-koq">receipt_long</mat-icon>

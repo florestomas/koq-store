@@ -97,17 +97,17 @@
         @if (selectedTransfer(); as transfer) {
           <!-- Detail header -->
           <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 shrink-0">
-            <div class="flex flex-col">
-              <span class="text-lg md:text-xl font-bold text-zinc-800">{{ formatTransferCode(transfer.id) }}</span>
-              <span class="text-xs md:text-sm text-zinc-500">
+            <div class="flex flex-col min-w-0">
+              <span class="text-lg md:text-xl font-bold text-zinc-800 truncate">{{ formatTransferCode(transfer.id) }}</span>
+              <span class="text-xs md:text-sm text-zinc-500 truncate">
                 Items desde <strong>{{ transfer.originLocationName }}</strong> con destino a <strong>{{ transfer.destinationLocationName }}</strong>
               </span>
             </div>
             <button
               (click)="confirmCurrentReception()"
-              class="w-full md:w-auto py-3 px-8 rounded-full text-sm font-bold tracking-wider text-white bg-zinc-900 hover:bg-zinc-800 transition cursor-pointer shrink-0"
+              class="w-full md:w-auto py-3 px-6 md:px-8 rounded-full text-sm font-bold tracking-wider text-white bg-zinc-900 hover:bg-zinc-800 transition cursor-pointer shrink-0"
             >
-              CONFIRMAR RECEPCIÓN
+              CONFIRMAR
             </button>
           </div>
 

@@ -1,4 +1,4 @@
-<div class="flex flex-col min-w-0 md:min-w-[720px] max-h-[85vh]">
+<div class="flex flex-col min-w-0 max-h-[85vh] md:min-w-[720px]">
   <h2 mat-dialog-title class="text-2xl font-medium">
     <div class="flex items-center gap-3">
       <img [src]="displayImageUrl()" class="size-12 rounded-xl" />
@@ -28,7 +28,7 @@
     }
   </nav>
 
-  <mat-dialog-content class="pt-6" style="zoom: 1.142857">
+  <mat-dialog-content class="pt-6 max-md:!max-h-[70vh]">
     @if (activeTab() === 'basic') {
       <div class="flex flex-col gap-4">
         <div class="flex flex-row gap-4">

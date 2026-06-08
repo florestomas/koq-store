@@ -2,21 +2,22 @@
   <!-- Left column — Search / Create / Variants -->
   <div class="flex-[2] flex flex-col gap-4 min-w-0">
     <!-- Header -->
-    <div class="flex flex-row items-center gap-3 w-full justify-between shrink-0">
-      <div class="flex flex-row items-center gap-3">
+    <div class="flex flex-row items-center gap-2 w-full justify-between shrink-0 flex-wrap">
+      <div class="flex flex-row items-center gap-2">
         <mat-icon class="text-3xl md:text-4xl text-koq">inventory</mat-icon>
-        <h1 class="text-2xl md:text-4xl text-black font-medium">{{ isEditing() ? 'Editando Ingreso' : 'Ingreso de Stock' | uppercase }}</h1>
+        <h1 class="text-xl md:text-4xl text-black font-medium truncate">{{ (isEditing() ? 'Editando Ingreso' : 'Ingreso de Stock') | uppercase }}</h1>
       </div>
+      <div class="flex flex-row items-center gap-2 flex-wrap">
       @if (isEditing()) {
-        <button (click)="cancelEdit()" class="flex items-center gap-1 px-4 py-2 rounded-full text-xs font-bold bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition cursor-pointer">
+        <button (click)="cancelEdit()" class="flex items-center gap-1 px-3 md:px-4 py-1.5 md:py-2 rounded-full text-[10px] md:text-xs font-bold bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition cursor-pointer">
           <mat-icon class="text-sm">close</mat-icon>
-          CANCELAR EDICIÓN
+          <span class="hidden xs:inline">CANCELAR</span><span class="xs:hidden">CAN.</span>
         </button>
       }
       <button
         (click)="repeatLastIngreso()"
         [disabled]="!ingresoService.hasLastIngreso()"
-        class="flex flex-row items-center gap-1 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition border border-dashed cursor-pointer"
+        class="flex flex-row items-center gap-1 px-2.5 md:px-3 py-1.5 md:py-2 rounded-full text-[10px] md:text-xs font-medium whitespace-nowrap transition border border-dashed cursor-pointer"
         [class.text-zinc-500]="ingresoService.hasLastIngreso()"
         [class.border-zinc-300]="ingresoService.hasLastIngreso()"
         [class.hover:border-koq]="ingresoService.hasLastIngreso()"
@@ -27,8 +28,9 @@
         [class.cursor-not-allowed]="!ingresoService.hasLastIngreso()"
       >
         <mat-icon class="text-sm">replay</mat-icon>
-        Repetir último
+        Repetir
       </button>
+      </div>
     </div>
 
     <!-- Success flash -->
@@ -208,7 +210,7 @@
   </div>
 
   <!-- Right column — Resumen de ingreso -->
-  <div class="flex-1 flex flex-col bg-white border border-gray-200 rounded-3xl p-4 md:p-6 shadow-sm min-w-0 h-full">
+  <div class="flex-1 flex flex-col bg-white border border-gray-200 rounded-3xl p-4 md:p-6 shadow-sm min-w-0 md:h-full">
     <div class="flex flex-row items-center gap-2 mb-4 shrink-0">
       <mat-icon class="text-koq">assignment</mat-icon>
       <h2 class="text-lg font-bold">Resumen de ingreso</h2>
