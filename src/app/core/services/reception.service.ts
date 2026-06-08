@@ -128,6 +128,7 @@ export class ReceptionService {
             quantitySent: d.quantity,
             stockStatus,
             productSku: `T. ${product?.size ?? ''} · ${color?.name ?? ''}`,
+
           };
         });
 

@@ -3,6 +3,7 @@ import { DatePipe, UpperCasePipe } from '@angular/common';
 import { MatIcon } from '@angular/material/icon';
 import { AuthService } from '../../core/services/auth.service';
 import { ReceptionService, DetailRow } from '../../core/services/reception.service';
+import { getColorHex } from '../../core/utils/colors';
 
 interface ReceptionCache {
   selectedTransferId: string | null;
@@ -22,6 +23,7 @@ export class RecepcionesComponent {
 
   readonly receptionService = inject(ReceptionService);
   readonly authService = inject(AuthService);
+  readonly getColorHex = getColorHex;
 
   readonly selectedTransferId = signal<string | null>(null);
   readonly receivedQty = signal<Record<string, number>>({});
