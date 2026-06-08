@@ -127,17 +127,37 @@ export class ProductEditModalComponent {
     const _v = this.variantsVersion();
     const prods = this.allProducts();
     const colors = this.allColors();
+    const stocks = this.allStocks();
+    const modelId = this.data.item.modelId;
+    const locations = this.data.locations;
+
     const colorIds = [
       ...new Set(
         prods
-          .filter((p) => p.idClothingModel === this.data.item.modelId && p.active)
+          .filter((p) => p.idClothingModel === modelId && p.active)
           .map((p) => p.idColor),
       ),
     ];
-    return colorIds.map((cid) => ({
-      id: cid,
-      name: colors.find((c) => c.id === cid)?.name ?? cid,
-    }));
+
+    const stockMap = new Map<string, number>();
+    for (const cid of colorIds) {
+      const prodIds = prods
+        .filter((p) => p.idClothingModel === modelId && p.active && p.idColor === cid)
+        .map((p) => p.id);
+      const total = locations.reduce((sum, loc) => {
+        return sum + stocks
+          .filter((s) => s.idLocation === loc.id && prodIds.includes(s.idProduct))
+          .reduce((s, st) => s + st.currentStock, 0);
+      }, 0);
+      stockMap.set(cid, total);
+    }
+
+    return colorIds
+      .map((cid) => ({
+        id: cid,
+        name: colors.find((c) => c.id === cid)?.name ?? cid,
+      }))
+      .sort((a, b) => (stockMap.get(b.id) ?? 0) - (stockMap.get(a.id) ?? 0));
   });
 
   private readonly usedColorIds = computed(() => {

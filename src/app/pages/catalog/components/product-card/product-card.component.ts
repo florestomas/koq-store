@@ -57,23 +57,29 @@ export class ProductCardComponent {
     const stocks = this.item().allStocks.filter((s) => s.idLocation === locId);
 
     const colorIds = [...new Set(prods.map((p) => p.idColor))];
-    return colorIds.map((cid) => {
-      const colorName = this.colors().find((c) => c.id === cid)?.name ?? cid;
-      const colorProducts = prods.filter((p) => p.idColor === cid);
-      const sizes = [...new Set(colorProducts.map((p) => p.size))]
-        .sort((a, b) => parseInt(a) - parseInt(b))
-        .map((size) => {
-          const sizeProducts = colorProducts.filter((p) => p.size === size);
-          const sizeStock = stocks
-            .filter((s) => sizeProducts.some((sp) => sp.id === s.idProduct))
-            .reduce((sum, s) => sum + s.currentStock, 0);
-          const sizeMinStock = stocks
-            .filter((s) => sizeProducts.some((sp) => sp.id === s.idProduct))
-            .reduce((sum, s) => sum + s.minimumStock, 0);
-          return { size, stock: sizeStock, minStock: sizeMinStock };
-        });
-      return { colorName, sizes };
-    });
+    return colorIds
+      .map((cid) => {
+        const colorName = this.colors().find((c) => c.id === cid)?.name ?? cid;
+        const colorProducts = prods.filter((p) => p.idColor === cid);
+        const sizes = [...new Set(colorProducts.map((p) => p.size))]
+          .sort((a, b) => parseInt(a) - parseInt(b))
+          .map((size) => {
+            const sizeProducts = colorProducts.filter((p) => p.size === size);
+            const sizeStock = stocks
+              .filter((s) => sizeProducts.some((sp) => sp.id === s.idProduct))
+              .reduce((sum, s) => sum + s.currentStock, 0);
+            const sizeMinStock = stocks
+              .filter((s) => sizeProducts.some((sp) => sp.id === s.idProduct))
+              .reduce((sum, s) => sum + s.minimumStock, 0);
+            return { size, stock: sizeStock, minStock: sizeMinStock };
+          });
+        return { colorName, sizes };
+      })
+      .sort((a, b) => {
+        const stockA = a.sizes.reduce((sum, s) => sum + s.stock, 0);
+        const stockB = b.sizes.reduce((sum, s) => sum + s.stock, 0);
+        return stockB - stockA;
+      });
   });
 
   readonly uniqueSizes = computed<string[]>(() => {
