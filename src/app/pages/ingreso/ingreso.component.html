@@ -13,6 +13,22 @@
           CANCELAR EDICIÓN
         </button>
       }
+      <button
+        (click)="repeatLastIngreso()"
+        [disabled]="!ingresoService.hasLastIngreso()"
+        class="flex flex-row items-center gap-1 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition border border-dashed cursor-pointer"
+        [class.text-zinc-500]="ingresoService.hasLastIngreso()"
+        [class.border-zinc-300]="ingresoService.hasLastIngreso()"
+        [class.hover:border-koq]="ingresoService.hasLastIngreso()"
+        [class.hover:text-koq]="ingresoService.hasLastIngreso()"
+        [class.cursor-pointer]="ingresoService.hasLastIngreso()"
+        [class.text-zinc-300]="!ingresoService.hasLastIngreso()"
+        [class.border-zinc-200]="!ingresoService.hasLastIngreso()"
+        [class.cursor-not-allowed]="!ingresoService.hasLastIngreso()"
+      >
+        <mat-icon class="text-sm">replay</mat-icon>
+        Repetir último
+      </button>
     </div>
 
     <!-- Success flash -->
@@ -199,15 +215,6 @@
       @if (totalResumenItems() > 0) {
         <span class="ml-auto text-xs text-zinc-400">{{ totalResumenItems() }} {{ totalResumenItems() === 1 ? 'item' : 'items' }}</span>
       }
-      @if (ingresoService.hasLastIngreso() && resumenItems().length === 0 && !isEditing()) {
-        <button
-          (click)="repeatLastIngreso()"
-          class="ml-auto flex flex-row items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium text-zinc-500 border border-dashed border-zinc-300 hover:border-koq hover:text-koq transition cursor-pointer"
-        >
-          <mat-icon class="text-sm">replay</mat-icon>
-          Repetir último
-        </button>
-      }
     </div>
 
     <!-- Items area -->
@@ -254,8 +261,7 @@
     </div>
 
     <!-- Footer: Location + totals + Confirm -->
-    @if (resumenItems().length > 0) {
-      <div class="border-t border-gray-200 pt-3 flex flex-col gap-3 shrink-0">
+    <div class="border-t border-gray-200 pt-3 flex flex-col gap-3 shrink-0">
         <!-- Location selector -->
         <div class="flex flex-col gap-1">
           <label class="text-xs font-semibold text-zinc-500">DESTINO</label>
@@ -294,6 +300,5 @@
           }
         </button>
       </div>
-    }
   </div>
 </div>
