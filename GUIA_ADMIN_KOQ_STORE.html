@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Guía Admin — KoqStore</title>
+<style>
+  @page { margin: 2cm; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', 'Arial', sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #222;
+    padding: 40px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  h1 { font-size: 28px; color: #1a237e; margin-bottom: 8px; margin-top: 10px; }
+  h2 { font-size: 22px; color: #1a237e; margin-top: 40px; margin-bottom: 12px; border-bottom: 2px solid #1a237e; padding-bottom: 4px; }
+  h3 { font-size: 18px; color: #333; margin-top: 28px; margin-bottom: 8px; }
+  h4 { font-size: 15px; color: #555; margin-top: 18px; margin-bottom: 4px; }
+  p { margin-bottom: 12px; }
+  ul, ol { margin-bottom: 14px; padding-left: 24px; }
+  li { margin-bottom: 6px; }
+  .intro { font-size: 15px; background: #e8eaf6; padding: 20px 24px; border-radius: 12px; margin: 20px 0; border-left: 5px solid #1a237e; }
+  .tip { background: #fff8e1; padding: 14px 18px; border-radius: 10px; margin: 14px 0; border-left: 4px solid #ffb300; font-size: 13px; }
+  .warning { background: #fff3e0; padding: 14px 18px; border-radius: 10px; margin: 14px 0; border-left: 4px solid #ff6f00; font-size: 13px; }
+  .danger { background: #ffebee; padding: 14px 18px; border-radius: 10px; margin: 14px 0; border-left: 4px solid #c62828; font-size: 13px; }
+  .step { background: #f5f5f5; padding: 14px 18px; border-radius: 10px; margin: 14px 0; }
+  .step strong { color: #1a237e; }
+  table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 13px; }
+  th, td { border: 1px solid #ddd; padding: 10px 12px; text-align: left; }
+  th { background: #1a237e; color: white; font-weight: 600; }
+  tr:nth-child(even) { background: #fafafa; }
+  .btn { display: inline-block; background: #1a237e; color: white; padding: 2px 10px; border-radius: 6px; font-weight: 600; font-size: 12px; }
+  .btn-purple { display: inline-block; background: #ad65af; color: white; padding: 2px 10px; border-radius: 6px; font-weight: 600; font-size: 12px; }
+  .badge { display: inline-block; background: #e0e0e0; padding: 1px 8px; border-radius: 10px; font-size: 11px; }
+  .tag { display: inline-block; background: #e8eaf6; color: #1a237e; padding: 1px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+  .page-break { page-break-before: always; }
+  .sub { color: #777; font-size: 13px; }
+  strong { color: #333; }
+  .toc { background: #fafafa; padding: 20px 24px; border-radius: 12px; margin: 20px 0; }
+  .toc a { text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  .toc ul { list-style: none; padding: 0; }
+  .toc li { margin-bottom: 6px; }
+  .toc li a { color: #555; font-size: 14px; }
+  .toc li a:hover { color: #1a237e; }
+  .header-img { text-align: center; margin: 30px 0; }
+  .footer { margin-top: 50px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #999; text-align: center; }
+  .admin-only { background: #e8eaf6; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; color: #1a237e; }
+  .shadow { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  .section-grid { display: flex; gap: 16px; flex-wrap: wrap; margin: 14px 0; }
+  .section-card { flex: 1; min-width: 200px; background: #fafafa; padding: 16px; border-radius: 12px; border: 1px solid #eee; }
+  .section-card h4 { margin-top: 0; }
+  @media print {
+    body { padding: 0; font-size: 12px; }
+    .page-break { page-break-before: always; }
+    h2 { margin-top: 30px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header-img">
+  <h1 style="font-size: 42px; margin-bottom: 0;">KoqStore</h1>
+  <p style="font-size: 18px; color: #888;">Guía para Administradores</p>
+</div>
+
+<div class="intro">
+  <strong>Esta guía es para el encargado o administrador del sistema.</strong> Además de todo lo que puede hacer un usuario normal (vender, recibir, consultar stock), como administrador tiene acceso a herramientas especiales: puede <strong>crear productos</strong>, <strong>editar stock</strong>, <strong>modificar precios</strong>, <strong>eliminar registros</strong>, <strong>agregar colores y talles</strong>, y <strong>gestionar categorías</strong>. Esta guía explica solo las funciones de administrador, asumiendo que ya leyó la guía general.
+</div>
+
+<h2>Contenido</h2>
+<div class="toc">
+  <ul>
+    <li><a href="#admin-toggle">1. El modo ADMIN — Cómo activar las herramientas de admin</a></li>
+    <li><a href="#product-edit">2. Editar un producto — Cambiar nombre, foto, colores, talles, precios y stock</a></li>
+    <li><a href="#stock-edit">3. Editar stock manualmente — Cambiar cantidades desde el catálogo</a></li>
+    <li><a href="#historial-admin">4. Historial — Editar y eliminar ventas, traslados e ingresos</a></li>
+    <li><a href="#crear-admin">5. Crear producto — Más detalles para el admin</a></li>
+    <li><a href="#categorias">6. Gestionar categorías — Agregar, renombrar y eliminar categorías</a></li>
+    <li><a href="#alertas-admin">7. Alertas — Filtrar por local</a></li>
+    <li><a href="#eliminar">8. Eliminar productos y registros — Precauciones importantes</a></li>
+    <li><a href="#resumen">9. Resumen de tareas de administrador</a></li>
+  </ul>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="admin-toggle">1. El modo ADMIN — Cómo activar las herramientas de admin</h2>
+
+<p>Para ver los botones y controles de administrador, primero tiene que <strong>activar el modo ADMIN</strong>.</p>
+
+<div class="step">
+  <p><strong>Paso 1:</strong> Mire la barra violeta del menú, en el costado izquierdo.</p>
+  <p><strong>Paso 2:</strong> Abajo de todo, cerca de su nombre, hay una palanquita que dice <span class="btn">ADMIN</span>.</p>
+  <p><strong>Paso 3:</strong> Toque esa palanquita para que se ponga de color. Cuando está activa, aparecen botones nuevos en varias pantallas.</p>
+  <p><strong>Paso 4:</strong> Toque de nuevo para desactivarlo si no quiere ver los botones de admin.</p>
+</div>
+
+<div class="tip">
+  <strong>Consejo:</strong> Cuando el modo ADMIN está activo, también puede filtrar el catálogo por local y ver el stock de cada sucursal por separado.
+</div>
+
+<h3>Qué cambia cuando activa ADMIN</h3>
+
+<table>
+  <tr><th>Pantalla</th><th>Qué aparece nuevo</th></tr>
+  <tr><td><strong>Catálogo</strong></td><td>Un icono de <strong>engranaje</strong> (⚙) para gestionar categorías, un filtro de ubicación para ver stock por local, y cada tarjeta de producto tiene un icono de <strong>lápiz</strong> (✏) para editarlo.</td></tr>
+  <tr><td><strong>Historial</strong></td><td>Botones de <strong>EDITAR</strong>, <strong>ELIMINAR</strong> y <strong>HACER DEVOLUCIÓN</strong> en cada evento.</td></tr>
+  <tr><td><strong>Catálogo (card expandida)</strong></td><td>Un botón <strong>ELIMINAR PRODUCTO</strong> para borrar el modelo completo.</td></tr>
+  <tr><td><strong>Crear Producto</strong></td><td>Esta pantalla ya es solo para administradores y taller.</td></tr>
+  <tr><td><strong>Ingreso</strong></td><td>Esta pantalla ya es solo para administradores y taller.</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="product-edit" class="page-break">2. Editar un producto — Cambiar nombre, foto, colores, talles, precios y stock</h2>
+
+<p>Como admin, puede <strong>modificar cualquier producto</strong> del sistema. Desde cambiarle el nombre hasta ajustar el stock unidad por unidad.</p>
+
+<h3>Cómo abrir el editor de un producto</h3>
+
+<div class="step">
+  <p><strong>Paso 1:</strong> Vaya al <strong>Catálogo</strong>.</p>
+  <p><strong>Paso 2:</strong> Busque el producto que quiere modificar.</p>
+  <p><strong>Paso 3:</strong> Toque el icono de <strong>lápiz</strong> (✏) que está en la esquina de la tarjeta del producto. Se abre una ventana grande con varias pestañas.</p>
+</div>
+
+<h3>Las pestañas del editor</h3>
+
+<div class="section-grid">
+  <div class="section-card">
+    <h4>Datos básicos</h4>
+    <p>Acá puede cambiar el <strong>nombre</strong> del producto y la <strong>categoría</strong>. Toque <span class="btn">GUARDAR</span> cuando termine.</p>
+  </div>
+  <div class="section-card">
+    <h4>Stock</h4>
+    <p>Acá puede ver y <strong>modificar el stock</strong> de cada local. Hay una tabla por cada sucursal, con colores en las filas y talles en las columnas. Toque cualquier número y escríbalo de nuevo para cambiarlo.</p>
+  </div>
+  <div class="section-card">
+    <h4>Variantes</h4>
+    <p>Acá puede <strong>agregar o sacar colores y talles</strong>. También puede cambiar la foto del producto.</p>
+  </div>
+  <div class="section-card">
+    <h4>Precios</h4>
+    <p>Acá puede <strong>cambiar los precios</strong> de cada talle. Toque el precio, escríbalo de nuevo y presione Enter para guardar.</p>
+  </div>
+</div>
+
+<h3>Editar stock — explicación detallada</h3>
+
+<p>En la pestaña <strong>Stock</strong> va a ver algo muy parecido a la grilla del catálogo, pero con números que puede <strong>tocar y cambiar</strong>. Hay un bloque por cada sucursal (Taller, Luz, Santiago, Avellaneda).</p>
+
+<div class="step">
+  <p><strong>Para cambiar el stock de una variante:</strong> Toque el número que está en el casillero de ese color × talle. Escríba el número nuevo y presione Enter (o toque afuera). El cambio se guarda automáticamente.</p>
+
+  <p><strong>Para cambiar el stock total de un local:</strong> Arriba de cada tabla de sucursal hay un número que dice "Stock total". Tóquelo, escriba el nuevo total y el sistema va a distribuir el stock entre todas las variantes.</p>
+
+  <p><strong>Para cambiar el stock mínimo:</strong> Debajo de cada número de stock hay un número chiquito con borde punteado. Ese es el "mínimo" (la cantidad que quiere tener siempre). Puede cambiarlo igual que el stock normal.</p>
+</div>
+
+<div class="tip">
+  <strong>¿Para qué sirve el stock mínimo?</strong> El sistema le avisa con una alerta cuando el stock está por debajo de ese número. Por ejemplo, si pone mínimo 5 en una remera negra talle 2, cuando queden 4 o menos va a aparecer una alerta.
+</div>
+
+<h3>Editar colores y talles — explicación detallada</h3>
+
+<p>En la pestaña <strong>Variantes</strong> puede:</p>
+
+<ul>
+  <li><strong>Agregar un color nuevo:</strong> Escriba el nombre del color y toque <span class="btn">AGREGAR</span>. El sistema crea el color y agrega ese color a todos los talles del producto (con stock 0). Si el color ya existe en la base de datos, lo reusa.</li>
+  <li><strong>Eliminar un color:</strong> Toque la <strong>✕</strong> al lado del color. <strong>Cuidado:</strong> no se puede eliminar si ese color tiene stock en algún local.</li>
+  <li><strong>Agregar un talle nuevo:</strong> Escriba el número de talle y toque <span class="btn">AGREGAR</span>. Se agrega ese talle a todos los colores del producto.</li>
+  <li><strong>Eliminar un talle:</strong> Toque la <strong>✕</strong> al lado del talle. No se puede eliminar si tiene stock.</li>
+</ul>
+
+<div class="warning">
+  <strong>Precaución:</strong> Cuando agrega un color o talle nuevo, el stock de esas variantes se crea en 0. Después tiene que ir a la pestaña "Stock" para poner las cantidades, o hacer un Ingreso.
+</div>
+
+<h3>Cambiar la foto del producto</h3>
+
+<p>En la pestaña <strong>Datos básicos</strong> o la pestaña <strong>Variantes</strong>, ve la foto actual del producto. Para cambiarla, toque la imagen o el área punteada y seleccione un archivo de su computadora. La foto se sube automáticamente.</p>
+
+<!-- ============================================================ -->
+<h2 id="stock-edit" class="page-break">3. Editar stock manualmente — Cambiar cantidades desde el catálogo</h2>
+
+<p>Además del editor, hay una forma rápida de cambiar stock directamente desde el catálogo, sin abrir la ventana de edición.</p>
+
+<div class="step">
+  <p><strong>Paso 1:</strong> En el Catálogo, active el modo ADMIN.</p>
+  <p><strong>Paso 2:</strong> En el filtro de ubicación (al lado del filtro de stock), elija un local. Ahora las tarjetas muestran el stock de ese local solamente.</p>
+  <p><strong>Paso 3:</strong> Toque la tarjeta del producto para expandirla y ver la grilla de stock.</p>
+  <p><strong>Paso 4:</strong> Toque el icono de <strong>lápiz</strong> (✏) para abrir el editor, o vaya directo al historial si necesita hacer cambios masivos.</p>
+</div>
+
+<p>Para cambios rápidos de stock, lo más práctico es usar la pestaña <strong>Stock</strong> del editor de producto, donde puede modificar número por número.</p>
+
+<!-- ============================================================ -->
+<h2 id="historial-admin" class="page-break">4. Historial — Editar y eliminar ventas, traslados e ingresos</h2>
+
+<p>Como administrador, en el Historial puede <strong>modificar o borrar cualquier evento</strong>. Esto es útil para corregir errores, pero también es peligroso si no se usa con cuidado.</p>
+
+<h3>Cómo editar un evento</h3>
+
+<div class="step">
+  <p><strong>Paso 1:</strong> Vaya al <strong>Historial</strong>.</p>
+  <p><strong>Paso 2:</strong> Busque el evento que quiere modificar (venta, traslado o ingreso).</p>
+  <p><strong>Paso 3:</strong> Toque la línea del evento para expandirlo y ver los detalles.</p>
+  <p><strong>Paso 4:</strong> Toque el botón <span class="btn">EDITAR</span> (solo visible con modo ADMIN activo).</p>
+  <p><strong>Paso 5:</strong> El sistema lo lleva a la pantalla correspondiente (Ventas, Trasladar Stock o Ingreso) con todos los datos cargados. Haga los cambios y confirme.</p>
+</div>
+
+<h3>Cómo eliminar un evento</h3>
+
+<div class="step">
+  <p><strong>Paso 1:</strong> Expanda el evento en el Historial.</p>
+  <p><strong>Paso 2:</strong> Toque el botón <span class="btn">ELIMINAR</span>.</p>
+  <p><strong>Paso 3:</strong> El sistema le pregunta "¿Está seguro?". Toque "Aceptar".</p>
+</div>
+
+<div class="danger">
+  <strong>IMPORTANTE — Qué pasa cuando elimina:</strong>
+  <ul>
+    <li><strong>Si elimina una venta:</strong> El stock de los productos vuelve al inventario como si la venta nunca hubiera pasado.</li>
+    <li><strong>Si elimina un traslado pendiente:</strong> El stock se queda donde estaba, el traslado desaparece.</li>
+    <li><strong>Si elimina un traslado confirmado:</strong> El stock vuelve al local de origen y se descuenta del destino.</li>
+    <li><strong>Si elimina un ingreso:</strong> El stock se descuenta del inventario.</li>
+  </ul>
+</div>
+
+<h3>Cómo hacer una devolución de venta</h3>
+
+<p>Cuando un cliente <strong>devuelve una prenda</strong>, no tiene que eliminar la venta. Use el botón <span class="btn">HACER DEVOLUCIÓN</span>:</p>
+
+<div class="step">
+  <p><strong>Paso 1:</strong> Expanda la venta en el Historial.</p>
+  <p><strong>Paso 2:</strong> Toque <span class="btn">HACER DEVOLUCIÓN</span>.</p>
+  <p><strong>Paso 3:</strong> Confirme la pregunta.</p>
+  <p><strong>Paso 4:</strong> La venta queda marcada como "DEVUELTA" en rojo y el stock vuelve al inventario.</p>
+</div>
+
+<div class="tip">
+  <strong>Diferencia entre DEVOLUCIÓN y ELIMINAR:</strong> La devolución conserva el registro de la venta (marcada como devuelta) para que quede en el historial. Eliminar borra la venta para siempre. Siempre que pueda, use "HACER DEVOLUCIÓN" en vez de eliminar.
+</div>
+
+<!-- ============================================================ -->
+<h2 id="crear-admin" class="page-break">5. Crear producto — Más detalles para el admin</h2>
+
+<p>Como administrador, cuando crea un producto tiene control total sobre los datos iniciales. La pantalla es la misma que para los usuarios del taller, pero usted puede además <strong>decidir los precios finales</strong> y <strong>el stock inicial en todas las sucursales</strong> (no solo en Taller).</p>
+
+<h3>Campos importantes al crear</h3>
+
+<table>
+  <tr><th>Campo</th><th>Detalle para el admin</th></tr>
+  <tr>
+    <td><strong>Precios</strong></td>
+    <td>Puede poner distintos precios por talle. Por ejemplo: talle 2 a $5000, talle 4 a $6000. Use el botón ↻ para copiar un precio a todos los talles si son iguales.</td>
+  </tr>
+  <tr>
+    <td><strong>Stock inicial</strong></td>
+    <td>En la tabla "STOCK EN TALLER POR VARIANTE", cada variante (color × talle) tiene dos números: "Stock" (cuántas unidades hay) y "Mín" (stock mínimo para alertas). Ponga un mínimo razonable para cada producto.</td>
+  </tr>
+  <tr>
+    <td><strong>Foto</strong></td>
+    <td>Subir una foto ayuda a identificar el producto en las pantallas de venta y recepción. Si no sube ninguna, se muestra un icono genérico.</td>
+  </tr>
+</table>
+
+<div class="tip">
+  <strong>¿Qué stock mínimo poner?</strong> Depende de la velocidad de venta. Una remera básica que se vende mucho puede tener mínimo 10. Un producto de temporada que se vende poco puede tener mínimo 2.
+</div>
+
+<!-- ============================================================ -->
+<h2 id="categorias" class="page-break">6. Gestionar categorías — Agregar, renombrar y eliminar categorías</h2>
+
+<p>Las categorías son los grupos de productos: Remeras, Buzos, Camisas, etc. Como admin, puede <strong>administrar estas categorías</strong> desde el Catálogo.</p>
+
+<h3>Cómo gestionar categorías</h3>
+
+<div class="step">
+  <p><strong>Paso 1:</strong> Vaya al <strong>Catálogo</strong> y active el modo ADMIN.</p>
+  <p><strong>Paso 2:</strong> Arriba a la derecha, al lado del título "CATÁLOGO", va a ver un icono de <strong>engranaje</strong> (⚙). Tóquelo.</p>
+  <p><strong>Paso 3:</strong> Se abre una ventana donde puede ver todas las categorías existentes.</p>
+  <p><strong>Paso 4:</strong> Para <strong>agregar</strong> una categoría nueva: escriba el nombre y toque <span class="btn">AGREGAR</span>.</p>
+  <p><strong>Paso 5:</strong> Para <strong>renombrar</strong>: toque el lápiz ✏ al lado de la categoría, cambie el nombre y confirme.</p>
+  <p><strong>Paso 6:</strong> Para <strong>eliminar</strong>: toque el icono de papelera 🗑 al lado de la categoría.</p>
+</div>
+
+<div class="warning">
+  <strong>Precaución:</strong> Si elimina una categoría que tiene productos adentro, esos productos se quedan sin categoría. Es mejor renombrarla que eliminarla.
+</div>
+
+<!-- ============================================================ -->
+<h2 id="alertas-admin" class="page-break">7. Alertas — Filtrar por local</h2>
+
+<p>Como admin, en la página de Alertas puede <strong>ver las alertas de cada sucursal por separado</strong>. Esto le ayuda a saber qué falta reponer en cada local.</p>
+
+<div class="step">
+  <p><strong>Paso 1:</strong> Vaya a <strong>ALERTAS</strong>.</p>
+  <p><strong>Paso 2:</strong> Abajo de las tarjetas de resumen, va a ver botones con los nombres de las sucursales: "Todas", "Taller", "Luz", "Santiago", "Avellaneda".</p>
+  <p><strong>Paso 3:</strong> Toque una sucursal para ver solo las alertas de ese local.</p>
+  <p><strong>Paso 4:</strong> Toque "Todas" para volver a ver todo junto.</p>
+</div>
+
+<p>También puede usar el botón <span class="btn">EXPORTAR / IMPRIMIR</span> para sacar un listado impreso de las alertas y dárselo al encargado del taller para que sepa qué producir.</p>
+
+<!-- ============================================================ -->
+<h2 id="eliminar" class="page-break">8. Eliminar productos y registros — Precauciones importantes</h2>
+
+<p>Como administrador, tiene el poder de <strong>eliminar cosas del sistema</strong>. Esto es útil para limpiar datos incorrectos, pero hay que hacerlo con cuidado.</p>
+
+<h3>Eliminar un producto completo (modelo)</h3>
+
+<div class="step">
+  <p><strong>Paso 1:</strong> En el Catálogo, expanda la tarjeta del producto que quiere eliminar.</p>
+  <p><strong>Paso 2:</strong> Abajo de todo, va a ver un botón rojo que dice <span class="btn" style="background:#c62828;">ELIMINAR PRODUCTO</span>.</p>
+  <p><strong>Paso 3:</strong> Toque ese botón. El sistema le pregunta "¿Eliminar este producto definitivamente?".</p>
+  <p><strong>Paso 4:</strong> Si toca "Aceptar", se borra <strong>todo</strong>: el modelo, los colores asociados, los productos de todos los talles y colores, y todos los registros de stock.</p>
+</div>
+
+<div class="danger">
+  <strong>MUY IMPORTANTE:</strong> 
+  <ul>
+    <li>Eliminar un producto <strong>borra para siempre</strong> su historial de ventas, traslados e ingresos (los registros en esas tablas también se eliminan).</li>
+    <li>Si el producto tiene stock en algún local, ese stock <strong>desaparece</strong>.</li>
+    <li>Los colores que solo usaba ese producto también se eliminan de la base de datos.</li>
+    <li><strong>No se puede deshacer.</strong> Piense dos veces antes de hacerlo.</li>
+  </ul>
+</div>
+
+<h3>Regla general: cuándo eliminar y cuándo no</h3>
+
+<table>
+  <tr><th>Situación</th><th>¿Eliminar?</th><th>Alternativa</th></tr>
+  <tr><td>Un producto ya no se fabrica más</td><td>No</td><td>Mejor desactivarlo (no hay botón todavía, pero puede dejar el stock en 0)</td></tr>
+  <tr><td>Una venta se hizo por error</td><td>No</td><td>Use <strong>HACER DEVOLUCIÓN</strong> para que quede registrada</td></tr>
+  <tr><td>Un traslado se canceló antes de enviar</td><td>Sí, si está pendiente</td><td>—</td></tr>
+  <tr><td>Un producto de prueba que nunca se usó</td><td>Sí</td><td>—</td></tr>
+  <tr><td>Un color o talle que ya no se usa</td><td>En el editor de producto</td><td>Solo si no tiene stock</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="resumen" class="page-break">9. Resumen de tareas de administrador</h2>
+
+<table>
+  <tr><th>Tarea</th><th>Dónde se hace</th><th>Paso rápido</th></tr>
+  <tr>
+    <td>Activar herramientas de admin</td>
+    <td>Menú lateral</td>
+    <td>Toque la palanquita <span class="btn">ADMIN</span></td>
+  </tr>
+  <tr>
+    <td>Cambiar nombre o categoría de un producto</td>
+    <td>Catálogo → ✏ → Datos básicos</td>
+    <td>Edite y toque <span class="btn">GUARDAR</span></td>
+  </tr>
+  <tr>
+    <td>Cambiar stock de una variante</td>
+    <td>Catálogo → ✏ → Stock</td>
+    <td>Toque el número, escríbalo de nuevo, Enter</td>
+  </tr>
+  <tr>
+    <td>Cambiar precio de un talle</td>
+    <td>Catálogo → ✏ → Precios</td>
+    <td>Toque el precio, escríbalo de nuevo, Enter</td>
+  </tr>
+  <tr>
+    <td>Agregar un color nuevo a un producto</td>
+    <td>Catálogo → ✏ → Variantes</td>
+    <td>Escriba el color y toque <span class="btn">AGREGAR</span></td>
+  </tr>
+  <tr>
+    <td>Agregar un talle nuevo a un producto</td>
+    <td>Catálogo → ✏ → Variantes</td>
+    <td>Escriba el talle y toque <span class="btn">AGREGAR</span></td>
+  </tr>
+  <tr>
+    <td>Cambiar la foto del producto</td>
+    <td>Catálogo → ✏ → Datos básicos / Variantes</td>
+    <td>Toque la imagen, elija archivo</td>
+  </tr>
+  <tr>
+    <td>Editar una venta</td>
+    <td>Historial → expandir → <span class="btn">EDITAR</span></td>
+    <td>Corrija y confirme</td>
+  </tr>
+  <tr>
+    <td>Editar un traslado</td>
+    <td>Historial → expandir → <span class="btn">EDITAR</span></td>
+    <td>Solo si está "pendiente"</td>
+  </tr>
+  <tr>
+    <td>Hacer devolución de una venta</td>
+    <td>Historial → expandir → <span class="btn">HACER DEVOLUCIÓN</span></td>
+    <td>Confirme la pregunta</td>
+  </tr>
+  <tr>
+    <td>Eliminar una venta/traslado/ingreso</td>
+    <td>Historial → expandir → <span class="btn">ELIMINAR</span></td>
+    <td>Cuidado: el stock se modifica solo</td>
+  </tr>
+  <tr>
+    <td>Eliminar un producto completo</td>
+    <td>Catálogo → expandir → <span class="btn">ELIMINAR PRODUCTO</span></td>
+    <td>Cuidado: borra todo para siempre</td>
+  </tr>
+  <tr>
+    <td>Agregar/renombrar/eliminar categorías</td>
+    <td>Catálogo → ⚙ (engranaje)</td>
+    <td>Use los botones de la ventana</td>
+  </tr>
+  <tr>
+    <td>Ver alertas de un local específico</td>
+    <td>Alertas → botones de sucursal</td>
+    <td>Toque el nombre del local</td>
+  </tr>
+  <tr>
+    <td>Filtrar catálogo por local</td>
+    <td>Catálogo → filtro de ubicación</td>
+    <td>Elija un local del menú</td>
+  </tr>
+  <tr>
+    <td>Crear un producto nuevo</td>
+    <td>CREAR PRODUCTO</td>
+    <td>Complete el formulario y toque <span class="btn">CREAR PRODUCTO</span></td>
+  </tr>
+</table>
+
+<!-- ============================================================ -->
+<h2>Reglas de oro para el administrador</h2>
+
+<div class="warning">
+  <strong>1. Antes de eliminar, pregúntese: "¿Puedo editarlo en vez de borrarlo?"</strong> Si la respuesta es sí, edite.
+</div>
+
+<div class="warning">
+  <strong>2. Cuando edite stock, verifique dos veces el número que escribió.</strong> Un error puede dejar stock negativo o cantidades incorrectas.
+</div>
+
+<div class="warning">
+  <strong>3. Use "HACER DEVOLUCIÓN" para ventas, no "ELIMINAR".</strong> Así queda registro de la devolución.
+</div>
+
+<div class="warning">
+  <strong>4. Revise las alertas seguido.</strong> Es la mejor herramienta para saber qué producir.
+</div>
+
+<div class="warning">
+  <strong>5. Si no está seguro de algo, consulte con otro administrador antes de hacer un cambio irreversible.</strong>
+</div>
+
+<!-- ============================================================ -->
+<div class="page-break"></div>
+<h2>Glosario — Palabras usadas en esta guía</h2>
+
+<table>
+  <tr><th>Palabra</th><th>Qué significa</th></tr>
+  <tr><td><strong>Variante</strong></td><td>Una combinación de color + talle. Ej: "Remera negra talle 2".</td></tr>
+  <tr><td><strong>Stock mínimo</strong></td><td>La cantidad que quiere tener siempre de una variante. Cuando el stock baja de ese número, salta una alerta.</td></tr>
+  <tr><td><strong>Sucursal / Local</strong></td><td>Cada lugar físico donde hay stock: Taller, Luz, Santiago, Avellaneda.</td></tr>
+  <tr><td><strong>Categoría</strong></td><td>El grupo al que pertenece un producto: Remeras, Buzos, Camisas, etc.</td></tr>
+  <tr><td><strong>Ingreso</strong></td><td>Cuando entra mercadería nueva al sistema (producción del taller o compra).</td></tr>
+  <tr><td><strong>Traslado</strong></td><td>Movimiento de stock entre locales.</td></tr>
+  <tr><td><strong>Devolución</strong></td><td>Cuando un cliente devuelve una prenda. El stock vuelve al inventario.</td></tr>
+  <tr><td><strong>Modo ADMIN</strong></td><td>Palanca que activa las herramientas de administrador.</td></tr>
+  <tr><td><strong>Editar</strong></td><td>Modificar algo existente (stock, precio, nombre).</td></tr>
+  <tr><td><strong>Eliminar</strong></td><td>Borrar algo para siempre. No se puede deshacer.</td></tr>
+  <tr><td><strong>Desactivar</strong></td><td>Ocultar un producto sin borrarlo (aún no implementado, alternativa: stock en 0).</td></tr>
+</table>
+
+<div class="footer">
+  <p>KoqStore — Guía para Administradores &mdash; Versión 1.0</p>
+  <p>Imprimí esta guía o guardala como PDF desde el menú Imprimir de tu navegador (Ctrl+P).</p>
+</div>
+
+</body>
+</html>

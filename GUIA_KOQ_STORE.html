@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Guía KoqStore — Cómo usar el sistema de stock</title>
+<style>
+  @page { margin: 2cm; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', 'Arial', sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #222;
+    padding: 40px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  h1 { font-size: 28px; color: #ad65af; margin-bottom: 8px; margin-top: 10px; }
+  h2 { font-size: 22px; color: #ad65af; margin-top: 40px; margin-bottom: 12px; border-bottom: 2px solid #ad65af; padding-bottom: 4px; }
+  h3 { font-size: 18px; color: #333; margin-top: 28px; margin-bottom: 8px; }
+  h4 { font-size: 15px; color: #555; margin-top: 18px; margin-bottom: 4px; }
+  p { margin-bottom: 12px; }
+  ul, ol { margin-bottom: 14px; padding-left: 24px; }
+  li { margin-bottom: 6px; }
+  .intro { font-size: 15px; background: #f8f0f8; padding: 20px 24px; border-radius: 12px; margin: 20px 0; border-left: 5px solid #ad65af; }
+  .tip { background: #fff8e1; padding: 14px 18px; border-radius: 10px; margin: 14px 0; border-left: 4px solid #ffb300; font-size: 13px; }
+  .important { background: #ffebee; padding: 14px 18px; border-radius: 10px; margin: 14px 0; border-left: 4px solid #e53935; font-size: 13px; }
+  .step { background: #f5f5f5; padding: 14px 18px; border-radius: 10px; margin: 14px 0; }
+  .step strong { color: #ad65af; }
+  table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 13px; }
+  th, td { border: 1px solid #ddd; padding: 10px 12px; text-align: left; }
+  th { background: #ad65af; color: white; font-weight: 600; }
+  tr:nth-child(even) { background: #fafafa; }
+  .btn { display: inline-block; background: #ad65af; color: white; padding: 2px 10px; border-radius: 6px; font-weight: 600; font-size: 12px; }
+  .badge { display: inline-block; background: #e0e0e0; padding: 1px 8px; border-radius: 10px; font-size: 11px; }
+  .tag { display: inline-block; background: #f3e5f5; color: #7b1fa2; padding: 1px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+  .page-break { page-break-before: always; }
+  .sub { color: #777; font-size: 13px; }
+  strong { color: #333; }
+  a { color: #ad65af; }
+  .toc { background: #fafafa; padding: 20px 24px; border-radius: 12px; margin: 20px 0; }
+  .toc a { text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  .toc ul { list-style: none; padding: 0; }
+  .toc li { margin-bottom: 6px; }
+  .toc li a { color: #555; font-size: 14px; }
+  .toc li a:hover { color: #ad65af; }
+  .header-img { text-align: center; margin: 30px 0; }
+  .footer { margin-top: 50px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #999; text-align: center; }
+  @media print {
+    body { padding: 0; font-size: 12px; }
+    .page-break { page-break-before: always; }
+    h2 { margin-top: 30px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header-img">
+  <h1 style="font-size: 42px; margin-bottom: 0;">KoqStore</h1>
+  <p style="font-size: 18px; color: #888;">Guía para usar el sistema de stock</p>
+</div>
+
+<div class="intro">
+  <strong>Esta guía es para usted.</strong> Si nunca usó una computadora o un celular para trabajar, no se preocupe. Este documento le explica paso a paso cómo usar cada pantalla del sistema KoqStore, con palabras sencillas y ejemplos de la vida real en el negocio de ropa.
+</div>
+
+<h2>Contenido</h2>
+<div class="toc">
+  <ul>
+    <li><a href="#primeros">1. Primeros pasos — Cómo entrar al sistema</a></li>
+    <li><a href="#pantalla-principal">2. La pantalla principal — El Catálogo</a></li>
+    <li><a href="#sidebar">3. El menú de navegación — Cómo ir de una página a otra</a></li>
+    <li><a href="#ventas">4. Ventas — Registrar una venta</a></li>
+    <li><a href="#ingreso">5. Ingreso — Agregar stock nuevo</a></li>
+    <li><a href="#trasladar">6. Trasladar Stock — Mover productos entre locales</a></li>
+    <li><a href="#recepciones">7. Recepciones — Confirmar que llegó lo que enviaron</a></li>
+    <li><a href="#alertas">8. Alertas — Ver qué productos tienen poco stock</a></li>
+    <li><a href="#historial">9. Historial — Ver todo lo que pasó</a></li>
+    <li><a href="#crear">10. Crear Producto — Agregar un producto nuevo al sistema</a></li>
+  </ul>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="primeros">1. Primeros pasos — Cómo entrar al sistema</h2>
+
+<h3>Lo que necesita</h3>
+<ul>
+  <li>Una computadora, tablet o celular con internet.</li>
+  <li>Un navegador web (Chrome, Edge, Safari o el que tenga).</li>
+  <li>Su <strong>usuario</strong> y <strong>contraseña</strong> (se los tiene que dar su jefe o encargado).</li>
+</ul>
+
+<h3>Cómo ingresar</h3>
+<div class="step">
+  <p><strong>Paso 1:</strong> Abra el navegador web (el icono de colores que usa para internet).</p>
+  <p><strong>Paso 2:</strong> En la barra de arriba, escriba la dirección que le dio su jefe (por ejemplo: <span class="tag">koq-store.vercel.app</span>).</p>
+  <p><strong>Paso 3:</strong> Va a ver una pantalla con el logo de KoqStore y dos casilleros para llenar:</p>
+  <ul>
+    <li><strong>Usuario:</strong> escriba su nombre de usuario o su correo electrónico.</li>
+    <li><strong>Contraseña:</strong> escriba su contraseña (los puntos negros son normales, es para que nadie la lea).</li>
+  </ul>
+  <p><strong>Paso 4:</strong> Toque el botón <span class="btn">INGRESAR</span>.</p>
+</div>
+
+<div class="tip">
+  <strong>Consejo:</strong> Si se equivoca de usuario o contraseña, aparece un cartel rojo que dice "Datos ingresados incorrectos". Toque el botón nuevamente después de corregir.
+</div>
+
+<h3>Qué hacer después de entrar</h3>
+<p>Una vez que entra, el sistema lo lleva directo al <strong>Catálogo</strong>, que es como el "menú principal". Ahí va a ver todos los productos que existen.</p>
+
+<!-- ============================================================ -->
+<h2 id="pantalla-principal" class="page-break">2. La pantalla principal — El Catálogo</h2>
+
+<p>El Catálogo es la página que ve cuando recién entra. Es como el "mostrador virtual" de todo lo que hay en el negocio. Acá puede ver todos los productos, buscar uno en particular, y ver cuánto stock hay de cada color y talle.</p>
+
+<h3>Qué ve en esta pantalla</h3>
+
+<table>
+  <tr><th>Elemento</th><th>Qué es</th><th>Qué hace</th></tr>
+  <tr>
+    <td><strong>Barra de búsqueda</strong> (lupa)</td>
+    <td>Un casillero donde puede escribir</td>
+    <td>Escriba el nombre del producto que busca (por ejemplo "remera") y la lista se achica solita para mostrar solo lo que coincide.</td>
+  </tr>
+  <tr>
+    <td><strong>Botones de categoría</strong> (TODOS, REMERAS, BUZOS...)</td>
+    <td>Etiquetas para filtrar por tipo de prenda</td>
+    <td>Toque "REMERAS" y van a aparecer solo las remeras. Toque "TODOS" para volver a ver todo.</td>
+  </tr>
+  <tr>
+    <td><strong>Filtro de stock</strong></td>
+    <td>Un menú para elegir "Todo", "Bajo" o "Sin stock"</td>
+    <td>Sirve para ver solo los productos que tienen poco stock o están agotados.</td>
+  </tr>
+  <tr>
+    <td><strong>Tarjetas de producto</strong></td>
+    <td>Cuadros con foto, nombre y stock de cada prenda</td>
+    <td>Adentro de cada tarjeta puede ver una tabla con los colores, los talles y cuántas unidades hay de cada combinación.</td>
+  </tr>
+</table>
+
+<h3>La tabla de stock adentro de cada producto</h3>
+<p>Cuando toca una tarjeta de producto (o ya viene abierta), va a ver una tabla que dice "GRILLA STOCK". Ahí las filas son los <strong>colores</strong> (con un puntito del color correspondiente) y las columnas son los <strong>talles</strong>. Adentro de cada celda hay un número: esa es la cantidad de prendas de ese color y talle.</p>
+
+<div class="tip">
+  <strong>Ejemplo:</strong> Si en la fila "NEGRO" y la columna "TALLE 2" ve un "5", significa que hay 5 remeras negras talle 2 en total.
+</div>
+
+<h3>Los números de stock</h3>
+<p>Cada número tiene un color de fondo que le ayuda a entender la situación:</p>
+<ul>
+  <li><strong>Fondo gris claro</strong> — Hay stock normal. Todo bien.</li>
+  <li><strong>Fondo amarillo o naranja</strong> — Queda poco. Hay que empezar a pensar en reponer.</li>
+  <li><strong>Fondo rojo</strong> — No queda nada. Hay que reponer urgente.</li>
+</ul>
+
+<!-- ============================================================ -->
+<h2 id="sidebar" class="page-break">3. El menú de navegación — Cómo ir de una página a otra</h2>
+
+<p>En el costado izquierdo de la pantalla (o apretando un icono de tres rayitas en el celular) hay una barra de color violeta. Ese es el <strong>menú principal</strong>. Cada opción lo lleva a una página distinta.</p>
+
+<table>
+  <tr><th>Opción del menú</th><th>Para qué sirve</th><th>¿Quién puede usarla?</th></tr>
+  <tr><td><strong>CATÁLOGO</strong></td><td>Ver todos los productos y su stock</td><td>Todos</td></tr>
+  <tr><td><strong>VENTAS</strong></td><td>Registrar una venta que hizo</td><td>Todos</td></tr>
+  <tr><td><strong>CREAR PRODUCTO</strong></td><td>Agregar un producto nuevo (ej: una campera nueva que van a empezar a hacer)</td><td>Solo taller y administradores</td></tr>
+  <tr><td><strong>INGRESO</strong></td><td>Agregar stock nuevo que salió del taller</td><td>Solo taller y administradores</td></tr>
+  <tr><td><strong>RECEPCIÓN</strong></td><td>Confirmar que llegó un envío de otro local</td><td>Todos</td></tr>
+  <tr><td><strong>TRASLADAR STOCK</strong></td><td>Enviar productos de un local a otro</td><td>Todos</td></tr>
+  <tr><td><strong>ALERTAS</strong></td><td>Ver qué productos están por quedarse sin stock</td><td>Todos</td></tr>
+  <tr><td><strong>HISTORIAL</strong></td><td>Ver todo lo que pasó: ventas, traslados, ingresos</td><td>Todos</td></tr>
+</table>
+
+<div class="tip">
+  <strong>Importante:</strong> Si alguna opción tiene un numerito al lado (como <span class="badge">3</span>), significa que hay algo pendiente. Por ejemplo, "RECEPCIÓN (3)" significa que tiene 3 envíos esperando ser recibidos.
+</div>
+
+<h3>Otras cosas en el menú</h3>
+<ul>
+  <li><strong>Su nombre</strong> — Aparece abajo para que sepa quién está usando el sistema.</li>
+  <li><strong>ADMIN</strong> — Una palanquita que solo ven los jefes. Si está prendida, aparecen botones extra como "Editar" y "Eliminar".</li>
+  <li><strong>CERRAR SESIÓN</strong> — Toque acá cuando termine de trabajar para salir del sistema.</li>
+</ul>
+
+<!-- ============================================================ -->
+<h2 id="ventas" class="page-break">4. Ventas — Registrar una venta</h2>
+
+<p>Esta página es para cuando <strong>vende una prenda</strong>. Ya sea en el local o por WhatsApp, acá anota todo lo que se llevó el cliente.</p>
+
+<h3>Cómo registrar una venta paso a paso</h3>
+
+<div class="step">
+  <p><strong>Paso 1 — Busque el producto:</strong> En la parte izquierda de la pantalla, use la barra de búsqueda o los botones de categoría para encontrar la prenda que vendió (ej: "Remera Manga Corta Modal Viscosa"). Toque la tarjeta del producto.</p>
+
+  <p><strong>Paso 2 — Elija el color y talle:</strong> Aparece una tablita con los colores en las filas y los talles en las columnas. Toque los casilleros y escriba cuántas unidades vendió de cada color y talle. Por ejemplo: si vendió 2 remeras negras talle 2, escriba "2" en el casillero de NEGRO × TALLE 2.</p>
+
+  <p><strong>Paso 3 — Agregue al resumen:</strong> Toque el botón <span class="btn">AGREGAR AL RESUMEN (N)</span> (la N es la cantidad de unidades que va a agregar). Los productos pasan a la columna de la derecha.</p>
+
+  <p><strong>Paso 4 — Revise el resumen:</strong> En la columna derecha va a ver todo lo que agregó. Si se equivocó, puede:</p>
+  <ul>
+    <li>Usar los botones <strong>−</strong> y <strong>+</strong> para cambiar la cantidad.</li>
+    <li>Usar el botón <strong>✕</strong> (equis) para sacar el producto de la venta.</li>
+    <li>Tocar el precio de cada producto para cambiarlo (si le hizo un descuento, por ejemplo).</li>
+  </ul>
+
+  <p><strong>Paso 5 — Elija el canal de venta:</strong> Más abajo en el resumen, elija si la venta fue <strong>LOCAL</strong> (en el negocio) o <strong>WHATSAPP</strong> (por teléfono). Es obligatorio elegir uno.</p>
+
+  <p><strong>Paso 6 — (Opcional) Recargo:</strong> Si el cliente pagó con tarjeta o Mercado Pago y tiene que agregar un recargo, elija "+10%" o "+$" y escriba el monto.</p>
+
+  <p><strong>Paso 7 — Confirme la venta:</strong> Toque el botón <span class="btn">CONFIRMAR VENTA</span> (está abajo a la derecha). Aparece una pregunta de confirmación. Toque "Aceptar".</p>
+</div>
+
+<div class="tip">
+  <strong>¿Qué pasa después?</strong> La venta queda registrada en el Historial, el stock se descuenta solito, y aparece un cartel verde que dice que salió todo bien.
+</div>
+
+<h3>El Canasto de ofertas</h3>
+<p>Si vende un "combo" o un producto que no está en el sistema (por ejemplo, "Pack 3 remeras básicas"), puede tocar el botón <strong>CANASTO DE OFERTAS</strong>. Se abre un casillero donde escribe un precio y toca "AGREGAR". Eso agrega un ítem genérico a la venta.</p>
+
+<h3>Cómo repetir la última venta</h3>
+<p>Si hace siempre ventas parecidas, toque <span class="btn">REPETIR ÚLTIMA</span> arriba del resumen. Esto carga los mismos productos de la venta anterior.</p>
+
+<!-- ============================================================ -->
+<h2 id="ingreso" class="page-break">5. Ingreso — Agregar stock nuevo</h2>
+
+<p>Esta página es para cuando <strong>entra mercadería nueva al negocio</strong>. Por ejemplo, cuando el taller termina de producir una tanda de remeras y hay que agregarlas al sistema.</p>
+
+<div class="important">
+  <strong>Atención:</strong> Esta página solo la pueden usar los usuarios del taller y los administradores.
+</div>
+
+<h3>Cómo agregar stock paso a paso</h3>
+
+<div class="step">
+  <p><strong>Paso 1:</strong> En la parte izquierda, busque el producto al que le quiere agregar stock (use la barra de búsqueda o los botones de categoría). Toque la tarjeta del producto.</p>
+
+  <p><strong>Paso 2:</strong> Aparece una tablita con los colores en las filas y los talles en las columnas. Escriba en cada casillero cuántas unidades entraron de ese color y talle. Por ejemplo: si entraron 10 buzos negros talle 4, escriba "10".</p>
+
+  <p><strong>Paso 3:</strong> Toque el botón <span class="btn">AGREGAR AL RESUMEN (N)</span>. Los productos pasan a la columna de la derecha, que es el resumen del ingreso.</p>
+
+  <p><strong>Paso 4:</strong> Revise el resumen. Puede cambiar cantidades con los botones <strong>−</strong> y <strong>+</strong>, o sacar un producto con el botón <strong>✕</strong>.</p>
+
+  <p><strong>Paso 5:</strong> Elija el <strong>DESTINO</strong> (a qué local va ese stock) usando el menú que está en el resumen.</p>
+
+  <p><strong>Paso 6:</strong> Toque el botón <span class="btn">REGISTRAR INGRESO</span>. Confirme la pregunta y ¡listo! El stock se agrega al sistema.</p>
+</div>
+
+<h3>Repetir el último ingreso</h3>
+<p>Si siempre ingresa los mismos productos (por ejemplo, todas las semanas entran las mismas remeras del taller), toque <span class="btn">REPETIR ÚLTIMO</span> para cargar automáticamente los productos del ingreso anterior. Solo tiene que ajustar las cantidades si cambiaron.</p>
+
+<h3>¿Y si el producto no existe?</h3>
+<p>Si busca un producto y no aparece, abajo le va a aparecer un botón que dice <span class="btn">CREAR PRODUCTO NUEVO</span>. Toque eso y lo lleva directo a la página para crear el producto (explicada más adelante).</p>
+
+<!-- ============================================================ -->
+<h2 id="trasladar" class="page-break">6. Trasladar Stock — Mover productos entre locales</h2>
+
+<p>Esta página es para cuando <strong>necesita enviar productos de un local a otro</strong>. Por ejemplo: si en el Taller hay 50 remeras y necesitan 20 en el local de Avellaneda, acá se hace ese movimiento.</p>
+
+<h3>Cómo hacer un traslado paso a paso</h3>
+
+<div class="step">
+  <p><strong>Paso 1 — Elija el destino:</strong> Arriba a la izquierda ya está seleccionado el <strong>origen</strong> (de dónde salen los productos). En el menú de al lado, elija el <strong>destino</strong> (adónde van los productos).</p>
+
+  <p><strong>Paso 2 — Busque el producto:</strong> Use la barra de búsqueda o los botones de categoría para encontrar la prenda que quiere trasladar.</p>
+
+  <p><strong>Paso 3 — Elija colores y cantidades:</strong> Toque la tarjeta del producto. Se abre una ventanita (popup) con una tabla de colores y talles. Escriba cuántas unidades de cada color y talle quiere enviar.</p>
+
+  <p><strong>Paso 4 — Agregue al resumen:</strong> Toque "AGREGAR" en la ventanita. Los productos aparecen en la columna derecha (el resumen).</p>
+
+  <p><strong>Paso 5 — Revise en el resumen:</strong> Puede cambiar cantidades con los botones <strong>−</strong> y <strong>+</strong>, o sacar un producto con el botón <strong>✕</strong>.</p>
+
+  <p><strong>Paso 6 — Confirme:</strong> Toque el botón <span class="btn">CONFIRMAR TRASLADO</span> (abajo a la derecha). Aparece una pregunta de confirmación. Toque "Aceptar".</p>
+</div>
+
+<div class="tip">
+  <strong>¿Qué pasa después?</strong> El stock se descuenta del local de origen y se agrega al local de destino automáticamente. El traslado queda como "pendiente" hasta que el local de destino confirme que lo recibió (usan la página "Recepción" para eso).
+</div>
+
+<h3>Repetir el último traslado</h3>
+<p>Si manda siempre los mismos productos al mismo destino, toque <span class="btn">REPETIR ÚLTIMO</span> para cargar todo automáticamente.</p>
+
+<!-- ============================================================ -->
+<h2 id="recepciones" class="page-break">7. Recepciones — Confirmar que llegó lo que enviaron</h2>
+
+<p>Esta página es para cuando <strong>le llega un envío de otro local</strong>. Por ejemplo, si desde el Taller le mandaron 20 remeras a su local, acá usted confirma que llegaron bien.</p>
+
+<h3>Cómo confirmar una recepción paso a paso</h3>
+
+<div class="step">
+  <p><strong>Paso 1 — Seleccione el envío:</strong> En la columna izquierda va a ver una lista de todos los envíos que están "EN CAMINO". Toque el que le llegó.</p>
+
+  <p><strong>Paso 2 — Revise los productos:</strong> En la columna derecha aparecen todos los productos que vienen en ese envío, con la cantidad que mandaron.</p>
+
+  <p><strong>Paso 3 — Corrija si falta algo:</strong> Si llegaron menos unidades de las que mandaron (por ejemplo, mandaron 10 pero llegaron 8), escriba el número correcto en el casillero "Recibida". El sistema va a marcar una <strong>DISCREPANCIA</strong> en rojo, que está bien, es para que quede registrado.</p>
+
+  <p><strong>Paso 4 — (Opcional) Escriba una observación:</strong> En el casillero de abajo puede escribir alguna nota, por ejemplo: "faltaron 2 unidades, caja dañada".</p>
+
+  <p><strong>Paso 5 — Confirme:</strong> Toque el botón <span class="btn">CONFIRMAR RECEPCIÓN</span>. Aparece una pregunta de confirmación. Toque "Aceptar".</p>
+</div>
+
+<div class="tip">
+  <strong>¿Qué pasa después?</strong> El stock se agrega a su local automáticamente y el envío desaparece de la lista de pendientes.
+</div>
+
+<!-- ============================================================ -->
+<h2 id="alertas" class="page-break">8. Alertas — Ver qué productos tienen poco stock</h2>
+
+<p>Esta página le muestra <strong>todos los productos que están por quedarse sin stock</strong>. Es útil para saber qué hay que reponer antes de que se agote.</p>
+
+<h3>Qué ve en esta pantalla</h3>
+
+<table>
+  <tr><th>Elemento</th><th>Qué significa</th></tr>
+  <tr>
+    <td><strong>Total Alertas</strong></td>
+    <td>La cantidad total de productos con problemas de stock.</td>
+  </tr>
+  <tr>
+    <td><strong>Stock Cero</strong></td>
+    <td>Productos que no tienen ninguna unidad. Aparecen en rojo.</td>
+  </tr>
+  <tr>
+    <td><strong>Stock Bajo</strong></td>
+    <td>Productos que tienen menos unidades del mínimo recomendado. Aparecen en naranja.</td>
+  </tr>
+  <tr>
+    <td><strong>Tabla de alertas</strong></td>
+    <td>Una lista con todos los productos que tienen alerta. Muestra: modelo, talle, color (con puntito), ubicación, stock actual y stock mínimo.</td>
+  </tr>
+</table>
+
+<h3>Cómo usar esta página</h3>
+<ul>
+  <li>Use la <strong>barra de búsqueda</strong> para encontrar un producto específico.</li>
+  <li>Use el filtro de <strong>ubicación</strong> (si es admin) para ver las alertas de un local en particular.</li>
+  <li>Toque el botón <span class="btn">EXPORTAR / IMPRIMIR</span> si quiere sacar una copia impresa o guardar un PDF de las alertas para mostrárselo al encargado.</li>
+</ul>
+
+<div class="tip">
+  <strong>Ejemplo:</strong> Si ve que "Remera Manga Corta - NEGRO - Talle 2" tiene stock "1" y el mínimo es "3", significa que está por agotarse y habría que producir o pedir más.
+</div>
+
+<!-- ============================================================ -->
+<h2 id="historial" class="page-break">9. Historial — Ver todo lo que pasó</h2>
+
+<p>Esta página es como el "libro de registro" del negocio. Acá puede ver <strong>todas las ventas, todos los traslados y todos los ingresos</strong> que se hicieron, ordenados del más nuevo al más viejo.</p>
+
+<h3>Cómo usar el historial</h3>
+
+<table>
+  <tr><th>Elemento</th><th>Qué hace</th></tr>
+  <tr>
+    <td><strong>Filtro de fechas</strong> (DESDE / HASTA)</td>
+    <td>Elija una fecha de inicio y una de fin para ver solo lo que pasó entre esos días.</td>
+  </tr>
+  <tr>
+    <td><strong>Tarjetas de resumen</strong> (VENTAS / TRASLADO STOCK / INGRESOS)</td>
+    <td>Toque una para ver solo ese tipo de movimiento. Por ejemplo, toque "VENTAS" para ver solo las ventas. Toque de nuevo para volver a ver todo.</td>
+  </tr>
+  <tr>
+    <td><strong>Barra de búsqueda</strong></td>
+    <td>Escriba algo para buscar en el historial (por ejemplo, el nombre de un producto o un código).</td>
+  </tr>
+  <tr>
+    <td><strong>Lista de eventos</strong></td>
+    <td>Cada línea es un evento (venta, traslado o ingreso). Toque cualquier línea para <strong>ver los detalles</strong> adentro.</td>
+  </tr>
+</table>
+
+<h3>Los detalles que puede ver</h3>
+<ul>
+  <li><strong>En una venta:</strong> Ve qué productos se vendieron, las cantidades, los precios, el total, y si la venta fue devuelta.</li>
+  <li><strong>En un traslado:</strong> Ve qué productos se trasladaron, las cantidades, el origen y el destino.</li>
+  <li><strong>En un ingreso:</strong> Ve qué productos entraron y las cantidades.</li>
+</ul>
+
+<h3>Botones de administrador</h3>
+<p>Si tiene el modo ADMIN activado, adentro de cada detalle va a ver botones para:</p>
+<ul>
+  <li><strong>EDITAR</strong> — Abre la página correspondiente (venta, traslado o ingreso) con los datos cargados para corregir algo.</li>
+  <li><strong>ELIMINAR</strong> — Borra el registro para siempre. <strong>Cuidado:</strong> si elimina una venta, el stock vuelve a aparecer. Si elimina un traslado, el stock vuelve al origen.</li>
+  <li><strong>HACER DEVOLUCIÓN</strong> — (solo en ventas) Marca la venta como devuelta y el stock regresa al inventario.</li>
+</ul>
+
+<div class="important">
+  <strong>Importante:</strong> Los botones de EDITAR y ELIMINAR pueden cambiar el stock. Úselos con cuidado y siempre verifique que está tocando el registro correcto.
+</div>
+
+<!-- ============================================================ -->
+<h2 id="crear" class="page-break">10. Crear Producto — Agregar un producto nuevo al sistema</h2>
+
+<p>Esta página es para cuando <strong>el taller empieza a hacer una prenda nueva</strong> que todavía no está en el sistema. Por ejemplo, si van a empezar a hacer "Campera de jean", acá la crean para después poder venderla y manejarla en el stock.</p>
+
+<div class="important">
+  <strong>Atención:</strong> Esta página solo la pueden usar los usuarios del taller y los administradores.
+</div>
+
+<h3>Cómo crear un producto paso a paso</h3>
+
+<div class="step">
+  <p><strong>Paso 1 — Nombre:</strong> En el primer casillero, escriba el nombre del producto (ej: "Campera de Jean Oversize").</p>
+
+  <p><strong>Paso 2 — Categoría:</strong> En el menú de al lado, elija a qué categoría pertenece (Remeras, Buzos, Camisas, etc.).</p>
+
+  <p><strong>Paso 3 — Colores:</strong> En la sección "COLORES", escriba un color (ej: "NEGRO") y toque <span class="btn">+ AGREGAR</span>. Repita para cada color que tenga el producto. Si se equivocó, toque la <strong>✕</strong> al lado del color para sacarlo.</p>
+
+  <p><strong>Paso 4 — Talles:</strong> En la sección "AGREGAR TALLE", escriba un número de talle (ej: "2") y toque <span class="btn">+ AGREGAR</span>. Repita para cada talle.</p>
+
+  <p><strong>Paso 5 — Precios:</strong> Abajo aparece "TALLES Y PRECIOS". Escriba el precio de venta para cada talle. Si todos los talles tienen el mismo precio, toque el botón con la flecha <strong>↻</strong> para copiar el precio a todos.</p>
+
+  <p><strong>Paso 6 — Stock inicial:</strong> Aparece una tabla "STOCK EN TALLER POR VARIANTE". Escriba cuántas unidades hay de cada color y talle en el taller. También puede poner un "mínimo" (la cantidad que quiere tener siempre, para que el sistema le avise cuando esté por llegara ese número).</p>
+
+  <p><strong>Paso 7 — Foto (opcional):</strong> En la columna derecha, toque el cuadro punteado para seleccionar una foto del producto desde su computadora.</p>
+
+  <p><strong>Paso 8 — Cree el producto:</strong> Toque el gran botón <span class="btn">CREAR PRODUCTO</span> que está abajo. Si todo está bien, el sistema lo lleva al Catálogo y el producto ya aparece ahí.</p>
+</div>
+
+<div class="tip">
+  <strong>¿Se equivocó mientras llenaba?</strong> No se preocupe, el sistema guarda automáticamente lo que va escribiendo. Si cierra sin querer, cuando vuelva a entrar a "Crear Producto" va a encontrar todo como lo dejó.
+</div>
+
+<!-- ============================================================ -->
+<div class="page-break"></div>
+<h2>Glosario — Palabras usadas en esta guía</h2>
+
+<table>
+  <tr><th>Palabra</th><th>Qué significa</th></tr>
+  <tr><td><strong>Stock</strong></td><td>Las unidades que hay de un producto. Es lo mismo que "inventario" o "existencia".</td></tr>
+  <tr><td><strong>Variante</strong></td><td>Una combinación de color + talle. Por ejemplo: "Remera negra talle 2" es una variante.</td></tr>
+  <tr><td><strong>Categoría</strong></td><td>El tipo de prenda: Remera, Buzo, Camisa, Pantalón, etc.</td></tr>
+  <tr><td><strong>Local / Ubicación</strong></td><td>El lugar donde está el stock: Taller, Luz, Santiago o Avellaneda.</td></tr>
+  <tr><td><strong>SKU</strong></td><td>Un código que identifica cada producto. En este sistema es "T. {talle} · {color}".</td></tr>
+  <tr><td><strong>Ingreso</strong></td><td>Cuando entra mercadería nueva al sistema (generalmente desde el taller).</td></tr>
+  <tr><td><strong>Traslado</strong></td><td>Cuando se mueve mercadería de un local a otro.</td></tr>
+  <tr><td><strong>Recepción</strong></td><td>Cuando un local confirma que le llegó la mercadería de otro local.</td></tr>
+  <tr><td><strong>MOD ADMIN</strong></td><td>Un modo especial que activa botones extra como "Editar" y "Eliminar". Solo los jefes lo usan.</td></tr>
+  <tr><td><strong>Navegador</strong></td><td>El programa que usa para internet: Chrome, Edge, Safari, etc.</td></tr>
+  <tr><td><strong>Popup / Ventanita</strong></td><td>Una ventana chica que aparece encima de la pantalla para hacer una acción rápida.</td></tr>
+  <tr><td><strong>Discrepancia</strong></td><td>Cuando la cantidad que recibió no coincide con la cantidad que le mandaron.</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2>Resumen rápido — Qué hacer en cada situación</h2>
+
+<table>
+  <tr><th>Situación</th><th>Qué hacer</th><th>¿En qué página?</th></tr>
+  <tr>
+    <td>Un cliente compró una remera</td>
+    <td>Registrar la venta</td>
+    <td>VENTAS</td>
+  </tr>
+  <tr>
+    <td>Llegaron 30 buzos nuevos del taller</td>
+    <td>Agregar el stock nuevo</td>
+    <td>INGRESO</td>
+  </tr>
+  <tr>
+    <td>Hay que mandar 10 remeras a Avellaneda</td>
+    <td>Hacer un traslado</td>
+    <td>TRASLADAR STOCK</td>
+  </tr>
+  <tr>
+    <td>Llegó un envío desde el taller</td>
+    <td>Confirmar la recepción</td>
+    <td>RECEPCIÓN</td>
+  </tr>
+  <tr>
+    <td>Quiere saber qué falta reponer</td>
+    <td>Revisar las alertas</td>
+    <td>ALERTAS</td>
+  </tr>
+  <tr>
+    <td>Quiere ver lo que se vendió ayer</td>
+    <td>Revisar el historial</td>
+    <td>HISTORIAL</td>
+  </tr>
+  <tr>
+    <td>Van a empezar a hacer una prenda nueva</td>
+    <td>Crear el producto</td>
+    <td>CREAR PRODUCTO</td>
+  </tr>
+  <tr>
+    <td>Quiere ver cuántas remeras negras hay</td>
+    <td>Buscar en el catálogo</td>
+    <td>CATÁLOGO</td>
+  </tr>
+</table>
+
+<div class="footer">
+  <p>KoqStore — Guía para usuarios &mdash; Versión 1.0</p>
+  <p>Imprimí esta guía o guardala como PDF desde el menú Imprimir de tu navegador.</p>
+</div>
+
+</body>
+</html>
