@@ -1,4 +1,4 @@
-import { computed, Injectable, signal, inject } from '@angular/core';
+import { computed, Injector, Injectable, signal, inject } from '@angular/core';
 import { AuthService } from './auth.service';
 import { CatalogService } from './catalog.service';
 import { ReceptionService } from './reception.service';
@@ -32,7 +32,11 @@ export interface TransferRow {
 export class TransferHistoryService {
   private readonly authService = inject(AuthService);
   private readonly catalog = inject(CatalogService);
-  private readonly receptionService = inject(ReceptionService);
+  private readonly injector = inject(Injector);
+
+  private get receptionService(): ReceptionService {
+    return this.injector.get(ReceptionService);
+  }
 
   readonly deleting = signal(false);
 
