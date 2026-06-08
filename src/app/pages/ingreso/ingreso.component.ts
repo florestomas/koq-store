@@ -36,8 +36,10 @@ interface ModelSearchResult {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IngresoComponent {
+  private static readonly CACHE_KEY = 'koq-ingreso-cache';
+
   private readonly catalogService = inject(CatalogService);
-  private readonly ingresoService = inject(IngresoService);
+  readonly ingresoService = inject(IngresoService);
   private readonly stockMovementService = inject(StockMovementService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -51,6 +53,7 @@ export class IngresoComponent {
   readonly selectedModel = signal<ClothingModel | null>(null);
   readonly variantQuantities = signal<Record<string, number>>({});
   readonly selectedLocationId = signal('');
+  readonly resumenItems = signal<IngresoItem[]>([]);
   readonly confirmed = signal(false);
   readonly error = signal<string | null>(null);
   readonly isConfirming = signal(false);
@@ -149,8 +152,14 @@ export class IngresoComponent {
     return Object.values(quantities).reduce((sum, q) => sum + q, 0);
   });
 
+  readonly canAddToResumen = computed(() => this.totalUnits() > 0);
+
+  readonly totalResumenItems = computed(() => this.resumenItems().length);
+  readonly totalResumenUnits = computed(() =>
+    this.resumenItems().reduce((sum, i) => sum + i.quantity, 0),
+  );
   readonly canConfirm = computed(
-    () => this.totalUnits() > 0 && this.selectedLocationId() !== '',
+    () => this.resumenItems().length > 0 && this.selectedLocationId() !== '',
   );
 
   readonly getColorHex = getColorHex;
@@ -164,47 +173,90 @@ export class IngresoComponent {
 
     inject(DestroyRef).onDestroy(() => sub.unsubscribe());
 
-    this.loadEditIfNeeded();
+    const editId = this.route.snapshot.queryParamMap.get('edit');
+    if (editId) {
+      this.loadEditIfNeeded(editId);
+    } else {
+      this.restoreFromCache();
+    }
   }
 
-  private async loadEditIfNeeded(): Promise<void> {
-    const editId = this.route.snapshot.queryParamMap.get('edit');
-    if (!editId) return;
+  private saveToCache(): void {
+    const items = this.resumenItems();
+    const locationId = this.selectedLocationId();
+    if (items.length === 0) {
+      sessionStorage.removeItem(IngresoComponent.CACHE_KEY);
+      return;
+    }
+    sessionStorage.setItem(
+      IngresoComponent.CACHE_KEY,
+      JSON.stringify({ items, locationId }),
+    );
+  }
 
+  private restoreFromCache(): void {
+    const raw = sessionStorage.getItem(IngresoComponent.CACHE_KEY);
+    if (!raw) return;
+    try {
+      const data = JSON.parse(raw);
+      if (Array.isArray(data.items) && data.items.length > 0) {
+        this.resumenItems.set(data.items);
+        if (data.locationId) this.selectedLocationId.set(data.locationId);
+      } else {
+        sessionStorage.removeItem(IngresoComponent.CACHE_KEY);
+      }
+    } catch {
+      sessionStorage.removeItem(IngresoComponent.CACHE_KEY);
+    }
+  }
+
+  private clearCache(): void {
+    sessionStorage.removeItem(IngresoComponent.CACHE_KEY);
+  }
+
+  private async loadEditIfNeeded(editId: string): Promise<void> {
     const data = await this.ingresoService.loadIngresoForEditing(editId);
     if (!data) return;
 
     const products = this.catalogService.catalogProducts();
-    const modelIds = new Set<string>();
-    const quantities: Record<string, number> = {};
+    const models = this.catalogService.catalogModels();
+    const colors = this.catalogService.colors();
+    const modelColors = this.catalogService.catalogModelColors();
 
+    const items: IngresoItem[] = [];
     for (const item of data.items) {
       const product = products.find((p) => p.id === item.productId);
-      if (product) {
-        modelIds.add(product.idClothingModel);
-        quantities[item.productId] = (quantities[item.productId] ?? 0) + item.quantity;
-      }
+      if (!product) continue;
+      const model = models.find((m) => m.id === product.idClothingModel);
+      const color = colors.find((c) => c.id === product.idColor);
+      const imageUrl = model
+        ? modelColors.find((mc) => mc.idClothingModel === model.id)?.imageUrl ?? ''
+        : '';
+      items.push({
+        productId: item.productId,
+        modelName: model?.name ?? 'Producto',
+        colorName: color?.name ?? '',
+        size: product.size,
+        quantity: item.quantity,
+        imageUrl,
+      });
     }
 
-    if (modelIds.size === 0) return;
-
-    const models = this.catalogService.catalogModels();
-    const model = models.find((m) => modelIds.has(m.id) && m.active);
-    if (!model) return;
+    if (items.length === 0) return;
 
     this.selectedLocationId.set(data.locationId);
-    this.variantQuantities.set(quantities);
-    this.selectedModel.set(model);
-    this.mode.set('variants');
+    this.resumenItems.set(items);
     this.editingIngresoId.set(data.referenceId);
   }
 
   cancelEdit(): void {
     this.editingIngresoId.set(null);
-    this.variantQuantities.set({});
-    this.selectedModel.set(null);
+    this.resumenItems.set([]);
     this.selectedLocationId.set('');
+    this.selectedModel.set(null);
+    this.variantQuantities.set({});
     this.mode.set('search');
+    this.clearCache();
     this.router.navigate(['/historial']);
   }
 
@@ -233,29 +285,32 @@ export class IngresoComponent {
     return this.variantQuantities()[productId] ?? 0;
   }
 
-  async confirmIngreso(): Promise<void> {
+  addToResumen(): void {
     const model = this.selectedModel();
-    if (!model || !this.canConfirm() || this.isConfirming()) return;
+    if (!model || !this.canAddToResumen()) return;
 
-    this.isConfirming.set(true);
-    try {
-      const quantities = this.variantQuantities();
-      const locationId = this.selectedLocationId();
-      const colors = this.catalogService.colors();
-      const products = this.catalogService.catalogProducts();
-      const modelProducts = products.filter(
-        (p) => p.idClothingModel === model.id && p.active,
-      );
+    const quantities = this.variantQuantities();
+    const newItems: IngresoItem[] = [];
 
-      const items: IngresoItem[] = [];
+    for (const row of this.variantGrid()) {
+      for (const cell of row.cells) {
+        if (!cell.productId) continue;
+        const qty = quantities[cell.productId] ?? 0;
+        if (qty <= 0) continue;
 
-      for (const row of this.variantGrid()) {
-        for (const cell of row.cells) {
-          if (!cell.productId) continue;
-          const qty = quantities[cell.productId] ?? 0;
-          if (qty <= 0) continue;
+        const existingIndex = this.resumenItems().findIndex(
+          (ri) => ri.productId === cell.productId,
+        );
 
-          items.push({
+        if (existingIndex !== -1) {
+          const current = [...this.resumenItems()];
+          current[existingIndex] = {
+            ...current[existingIndex],
+            quantity: current[existingIndex].quantity + qty,
+          };
+          this.resumenItems.set(current);
+        } else {
+          newItems.push({
             productId: cell.productId,
             modelName: model.name,
             colorName: row.colorName,
@@ -265,6 +320,58 @@ export class IngresoComponent {
           });
         }
       }
+    }
+
+    if (newItems.length > 0) {
+      this.resumenItems.update((prev) => [...prev, ...newItems]);
+    }
+
+    this.variantQuantities.set({});
+    this.saveToCache();
+  }
+
+  changeResumenQty(index: number, delta: number): void {
+    const items = [...this.resumenItems()];
+    const item = items[index];
+    if (!item) return;
+
+    const newQty = item.quantity + delta;
+    if (newQty <= 0) {
+      items.splice(index, 1);
+    } else {
+      items[index] = { ...item, quantity: newQty };
+    }
+    this.resumenItems.set(items);
+    this.saveToCache();
+  }
+
+  removeResumenItem(index: number): void {
+    const items = [...this.resumenItems()];
+    items.splice(index, 1);
+    this.resumenItems.set(items);
+    this.saveToCache();
+  }
+
+  setSelectedLocationId(value: string): void {
+    this.selectedLocationId.set(value);
+    this.saveToCache();
+  }
+
+  repeatLastIngreso(): void {
+    const data = this.ingresoService.repeatLastIngreso();
+    if (!data) return;
+    this.resumenItems.set(data.items);
+    this.selectedLocationId.set(data.locationId);
+    this.saveToCache();
+  }
+
+  async confirmIngreso(): Promise<void> {
+    if (!this.canConfirm() || this.isConfirming()) return;
+
+    this.isConfirming.set(true);
+    try {
+      const items = this.resumenItems();
+      const locationId = this.selectedLocationId();
 
       if (items.length === 0) return;
 
@@ -279,13 +386,16 @@ export class IngresoComponent {
       if (ok) {
         this.confirmed.set(true);
         this.error.set(null);
-        this.variantQuantities.set({});
-        this.selectedModel.set(null);
+        this.ingresoService.saveLastIngreso(items, locationId);
+        this.resumenItems.set([]);
         this.selectedLocationId.set('');
+        this.selectedModel.set(null);
+        this.variantQuantities.set({});
         this.mode.set('search');
         this.searchControl.setValue('');
         this.searchTerm.set('');
         this.selectedCategoryId.set(null);
+        this.clearCache();
         this.catalogService.triggerRefresh();
         this.stockMovementService.refresh();
         if (editingId) {

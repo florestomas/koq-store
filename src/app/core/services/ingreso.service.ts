@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { computed, Injectable, signal } from '@angular/core';
 import { getSupabase } from './supabase.service';
 
 export interface IngresoItem {
@@ -18,6 +18,15 @@ export interface IngresoGroupData {
 
 @Injectable({ providedIn: 'root' })
 export class IngresoService {
+  private static readonly LAST_CACHE_KEY = 'koq-ingreso-last';
+
+  private lastIngresoData = signal<{ items: IngresoItem[]; locationId: string } | null>(null);
+  readonly hasLastIngreso = computed(() => this.lastIngresoData() !== null);
+
+  constructor() {
+    this.restoreLastIngreso();
+  }
+
   async loadIngresoForEditing(referenceId: string): Promise<IngresoGroupData | null> {
     try {
       const supabase = getSupabase();
@@ -145,6 +154,34 @@ export class IngresoService {
     } catch (err) {
       console.error('Error in editIngreso:', err);
       return false;
+    }
+  }
+
+  saveLastIngreso(items: IngresoItem[], locationId: string): void {
+    if (items.length === 0) return;
+    const data = { items: items.map((i) => ({ ...i })), locationId };
+    this.lastIngresoData.set(data);
+    sessionStorage.setItem(IngresoService.LAST_CACHE_KEY, JSON.stringify(data));
+  }
+
+  repeatLastIngreso(): { items: IngresoItem[]; locationId: string } | null {
+    const data = this.lastIngresoData();
+    if (!data) return null;
+    return { items: data.items.map((i) => ({ ...i })), locationId: data.locationId };
+  }
+
+  private restoreLastIngreso(): void {
+    const raw = sessionStorage.getItem(IngresoService.LAST_CACHE_KEY);
+    if (!raw) return;
+    try {
+      const data = JSON.parse(raw);
+      if (Array.isArray(data.items) && data.items.length > 0 && data.locationId) {
+        this.lastIngresoData.set(data);
+      } else {
+        sessionStorage.removeItem(IngresoService.LAST_CACHE_KEY);
+      }
+    } catch {
+      sessionStorage.removeItem(IngresoService.LAST_CACHE_KEY);
     }
   }
 }

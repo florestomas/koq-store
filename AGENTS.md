@@ -73,7 +73,7 @@ Component nesting: `catalog/` → `components/product-card/` → `stock-badge.co
 
 ## Color utility
 
-`core/utils/colors.ts` — hardcoded hex map for 26 colors. Usage:
+`core/utils/colors.ts` — hardcoded hex map for 36 colors. Usage:
 
 ```ts
 import { getColorHex } from '../../core/utils/colors';
@@ -86,8 +86,8 @@ Color names are uppercase (e.g. `NEGRO`, `VERDE PETROLEO`). The function normali
 ## Tests
 
 - 5 spec files (`app`, `new-sale`, `alertas`, `historial`, `recepciones`) — smoke tests, no service mocking
-- All follow: `TestBed.configureTestingModule({ imports: [Component] })`, no providers array
-- Set `auth.logged.set(true)` in `beforeEach` to bypass login
+- Pattern: `TestBed.configureTestingModule({ imports: [Component] })`. Some provide `Router` mock if component injects it.
+- Auth/Router guards are NOT mocked — tests import the component standalone; rely on `fixture.detectChanges()` not triggering guard logic
 
 ## Codegen
 
@@ -95,5 +95,4 @@ Color names are uppercase (e.g. `NEGRO`, `VERDE PETROLEO`). The function normali
 
 ## Stale
 
-- `.vscode/launch.json` references Karma port `9876` — wrong, Vitest doesn't use it
-- `src/material-theme.scss` is the M3 theme (not a stale file — actively used)
+- `.vscode/launch.json` references Karma port `9876` — Vitest doesn't use it

@@ -1,6 +1,6 @@
 <div class="flex flex-col md:flex-row w-full h-full gap-4 md:gap-6 p-4 md:p-8">
   <!-- Left column — Search / Create / Variants -->
-  <div class="flex-1 flex flex-col gap-4 min-w-0">
+  <div class="flex-[2] flex flex-col gap-4 min-w-0">
     <!-- Header -->
     <div class="flex flex-row items-center gap-3 w-full justify-between shrink-0">
       <div class="flex flex-row items-center gap-3">
@@ -172,14 +172,97 @@
         </div>
       }
 
-      <!-- Location selector + Confirm -->
-      <div class="flex flex-col gap-4 bg-white border border-gray-200 rounded-2xl p-4">
+      <!-- Add to resumen button -->
+      <div class="flex flex-row items-center justify-end gap-3">
+        <button
+          (click)="clearModel()"
+          class="px-6 py-2.5 rounded-full text-sm font-semibold border border-gray-300 text-zinc-600 hover:bg-gray-50 transition cursor-pointer"
+        >
+          Cancelar
+        </button>
+        <button
+          (click)="addToResumen()"
+          [disabled]="!canAddToResumen()"
+          class="px-6 py-2.5 rounded-full text-sm font-bold tracking-wider text-white transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed bg-koq hover:opacity-90"
+        >
+          Agregar al resumen ({{ totalUnits() }})
+        </button>
+      </div>
+    }
+  </div>
+
+  <!-- Right column — Resumen de ingreso -->
+  <div class="flex-1 flex flex-col bg-white border border-gray-200 rounded-3xl p-4 md:p-6 shadow-sm min-w-0 h-full">
+    <div class="flex flex-row items-center gap-2 mb-4 shrink-0">
+      <mat-icon class="text-koq">assignment</mat-icon>
+      <h2 class="text-lg font-bold">Resumen de ingreso</h2>
+      @if (totalResumenItems() > 0) {
+        <span class="ml-auto text-xs text-zinc-400">{{ totalResumenItems() }} {{ totalResumenItems() === 1 ? 'item' : 'items' }}</span>
+      }
+      @if (ingresoService.hasLastIngreso() && resumenItems().length === 0 && !isEditing()) {
+        <button
+          (click)="repeatLastIngreso()"
+          class="ml-auto flex flex-row items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium text-zinc-500 border border-dashed border-zinc-300 hover:border-koq hover:text-koq transition cursor-pointer"
+        >
+          <mat-icon class="text-sm">replay</mat-icon>
+          Repetir último
+        </button>
+      }
+    </div>
+
+    <!-- Items area -->
+    <div class="flex flex-col flex-1 overflow-y-auto min-h-0 gap-2">
+      @if (resumenItems().length === 0) {
+        <div class="flex flex-col items-center justify-center flex-1 text-zinc-400">
+          <mat-icon class="text-6xl mb-4">add_shopping_cart</mat-icon>
+          <p class="text-base font-medium">No hay productos agregados</p>
+          <p class="text-sm">Seleccioná productos de la izquierda</p>
+        </div>
+      }
+
+      @if (resumenItems().length > 0) {
+        @for (item of resumenItems(); track item.productId; let i = $index) {
+          <div class="flex flex-row items-center gap-3 bg-gray-50 rounded-2xl p-3 shrink-0">
+            <img [src]="item.imageUrl" class="size-10 rounded-lg object-cover shrink-0" />
+            <div class="flex flex-col flex-1 min-w-0">
+              <p class="text-sm font-semibold truncate leading-tight">{{ item.modelName }}</p>
+              <p class="text-xs text-zinc-400 leading-tight mt-0.5">
+                <span class="inline-block rounded-full size-2.5 shrink-0 mr-1 align-middle" [style.background]="getColorHex(item.colorName)"></span>
+                <strong>{{ item.colorName | uppercase }}</strong> &middot; Talle <strong>{{ item.size }}</strong>
+              </p>
+            </div>
+            <div class="flex flex-row items-center gap-1 shrink-0">
+              <button
+                (click)="changeResumenQty(i, -1)"
+                class="size-9 rounded-full border border-gray-300 flex items-center justify-center text-sm font-bold hover:bg-red-50 hover:border-red-300 hover:text-red-500 transition cursor-pointer"
+              >&minus;</button>
+              <span class="w-8 text-center text-sm font-bold">{{ item.quantity }}</span>
+              <button
+                (click)="changeResumenQty(i, 1)"
+                class="size-9 rounded-full border border-gray-300 flex items-center justify-center text-sm font-bold hover:bg-koq/10 hover:border-koq hover:text-koq transition cursor-pointer"
+              >+</button>
+            </div>
+            <button
+              (click)="removeResumenItem(i)"
+              class="size-7 rounded-full flex items-center justify-center text-zinc-400 hover:bg-red-50 hover:text-red-400 transition cursor-pointer shrink-0"
+            >
+              <mat-icon class="text-base">close</mat-icon>
+            </button>
+          </div>
+        }
+      }
+    </div>
+
+    <!-- Footer: Location + totals + Confirm -->
+    @if (resumenItems().length > 0) {
+      <div class="border-t border-gray-200 pt-3 flex flex-col gap-3 shrink-0">
+        <!-- Location selector -->
         <div class="flex flex-col gap-1">
           <label class="text-xs font-semibold text-zinc-500">DESTINO</label>
           <select
             class="border border-gray-300 rounded-xl px-4 py-3 text-base outline-none focus:border-koq bg-white"
             [value]="selectedLocationId()"
-            (change)="selectedLocationId.set($any($event.target).value)"
+            (change)="setSelectedLocationId($any($event.target).value)"
           >
             <option value="" disabled selected>Seleccionar ubicación...</option>
             @for (loc of locations; track loc.id) {
@@ -188,12 +271,27 @@
           </select>
         </div>
 
+        <!-- Totals -->
+        <div class="flex flex-row justify-between text-sm">
+          <span class="text-zinc-500">Total items</span>
+          <span class="font-bold">{{ totalResumenItems() }}</span>
+        </div>
+        <div class="flex flex-row justify-between text-sm">
+          <span class="text-zinc-500">Total unidades</span>
+          <span class="font-bold">{{ totalResumenUnits() }}</span>
+        </div>
+
+        <!-- Confirm button -->
         <button
           (click)="confirmIngreso()"
-          [disabled]="!canConfirm()"
+          [disabled]="!canConfirm() || isConfirming()"
           class="w-full py-3.5 rounded-full text-sm font-bold tracking-wider text-white transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed bg-koq hover:opacity-90"
         >
-          {{ isEditing() ? 'ACTUALIZAR INGRESO' : 'REGISTRAR INGRESO' }} ({{ totalUnits() }} unidades)
+          @if (isConfirming()) {
+            CONFIRMANDO...
+          } @else {
+            {{ isEditing() ? 'ACTUALIZAR INGRESO' : 'REGISTRAR INGRESO' }}
+          }
         </button>
       </div>
     }
