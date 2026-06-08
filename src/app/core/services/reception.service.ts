@@ -1,6 +1,7 @@
 import { computed, Injectable, signal, inject } from '@angular/core';
 import { AuthService } from './auth.service';
 import { CatalogService } from './catalog.service';
+import { TransferHistoryService } from './transfer-history.service';
 import { getSupabase } from './supabase.service';
 import { toCamelCase } from '../utils/supabase-utils';
 import { Transfer } from '../../interfaces/transfer';
@@ -35,6 +36,7 @@ export interface ReceptionRow {
 export class ReceptionService {
   private readonly authService = inject(AuthService);
   private readonly catalog = inject(CatalogService);
+  private readonly transferHistoryService = inject(TransferHistoryService);
   private readonly refreshCounter = signal(0);
 
   private readonly transfersSig = signal<Transfer[]>([]);
@@ -286,6 +288,8 @@ export class ReceptionService {
       await supabase.from('transfer_details').delete().eq('id_transfer', transferId);
       await supabase.from('transfers').delete().eq('id', transferId);
       this.refresh();
+      this.catalog.triggerRefresh();
+      this.transferHistoryService.refresh();
       return true;
     } catch (err) {
       console.error('Error deleting transfer:', err);
