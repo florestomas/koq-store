@@ -220,11 +220,40 @@ export class StockMovementService {
 
   private async loadMovements(): Promise<void> {
     try {
-      const { data } = await getSupabase().from('stock_movements').select('*');
-      if (data) this.movementsSig.set(data.map((r: Record<string, unknown>) => toCamelCase<StockMovement>(r)));
+      const data = await this.fetchAll('stock_movements');
+      if (data.length) this.movementsSig.set(data.map((r: Record<string, unknown>) => toCamelCase<StockMovement>(r)));
     } catch (err) {
       console.error('Error loading stock movements:', err);
     }
+  }
+
+  private async fetchAll(table: string): Promise<Record<string, unknown>[]> {
+    const supabase = getSupabase();
+    const pageSize = 1000;
+    const allRows: Record<string, unknown>[] = [];
+    let from = 0;
+
+    while (true) {
+      const { data, error } = await supabase
+        .from(table)
+        .select('*')
+        .range(from, from + pageSize - 1);
+
+      if (error) {
+        console.error(`Error fetching ${table}:`, error.message);
+        break;
+      }
+
+      if (!data || data.length === 0) break;
+
+      allRows.push(...data);
+
+      if (data.length < pageSize) break;
+
+      from += pageSize;
+    }
+
+    return allRows;
   }
 
   async logMovement(

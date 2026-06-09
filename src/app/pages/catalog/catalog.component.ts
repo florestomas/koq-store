@@ -32,6 +32,8 @@ export class CatalogComponent {
   }
 
   constructor() {
+    this.catalogService.triggerRefresh();
+
     const sub = this.searchControl.valueChanges
       .pipe(debounceTime(200), distinctUntilChanged())
       .subscribe((value) => {

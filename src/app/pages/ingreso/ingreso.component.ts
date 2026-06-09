@@ -396,7 +396,7 @@ export class IngresoComponent {
         this.searchTerm.set('');
         this.selectedCategoryId.set(null);
         this.clearCache();
-        this.catalogService.triggerRefresh();
+        await this.catalogService.triggerRefresh();
         this.stockMovementService.refresh();
         if (editingId) {
           this.editingIngresoId.set(null);
@@ -406,7 +406,7 @@ export class IngresoComponent {
       } else {
         this.error.set('Error al registrar el ingreso. Intente nuevamente.');
       }
-    } finally {
+      } finally {
       this.isConfirming.set(false);
     }
   }

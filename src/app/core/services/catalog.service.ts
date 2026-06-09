@@ -215,26 +215,28 @@ export class CatalogService {
         { data: rawCategories },
         { data: rawModels },
         { data: rawProducts },
-        { data: rawStocks },
         { data: rawColors },
         { data: rawModelColors },
         { data: rawLocations },
         { data: rawUsers },
       ] = await Promise.all([
-        supabase.from('categories').select('*').limit(100000),
-        supabase.from('clothing_models').select('*').limit(100000),
-        supabase.from('products').select('*').limit(100000),
-        supabase.from('stock_locations').select('*').limit(100000),
-        supabase.from('colors').select('*').limit(100000),
-        supabase.from('clothing_model_colors').select('*').limit(100000),
-        supabase.from('locations').select('*').limit(100000),
-        supabase.from('users').select('*').limit(100000),
+        supabase.from('categories').select('*').limit(1000),
+        supabase.from('clothing_models').select('*').limit(1000),
+        supabase.from('products').select('*').limit(1000),
+        supabase.from('colors').select('*').limit(1000),
+        supabase.from('clothing_model_colors').select('*').limit(1000),
+        supabase.from('locations').select('*').limit(1000),
+        supabase.from('users').select('*').limit(1000),
       ]);
+
+      const rawStocks = await this.fetchAll('stock_locations');
 
       if (rawCategories) this.categoriesSig.set(rawCategories.map((r: Record<string, unknown>) => toCamelCase<Category>(r)));
       if (rawModels) this.modelsSig.set(rawModels.map((r: Record<string, unknown>) => toCamelCase<ClothingModel>(r)));
       if (rawProducts) this.productsSig.set(rawProducts.map((r: Record<string, unknown>) => toCamelCase<Product>(r)));
-      if (rawStocks) this.stocksSig.set(rawStocks.map((r: Record<string, unknown>) => toCamelCase<StockLocation>(r)));
+      if (rawStocks.length) {
+        this.stocksSig.set(rawStocks.map((r: Record<string, unknown>) => toCamelCase<StockLocation>(r)));
+      }
       if (rawColors) this.colorsSig.set(rawColors.map((r: Record<string, unknown>) => toCamelCase<Color>(r)));
       if (rawModelColors) this.modelColorsSig.set(rawModelColors.map((r: Record<string, unknown>) => toCamelCase<ClothingModelColor>(r)));
       if (rawLocations) this.locationsSig.set(rawLocations.map((r: Record<string, unknown>) => toCamelCase<Location>(r)));
@@ -244,6 +246,35 @@ export class CatalogService {
     } finally {
       this.loaded.set(true);
     }
+  }
+
+  private async fetchAll(table: string): Promise<Record<string, unknown>[]> {
+    const supabase = getSupabase();
+    const pageSize = 1000;
+    const allRows: Record<string, unknown>[] = [];
+    let from = 0;
+
+    while (true) {
+      const { data, error } = await supabase
+        .from(table)
+        .select('*')
+        .range(from, from + pageSize - 1);
+
+      if (error) {
+        console.error(`Error fetching ${table}:`, error.message);
+        break;
+      }
+
+      if (!data || data.length === 0) break;
+
+      allRows.push(...data);
+
+      if (data.length < pageSize) break;
+
+      from += pageSize;
+    }
+
+    return allRows;
   }
 
   setSearchTerm(value: string): void {

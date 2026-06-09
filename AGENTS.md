@@ -24,7 +24,7 @@ No `vitest.config` — Angular builder manages Vitest. Use `--include` for filte
 - **Material Icons Outlined** default (`MAT_ICON_DEFAULT_OPTIONS` in `app.config.ts`)
 - Brand color `--color-koq: #ad65af` (Tailwind `@theme` in `styles.css`)
 - `provideBrowserGlobalErrorListeners()` in `app.config.ts` — global error catcher
-- Vercel deploy with SPA rewrites, output `dist/koq-store` (`vercel.json`)
+- Vercel deploy with SPA rewrites, output `dist/koq-store/browser` (`vercel.json`)
 - **Supabase** JS client directly (no `provideHttpClient`). Hardcoded URL + anon key in `supabase.service.ts`. Storage bucket `product-images`.
 
 ## Architecture
