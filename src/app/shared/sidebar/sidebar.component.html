@@ -1,9 +1,9 @@
 <div
-  class="flex flex-col h-full items-start justify-start bg-white relative max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-50 max-md:shadow-2xl max-md:transition-transform max-md:duration-300 max-md:w-72"
-  [class.max-md:-translate-x-full]="!open"
+  class="flex flex-col h-full items-start justify-start bg-white relative overflow-y-auto max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:z-50 max-lg:shadow-2xl max-lg:transition-transform max-lg:duration-300 max-lg:w-72"
+  [class.max-lg:-translate-x-full]="!open"
 >
   <!-- Mobile close button -->
-  <button (click)="close.emit()" class="absolute top-4 right-4 md:hidden text-zinc-400 hover:text-zinc-700 transition cursor-pointer">
+  <button (click)="close.emit()" class="absolute top-4 right-4 lg:hidden text-zinc-400 hover:text-zinc-700 transition cursor-pointer">
     <mat-icon>close</mat-icon>
   </button>
 
