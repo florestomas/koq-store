@@ -396,6 +396,14 @@ export class NewSaleComponent {
     this.selectedCategoryId.set(id);
   }
 
+  openCanastoForm(): void {
+    this.showCanastoForm.set(true);
+    setTimeout(() => {
+      const input = document.querySelector<HTMLInputElement>('#canasto-price-input');
+      input?.focus();
+    });
+  }
+
   addCanasto(): void {
     const price = this.canastoPrice();
     if (price <= 0) return;
