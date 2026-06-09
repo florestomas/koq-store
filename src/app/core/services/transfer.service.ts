@@ -596,7 +596,9 @@ export class TransferService {
         const model = product ? models.find((m) => m.id === product.idClothingModel) : undefined;
         const color = product ? colors.find((c) => c.id === product.idColor) : undefined;
         const imageUrl = model
-          ? modelColors.find((mc) => mc.idClothingModel === model.id)?.imageUrl ?? ''
+          ? (modelColors.find((mc) => mc.idClothingModel === model.id && mc.imageUrl && !mc.imageUrl.includes('placehold.co'))?.imageUrl
+              ?? modelColors.find((mc) => mc.idClothingModel === model.id)?.imageUrl
+              ?? '')
           : '';
         const stockAtOrigin = stocks.find(
           (s) => s.idProduct === d['id_product'] && s.idLocation === this.originId(),

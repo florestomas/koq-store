@@ -310,7 +310,9 @@ export class NewSaleComponent {
     );
 
     const modelColors = this.catalogService.catalogModelColors();
-    const imageUrl = modelColors.find((mc) => mc.idClothingModel === model.id)?.imageUrl ?? '';
+    const imageUrl = modelColors.find((mc) => mc.idClothingModel === model.id && mc.imageUrl && !mc.imageUrl.includes('placehold.co'))?.imageUrl
+      ?? modelColors.find((mc) => mc.idClothingModel === model.id)?.imageUrl
+      ?? '';
 
     const rows: QuantityPickerRow[] = colorIds.map((colorId) => {
       const colorName = colors.find((c) => c.id === colorId)?.name ?? colorId;

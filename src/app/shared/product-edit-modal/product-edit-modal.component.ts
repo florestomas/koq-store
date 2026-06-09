@@ -480,13 +480,17 @@ export class ProductEditModalComponent {
       const costPrice = existingProduct?.costPrice ?? 0;
       const salePrice = existingProduct?.salePrice ?? 0;
 
+      const existingImage = this.allModelColors().find(
+        (mc) => mc.idClothingModel === modelId && mc.imageUrl && !mc.imageUrl.includes('placehold.co'),
+      )?.imageUrl ?? '';
+
       const { error: mcError } = await supabase
         .from('clothing_model_colors')
         .insert({
           id: crypto.randomUUID(),
           id_clothing_model: modelId,
           id_color: colorId,
-          image_url: `https://placehold.co/400x400?text=${encodeURIComponent(name.toUpperCase())}`,
+          image_url: existingImage,
         });
       if (mcError) {
         console.error('Error linking color to model:', mcError);

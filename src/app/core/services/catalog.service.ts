@@ -90,7 +90,9 @@ export class CatalogService {
       const modelColors = allModelColors.filter(
         (mc) => mc.idClothingModel === model.id,
       );
-      const imageUrl = modelColors[0]?.imageUrl ?? '';
+      const imageUrl = modelColors.find((mc) => mc.imageUrl && !mc.imageUrl.includes('placehold.co'))?.imageUrl
+        ?? modelColors[0]?.imageUrl
+        ?? '';
 
       const locationStocks = locationIds.map((lid) => {
         const locStocks = stocks.filter((s) => s.idLocation === lid);
