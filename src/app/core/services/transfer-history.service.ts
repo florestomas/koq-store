@@ -137,7 +137,7 @@ export class TransferHistoryService {
   });
 
   constructor() {
-    this.authService.waitForInit().then(() => this.loadTransfers());
+    this.authService.waitForInit().then(() => this.loadTransfers()).catch((err) => console.error('Failed to load transfers:', err));
   }
 
   private async loadTransfers(): Promise<void> {
@@ -153,9 +153,9 @@ export class TransferHistoryService {
     }
   }
 
-  refresh(): void {
+  refresh(): Promise<void> {
     this.refreshCounter.update((c) => c + 1);
-    this.loadTransfers();
+    return this.loadTransfers();
   }
 
   async hardDeleteTransfer(transferId: string): Promise<boolean> {

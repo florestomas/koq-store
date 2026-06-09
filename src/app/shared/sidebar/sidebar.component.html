@@ -1,5 +1,5 @@
 <div
-  class="flex flex-col h-full items-start justify-start bg-white relative overflow-y-auto max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:z-50 max-lg:shadow-2xl max-lg:transition-transform max-lg:duration-300 max-lg:w-72"
+  class="flex flex-col h-full items-start justify-start bg-white relative max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:z-50 max-lg:shadow-2xl max-lg:transition-transform max-lg:duration-300 max-lg:w-72"
   [class.max-lg:-translate-x-full]="!open"
 >
   <!-- Mobile close button -->
@@ -15,7 +15,7 @@
     <img class="size-14" src="koq-logo-sm.jpeg" />
   </div>
 
-  <nav class="flex flex-col gap-0.5 w-full py-4 px-6">
+  <nav class="flex flex-col gap-0.5 w-full py-4 px-6 flex-1 overflow-y-auto min-h-0 pb-32">
     <app-nav-item
       [navLink]="'catalogo'"
       [iconName]="'inventory_2'"

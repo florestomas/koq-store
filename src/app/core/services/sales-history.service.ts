@@ -232,7 +232,7 @@ export class SalesHistoryService {
   });
 
   constructor() {
-    this.authService.waitForInit().then(() => this.loadSales());
+    this.authService.waitForInit().then(() => this.loadSales()).catch((err) => console.error('Failed to load sales:', err));
   }
 
   private async loadSales(): Promise<void> {
@@ -328,8 +328,8 @@ export class SalesHistoryService {
     }
   }
 
-  refresh(): void {
+  refresh(): Promise<void> {
     this.refreshCounter.update((c) => c + 1);
-    this.loadSales();
+    return this.loadSales();
   }
 }

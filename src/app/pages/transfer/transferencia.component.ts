@@ -48,7 +48,9 @@ export class TransferenciaComponent {
 
     const editId = this.route.snapshot.queryParamMap.get('edit');
     if (editId) {
-      this.transferService.loadTransferForEditing(editId);
+      this.transferService.loadTransferForEditing(editId).catch((err) =>
+        console.error('Failed to load transfer for editing:', err),
+      );
     }
 
     this.catalogService.triggerRefresh();

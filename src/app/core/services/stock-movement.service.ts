@@ -211,11 +211,11 @@ export class StockMovementService {
   );
 
   constructor() {
-    this.authService.waitForInit().then(() => this.loadMovements());
+    this.authService.waitForInit().then(() => this.loadMovements()).catch((err) => console.error('Failed to load movements:', err));
   }
 
-  refresh(): void {
-    this.loadMovements();
+  refresh(): Promise<void> {
+    return this.loadMovements();
   }
 
   private async loadMovements(): Promise<void> {
