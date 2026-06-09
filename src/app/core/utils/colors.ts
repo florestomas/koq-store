@@ -45,8 +45,8 @@ export function getColorHex(name: string): string {
 export function colorPriority(name: string): number {
   const n = name.toUpperCase().trim();
   const index = [
-    'BLANCO',
     'NEGRO',
+    'BLANCO',
     'ROJO',
     'AZUL',
     'VERDE',
