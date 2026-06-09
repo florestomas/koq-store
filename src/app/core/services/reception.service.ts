@@ -111,13 +111,15 @@ export class ReceptionService {
               s.idLocation === t.idDestination,
           );
           const currentStock = destStock?.currentStock ?? 0;
-          const minStock = destStock?.minimumStock ?? 1;
+          const minStock = destStock?.minimumStock ?? 0;
           const stockStatus: 'critical' | 'low' | 'ok' =
-            currentStock === 0
-              ? 'critical'
-              : currentStock <= minStock
-                ? 'low'
-                : 'ok';
+            minStock === 0
+              ? 'ok'
+              : currentStock === 0
+                ? 'critical'
+                : currentStock <= minStock
+                  ? 'low'
+                  : 'ok';
 
           return {
             detailId: d.id,

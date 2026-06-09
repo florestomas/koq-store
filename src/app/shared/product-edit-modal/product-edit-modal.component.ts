@@ -362,7 +362,7 @@ export class ProductEditModalComponent {
           id_product: productIds[0],
           id_location: locationId,
           current_stock: newStock,
-          minimum_stock: 1,
+          minimum_stock: 0,
         });
         if (error) { console.error('Error inserting stock:', error); alert('Error al insertar stock: ' + error.message); }
       }

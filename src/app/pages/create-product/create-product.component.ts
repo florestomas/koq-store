@@ -167,7 +167,7 @@ export class CreateProductComponent {
   }
 
   getMinStock(colorId: string, size: string): number {
-    return this.minStockValues()[colorId]?.[size] ?? 1;
+    return this.minStockValues()[colorId]?.[size] ?? 0;
   }
 
   async addColor(): Promise<void> {

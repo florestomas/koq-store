@@ -139,10 +139,10 @@ export class CatalogService {
         .filter((ls) => {
           const hasLow = stocks.some(
             (s) =>
-              s.idLocation === ls.locationId && s.currentStock > 0 && s.currentStock <= s.minimumStock,
+              s.idLocation === ls.locationId && s.currentStock > 0 && s.currentStock <= s.minimumStock && s.minimumStock > 0,
           );
           const hasOut = stocks.some(
-            (s) => s.idLocation === ls.locationId && s.currentStock === 0,
+            (s) => s.idLocation === ls.locationId && s.currentStock === 0 && s.minimumStock > 0,
           );
           return hasLow || hasOut;
         })
