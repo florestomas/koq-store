@@ -7,8 +7,8 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "deploy": "npx vercel --prod",
-    "preview": "npx vercel dev"
+    "deploy": "npm run build && wrangler deploy",
+    "preview": "npm run build && wrangler dev"
   },
   "prettier": {
     "printWidth": 100,
@@ -46,7 +46,8 @@
     "postcss": "^8.5.3",
     "tailwindcss": "^4.1.12",
     "typescript": "~5.9.2",
+    "vercel": "^41.6.0",
     "vitest": "^4.0.8",
-    "vercel": "^41.6.0"
+    "wrangler": "^4.99.0"
   }
 }
