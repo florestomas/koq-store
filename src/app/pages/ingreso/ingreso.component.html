@@ -1,6 +1,6 @@
 <div class="flex flex-col md:flex-row w-full h-full gap-4 md:gap-6 p-4 md:p-8">
   <!-- Left column — Search / Create / Variants -->
-  <div class="flex-[2] flex flex-col gap-4 min-w-0 overflow-hidden">
+  <div class="flex-[2] flex flex-col gap-4 min-w-0">
     <!-- Header -->
     <div class="flex flex-row items-center gap-2 w-full justify-between shrink-0 flex-wrap">
       <div class="flex flex-row items-center gap-2">
@@ -50,7 +50,6 @@
     }
 
     <!-- ===== SEARCH MODE ===== -->
-    @if (mode() === 'search') {
       <!-- Search input -->
       <div class="flex flex-row items-center gap-2 bg-gray-100 rounded-full px-4 py-2.5 border-2 border-transparent focus-within:border-koq">
         <mat-icon class="text-zinc-400">search</mat-icon>
@@ -126,87 +125,6 @@
           </button>
         </div>
       }
-    }
-
-    <!-- ===== VARIANTS MODE ===== -->
-    @if (mode() === 'variants' && selectedModel(); as model) {
-      <!-- Model info header -->
-      <div class="flex flex-row items-center gap-4 bg-white border border-gray-200 rounded-2xl p-4 shrink-0">
-        <button (click)="clearModel()" class="shrink-0 text-zinc-400 hover:text-zinc-700 transition cursor-pointer">
-          <mat-icon>arrow_back</mat-icon>
-        </button>
-        @if (modelImageUrl()) {
-          <img [src]="modelImageUrl()" class="size-14 rounded-xl object-cover shrink-0 bg-gray-100" />
-        }
-        <div class="flex flex-col flex-1 min-w-0">
-          <p class="text-lg font-bold truncate">{{ model.name }}</p>
-        </div>
-      </div>
-
-      <!-- Variant grid -->
-      @if (variantGrid().length > 0) {
-        <div class="overflow-auto flex-1 min-h-0 border border-gray-200 rounded-2xl bg-white">
-          <table class="w-full text-sm">
-            <thead>
-              <tr class="border-b border-gray-200 bg-gray-50">
-                <th class="text-left py-3 px-4 text-zinc-500 font-medium text-xs uppercase tracking-wider">Color</th>
-                @for (size of allSizes(); track size) {
-                  <th class="text-center py-3 px-3 text-zinc-500 font-medium text-xs uppercase tracking-wider">T. {{ size }}</th>
-                }
-              </tr>
-            </thead>
-            <tbody>
-              @for (row of variantGrid(); track row.colorName) {
-                <tr class="border-b border-gray-100 last:border-b-0">
-                  <td class="py-2.5 px-4 font-medium text-sm">
-                    <span class="inline-block rounded-full size-3 shrink-0 mr-1.5 align-middle" [style.background]="getColorHex(row.colorName)"></span>
-                    {{ row.colorName }}
-                  </td>
-                  @for (cell of row.cells; track cell.productId ?? cell.size) {
-                    <td class="py-2.5 px-3 text-center">
-                      @if (cell.productId) {
-                        <input
-                          type="number"
-                          min="0"
-                          class="w-16 text-center border border-gray-300 rounded-lg px-2 py-1.5 text-sm outline-none focus:border-koq"
-                          [value]="getVariantQty(cell.productId)"
-                          (input)="setVariantQty(cell.productId, $any($event.target).value)"
-                          placeholder="0"
-                        />
-                      } @else {
-                        <span class="text-gray-200 text-xs">&mdash;</span>
-                      }
-                    </td>
-                  }
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      } @else {
-        <div class="flex flex-col items-center justify-center py-10 text-zinc-400 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
-          <mat-icon class="text-4xl mb-2">inventory_2</mat-icon>
-          <p class="text-sm font-medium">Este modelo no tiene variantes disponibles</p>
-        </div>
-      }
-
-      <!-- Add to resumen button -->
-      <div class="flex flex-row items-center justify-end gap-3 shrink-0">
-        <button
-          (click)="clearModel()"
-          class="px-6 py-2.5 rounded-full text-sm font-semibold border border-gray-300 text-zinc-600 hover:bg-gray-50 transition cursor-pointer"
-        >
-          Cancelar
-        </button>
-        <button
-          (click)="addToResumen()"
-          [disabled]="!canAddToResumen()"
-          class="px-6 py-2.5 rounded-full text-sm font-bold tracking-wider text-white transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed bg-koq hover:opacity-90"
-        >
-          Agregar al resumen ({{ totalUnits() }})
-        </button>
-      </div>
-    }
   </div>
 
   <!-- Right column — Resumen de ingreso -->

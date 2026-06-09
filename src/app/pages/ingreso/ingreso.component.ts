@@ -3,24 +3,21 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { UpperCasePipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatIcon } from '@angular/material/icon';
+import { MatDialog } from '@angular/material/dialog';
 import { RouterLink } from '@angular/router';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { CatalogService } from '../../core/services/catalog.service';
 import { IngresoService, IngresoItem } from '../../core/services/ingreso.service';
-import { getColorHex, colorPriority } from '../../core/utils/colors';
+import { getColorHex } from '../../core/utils/colors';
 import { StockMovementService } from '../../core/services/stock-movement.service';
 import { ClothingModel } from '../../interfaces/clothing-model';
 import { Category } from '../../interfaces/category';
-
-interface VariantCell {
-  productId: string | null;
-  size: string;
-}
-
-interface VariantRow {
-  colorName: string;
-  cells: VariantCell[];
-}
+import {
+  ProductQuantityPickerDialogComponent,
+  QuantityPickerData,
+  QuantityPickerResult,
+  QuantityPickerRow,
+} from '../../shared/product-quantity-picker-dialog/product-quantity-picker-dialog.component';
 
 interface ModelSearchResult {
   model: ClothingModel;
@@ -43,15 +40,12 @@ export class IngresoComponent {
   private readonly stockMovementService = inject(StockMovementService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-
-  readonly mode = signal<'search' | 'variants'>('search');
+  private readonly dialog = inject(MatDialog);
 
   readonly searchControl = new FormControl('');
   readonly searchTerm = signal('');
   readonly selectedCategoryId = signal<string | null>(null);
 
-  readonly selectedModel = signal<ClothingModel | null>(null);
-  readonly variantQuantities = signal<Record<string, number>>({});
   readonly selectedLocationId = signal('');
   readonly resumenItems = signal<IngresoItem[]>([]);
   readonly confirmed = signal(false);
@@ -99,65 +93,7 @@ export class IngresoComponent {
     return cats;
   });
 
-  readonly modelImageUrl = computed(() => {
-    const model = this.selectedModel();
-    if (!model) return '';
-    const modelColors = this.catalogService.catalogModelColors();
-    return (
-      modelColors.find((mc) => mc.idClothingModel === model.id)?.imageUrl ?? ''
-    );
-  });
-
-  readonly modelProducts = computed(() => {
-    const model = this.selectedModel();
-    if (!model) return [];
-    const products = this.catalogService.catalogProducts();
-    return products
-      .filter((p) => p.idClothingModel === model.id && p.active)
-      .map((p) => ({ id: p.id, idColor: p.idColor, size: p.size }));
-  });
-
-  readonly allSizes = computed(() => {
-    const products = this.modelProducts();
-    return [...new Set(products.map((p) => p.size))].sort(
-      (a, b) => {
-        const na = parseInt(a);
-        const nb = parseInt(b);
-        if (!isNaN(na) && !isNaN(nb)) return na - nb;
-        return a.localeCompare(b);
-      },
-    );
-  });
-
-  readonly variantGrid = computed<VariantRow[]>(() => {
-    const products = this.modelProducts();
-    const sizes = this.allSizes();
-    const colors = this.catalogService.colors();
-    const colorIds = [...new Set(products.map((p) => p.idColor))];
-
-    return colorIds.map((colorId) => {
-      const colorName = colors.find((c) => c.id === colorId)?.name ?? colorId;
-      const colorProducts = products.filter((p) => p.idColor === colorId);
-      const cells: VariantCell[] = sizes.map((size) => {
-        const product = colorProducts.find((p) => p.size === size);
-        if (!product) return { productId: null, size };
-        return { productId: product.id, size };
-      });
-      return { colorName, cells };
-    }).sort((a, b) => {
-      const pa = colorPriority(a.colorName);
-      const pb = colorPriority(b.colorName);
-      if (pa !== pb) return pa - pb;
-      return a.colorName.localeCompare(b.colorName);
-    });
-  });
-
-  readonly totalUnits = computed(() => {
-    const quantities = this.variantQuantities();
-    return Object.values(quantities).reduce((sum, q) => sum + q, 0);
-  });
-
-  readonly canAddToResumen = computed(() => this.totalUnits() > 0);
+  readonly getColorHex = getColorHex;
 
   readonly totalResumenItems = computed(() => this.resumenItems().length);
   readonly totalResumenUnits = computed(() =>
@@ -166,8 +102,6 @@ export class IngresoComponent {
   readonly canConfirm = computed(
     () => this.resumenItems().length > 0 && this.selectedLocationId() !== '',
   );
-
-  readonly getColorHex = getColorHex;
 
   constructor() {
     const sub = this.searchControl.valueChanges
@@ -258,72 +192,95 @@ export class IngresoComponent {
     this.editingIngresoId.set(null);
     this.resumenItems.set([]);
     this.selectedLocationId.set('');
-    this.selectedModel.set(null);
-    this.variantQuantities.set({});
-    this.mode.set('search');
     this.clearCache();
     this.router.navigate(['/historial']);
   }
 
   selectModel(model: ClothingModel): void {
-    this.selectedModel.set(model);
-    this.variantQuantities.set({});
-    this.mode.set('variants');
+    const products = this.catalogService.catalogProducts().filter(
+      (p) => p.idClothingModel === model.id && p.active,
+    );
+    if (products.length === 0) return;
+
+    const colors = this.catalogService.colors();
+    const colorIds = [...new Set(products.map((p) => p.idColor))];
+    const allSizes = [...new Set(products.map((p) => p.size))].sort(
+      (a, b) => {
+        const na = parseInt(a);
+        const nb = parseInt(b);
+        if (!isNaN(na) && !isNaN(nb)) return na - nb;
+        return a.localeCompare(b);
+      },
+    );
+
+    const modelColors = this.catalogService.catalogModelColors();
+    const imageUrl = modelColors.find((mc) => mc.idClothingModel === model.id)?.imageUrl ?? '';
+
+    const rows: QuantityPickerRow[] = colorIds.map((colorId) => {
+      const colorName = colors.find((c) => c.id === colorId)?.name ?? colorId;
+      const colorProducts = products.filter((p) => p.idColor === colorId);
+      const cells = allSizes.map((size) => {
+        const product = colorProducts.find((p) => p.size === size);
+        return {
+          productId: product ? product.id : null,
+          size,
+        };
+      });
+      return { colorName, cells };
+    });
+
+    const data: QuantityPickerData = {
+      modelName: model.name,
+      imageUrl,
+      sizes: allSizes,
+      rows,
+      showStock: false,
+    };
+
+    const dialogRef = this.dialog.open<
+      ProductQuantityPickerDialogComponent,
+      QuantityPickerData,
+      QuantityPickerResult
+    >(ProductQuantityPickerDialogComponent, { data, maxWidth: '90vw' });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) this.addToResumenFromPicker(model, result.quantities);
+    });
   }
 
-  setSelectedCategory(id: string | null): void {
-    this.selectedCategoryId.set(id);
-  }
+  private addToResumenFromPicker(model: ClothingModel, quantities: Record<string, number>): void {
+    const products = this.catalogService.catalogProducts();
+    const colors = this.catalogService.colors();
+    const modelColors = this.catalogService.catalogModelColors();
+    const imageUrl = modelColors.find((mc) => mc.idClothingModel === model.id)?.imageUrl ?? '';
 
-  clearModel(): void {
-    this.selectedModel.set(null);
-    this.variantQuantities.set({});
-    this.mode.set('search');
-  }
-
-  setVariantQty(productId: string, rawValue: string): void {
-    const value = Math.max(parseInt(rawValue) || 0, 0);
-    this.variantQuantities.update((map) => ({ ...map, [productId]: value }));
-  }
-
-  getVariantQty(productId: string): number {
-    return this.variantQuantities()[productId] ?? 0;
-  }
-
-  addToResumen(): void {
-    const model = this.selectedModel();
-    if (!model || !this.canAddToResumen()) return;
-
-    const quantities = this.variantQuantities();
     const newItems: IngresoItem[] = [];
 
-    for (const row of this.variantGrid()) {
-      for (const cell of row.cells) {
-        if (!cell.productId) continue;
-        const qty = quantities[cell.productId] ?? 0;
-        if (qty <= 0) continue;
+    for (const [productId, qty] of Object.entries(quantities)) {
+      if (qty <= 0) continue;
+      const product = products.find((p) => p.id === productId);
+      if (!product) continue;
+      const colorName = colors.find((c) => c.id === product.idColor)?.name ?? '';
 
-        const existingIndex = this.resumenItems().findIndex(
-          (ri) => ri.productId === cell.productId,
-        );
-
-        if (existingIndex !== -1) {
-          const current = [...this.resumenItems()];
-          current[existingIndex] = {
-            ...current[existingIndex],
-            quantity: current[existingIndex].quantity + qty,
-          };
-          this.resumenItems.set(current);
-        } else {
-          newItems.push({
-            productId: cell.productId,
-            modelName: model.name,
-            colorName: row.colorName,
-            size: cell.size,
-            quantity: qty,
-            imageUrl: this.modelImageUrl(),
-          });
-        }
+      const existingIndex = this.resumenItems().findIndex(
+        (ri) => ri.productId === productId,
+      );
+      if (existingIndex !== -1) {
+        const current = [...this.resumenItems()];
+        current[existingIndex] = {
+          ...current[existingIndex],
+          quantity: current[existingIndex].quantity + qty,
+        };
+        this.resumenItems.set(current);
+      } else {
+        newItems.push({
+          productId,
+          modelName: model.name,
+          colorName,
+          size: product.size,
+          quantity: qty,
+          imageUrl,
+        });
       }
     }
 
@@ -331,8 +288,11 @@ export class IngresoComponent {
       this.resumenItems.update((prev) => [...prev, ...newItems]);
     }
 
-    this.variantQuantities.set({});
     this.saveToCache();
+  }
+
+  setSelectedCategory(id: string | null): void {
+    this.selectedCategoryId.set(id);
   }
 
   changeResumenQty(index: number, delta: number): void {
@@ -394,9 +354,6 @@ export class IngresoComponent {
         this.ingresoService.saveLastIngreso(items, locationId);
         this.resumenItems.set([]);
         this.selectedLocationId.set('');
-        this.selectedModel.set(null);
-        this.variantQuantities.set({});
-        this.mode.set('search');
         this.searchControl.setValue('');
         this.searchTerm.set('');
         this.selectedCategoryId.set(null);

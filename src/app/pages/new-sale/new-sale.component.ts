@@ -2,27 +2,22 @@ import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, signa
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { UpperCasePipe, DecimalPipe } from '@angular/common';
 import { MatIcon } from '@angular/material/icon';
+import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { CatalogService } from '../../core/services/catalog.service';
 import { SaleService, CartItem } from '../../core/services/sale.service';
 import { getSupabase } from '../../core/services/supabase.service';
-import { getColorHex, colorPriority } from '../../core/utils/colors';
+import { getColorHex } from '../../core/utils/colors';
 import { ClothingModel } from '../../interfaces/clothing-model';
 import { Category } from '../../interfaces/category';
-
-interface VariantCell {
-  productId: string | null;
-  size: string;
-  stock: number;
-}
-
-interface VariantRow {
-  colorId: string;
-  colorName: string;
-  cells: VariantCell[];
-}
+import {
+  ProductQuantityPickerDialogComponent,
+  QuantityPickerData,
+  QuantityPickerResult,
+  QuantityPickerRow,
+} from '../../shared/product-quantity-picker-dialog/product-quantity-picker-dialog.component';
 
 interface SaleCache {
   cartItems: CartItem[];
@@ -85,18 +80,17 @@ export class NewSaleComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   readonly catalogService = inject(CatalogService);
+  private readonly dialog = inject(MatDialog);
 
   readonly searchControl = new FormControl('');
   readonly searchTerm = signal('');
   readonly selectedCategoryId = signal<string | null>(null);
-  readonly selectedModel = signal<ClothingModel | null>(null);
   readonly cartItems = signal<CartItem[]>([]);
   readonly channel = signal<'local' | 'whatsapp' | null>(null);
   readonly surchargeMode = signal<'none' | 'percentage' | 'fixed'>('none');
   readonly surchargeFixedValue = signal(0);
   readonly confirmed = signal(false);
   readonly error = signal<string | null>(null);
-  readonly variantQuantities = signal<Record<string, number>>({});
   readonly showCanastoForm = signal(false);
   readonly canastoPrice = signal(0);
   readonly editingSaleId = signal<string | null>(null);
@@ -190,88 +184,6 @@ export class NewSaleComponent {
     return categories.filter((c) => modelIdsWithStock.has(c.id));
   });
 
-  readonly modelImageUrl = computed(() => {
-    const model = this.selectedModel();
-    if (!model) return '';
-    const modelColors = this.catalogService.catalogModelColors();
-    return (
-      modelColors.find((mc) => mc.idClothingModel === model.id)
-        ?.imageUrl ?? ''
-    );
-  });
-
-  readonly modelProducts = computed(() => {
-    const model = this.selectedModel();
-    if (!model) return [];
-    const products = this.catalogService.catalogProducts();
-    return products.filter(
-      (p) => p.idClothingModel === model.id && p.active,
-    );
-  });
-
-  readonly modelTotalStock = computed(() => {
-    const products = this.modelProducts();
-    const locId = this.userLocationId();
-    const stocks = this.catalogService.catalogStocks();
-    const cartMap = this.cartQuantities();
-    const dbStock = stocks
-      .filter(
-        (s) =>
-          products.some((p) => p.id === s.idProduct) &&
-          s.idLocation === locId,
-      )
-      .reduce((sum, s) => sum + s.currentStock, 0);
-    const cartTotal = products.reduce((sum, p) => sum + (cartMap.get(p.id) ?? 0), 0);
-    return Math.max(0, dbStock - cartTotal);
-  });
-
-  readonly allSizes = computed(() => {
-    const products = this.modelProducts();
-    return [...new Set(products.map((p) => p.size))].sort(
-      (a, b) => parseInt(a) - parseInt(b),
-    );
-  });
-
-  readonly variantGrid = computed<VariantRow[]>(() => {
-    const products = this.modelProducts();
-    const locId = this.userLocationId();
-    const sizes = this.allSizes();
-    const colors = this.catalogService.colors();
-    const stocks = this.catalogService.catalogStocks();
-    const cartMap = this.cartQuantities();
-    const colorIds = [...new Set(products.map((p) => p.idColor))];
-
-    return colorIds.map((colorId) => {
-      const colorName = colors.find((c) => c.id === colorId)?.name ?? colorId;
-      const colorProducts = products.filter((p) => p.idColor === colorId);
-
-      const cells: VariantCell[] = sizes.map((size) => {
-        const product = colorProducts.find((p) => p.size === size);
-        if (!product) return { productId: null, size, stock: 0 };
-        const dbStock =
-          stocks.find(
-            (s) => s.idProduct === product.id && s.idLocation === locId,
-          )?.currentStock ?? 0;
-        const cartQty = cartMap.get(product.id) ?? 0;
-        return { productId: product.id, size, stock: Math.max(0, dbStock - cartQty) };
-      });
-
-      return { colorId, colorName, cells };
-    }).sort((a, b) => {
-      const pa = colorPriority(a.colorName);
-      const pb = colorPriority(b.colorName);
-      if (pa !== pb) return pa - pb;
-      return a.colorName.localeCompare(b.colorName);
-    });
-  });
-
-  readonly totalAddingUnits = computed(() => {
-    const quantities = this.variantQuantities();
-    return Object.values(quantities).reduce((sum, q) => sum + q, 0);
-  });
-
-  readonly canAddToCart = computed(() => this.totalAddingUnits() > 0);
-
   readonly totalBeforeDiscount = computed(() =>
     this.cartItems().reduce(
       (sum, item) => sum + item.quantity * item.unitPrice,
@@ -301,8 +213,6 @@ export class NewSaleComponent {
       .pipe(debounceTime(300), distinctUntilChanged())
       .subscribe((value) => {
         this.searchTerm.set(value ?? '');
-        this.selectedModel.set(null);
-        this.variantQuantities.set({});
       });
 
     this.destroyRef.onDestroy(() => sub.unsubscribe());
@@ -385,88 +295,93 @@ export class NewSaleComponent {
   }
 
   selectModel(model: ClothingModel): void {
-    this.selectedModel.set(model);
-    this.variantQuantities.set({});
+    const products = this.catalogService.catalogProducts().filter(
+      (p) => p.idClothingModel === model.id && p.active,
+    );
+    if (products.length === 0) return;
+
+    const locId = this.userLocationId();
+    const colors = this.catalogService.colors();
+    const stocks = this.catalogService.catalogStocks();
+    const cartMap = this.cartQuantities();
+    const colorIds = [...new Set(products.map((p) => p.idColor))];
+    const allSizes = [...new Set(products.map((p) => p.size))].sort(
+      (a, b) => parseInt(a) - parseInt(b),
+    );
+
+    const modelColors = this.catalogService.catalogModelColors();
+    const imageUrl = modelColors.find((mc) => mc.idClothingModel === model.id)?.imageUrl ?? '';
+
+    const rows: QuantityPickerRow[] = colorIds.map((colorId) => {
+      const colorName = colors.find((c) => c.id === colorId)?.name ?? colorId;
+      const colorProducts = products.filter((p) => p.idColor === colorId);
+      const cells = allSizes.map((size) => {
+        const product = colorProducts.find((p) => p.size === size);
+        if (!product) return { productId: null, size, stock: 0 };
+        const dbStock =
+          stocks.find((s) => s.idProduct === product.id && s.idLocation === locId)
+            ?.currentStock ?? 0;
+        const cartQty = cartMap.get(product.id) ?? 0;
+        return { productId: product.id, size, stock: Math.max(0, dbStock - cartQty) };
+      });
+      return { colorName, cells };
+    });
+
+    const data: QuantityPickerData = {
+      modelName: model.name,
+      imageUrl,
+      sizes: allSizes,
+      rows,
+      showStock: true,
+    };
+
+    const dialogRef = this.dialog.open<
+      ProductQuantityPickerDialogComponent,
+      QuantityPickerData,
+      QuantityPickerResult
+    >(ProductQuantityPickerDialogComponent, { data, maxWidth: '90vw' });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) this.addToCartFromPicker(model, result.quantities, imageUrl);
+    });
   }
 
-  setSelectedCategory(id: string | null): void {
-    this.selectedCategoryId.set(id);
-    this.selectedModel.set(null);
-    this.variantQuantities.set({});
-  }
-
-  clearModel(): void {
-    this.selectedModel.set(null);
-    this.variantQuantities.set({});
-  }
-
-  setVariantQty(productId: string, rawValue: string): void {
-    let value = Math.max(parseInt(rawValue) || 0, 0);
-    if (value > 0) {
-      const stocks = this.catalogService.catalogStocks();
-      const dbStock =
-        stocks.find(
-          (s) => s.idProduct === productId && s.idLocation === this.userLocationId(),
-        )?.currentStock ?? 0;
-      const cartTotal = this.cartQuantities().get(productId) ?? 0;
-      value = Math.min(value, Math.max(0, dbStock - cartTotal));
-    }
-    this.variantQuantities.update((map) => ({ ...map, [productId]: value }));
-  }
-
-  getVariantQty(productId: string): number {
-    return this.variantQuantities()[productId] ?? 0;
-  }
-
-  addToCart(): void {
-    const model = this.selectedModel();
-    if (!model || !this.canAddToCart()) return;
-
-    this.error.set(null);
-
-    const quantities = this.variantQuantities();
+  private addToCartFromPicker(
+    model: ClothingModel,
+    quantities: Record<string, number>,
+    imageUrl: string,
+  ): void {
+    const products = this.catalogService.catalogProducts();
+    const colors = this.catalogService.colors();
     const items: CartItem[] = [];
 
-    for (const row of this.variantGrid()) {
-      for (const cell of row.cells) {
-        if (!cell.productId) continue;
-        const qty = quantities[cell.productId] ?? 0;
-        if (qty <= 0) continue;
+    for (const [productId, qty] of Object.entries(quantities)) {
+      if (qty <= 0) continue;
+      const product = products.find((p) => p.id === productId);
+      if (!product) continue;
+      const colorName = colors.find((c) => c.id === product.idColor)?.name ?? '';
 
-        if (qty > cell.stock) {
-          this.error.set(
-            `Stock insuficiente para "${model.name} T.${cell.size} ${row.colorName}". Disponible: ${cell.stock}.`,
-          );
-          return;
-        }
-
-        const products = this.catalogService.catalogProducts();
-        const product = products.find((p) => p.id === cell.productId);
-        if (!product) continue;
-
-        const existing = this.cartItems().findIndex(
-          (ci) => ci.productId === cell.productId,
-        );
-
-        if (existing !== -1) {
-          const current = [...this.cartItems()];
-          current[existing] = {
-            ...current[existing],
-            quantity: current[existing].quantity + qty,
-          };
-          this.cartItems.set(current);
-        } else {
-          items.push({
-            productId: cell.productId,
-            modelName: model.name,
-            colorName: row.colorName,
-            size: cell.size,
-            quantity: qty,
-            unitPrice: product.salePrice,
-            originalPrice: product.salePrice,
-            imageUrl: this.modelImageUrl(),
-          });
-        }
+      const existing = this.cartItems().findIndex(
+        (ci) => ci.productId === productId,
+      );
+      if (existing !== -1) {
+        const current = [...this.cartItems()];
+        current[existing] = {
+          ...current[existing],
+          quantity: current[existing].quantity + qty,
+        };
+        this.cartItems.set(current);
+      } else {
+        items.push({
+          productId,
+          modelName: model.name,
+          colorName,
+          size: product.size,
+          quantity: qty,
+          unitPrice: product.salePrice,
+          originalPrice: product.salePrice,
+          imageUrl,
+        });
       }
     }
 
@@ -474,8 +389,11 @@ export class NewSaleComponent {
       this.cartItems.update((prev) => [...prev, ...items]);
     }
 
-    this.variantQuantities.set({});
     this.saveToCache();
+  }
+
+  setSelectedCategory(id: string | null): void {
+    this.selectedCategoryId.set(id);
   }
 
   addCanasto(): void {
@@ -620,8 +538,6 @@ export class NewSaleComponent {
       this.confirmed.set(true);
       this.error.set(null);
       this.cartItems.set([]);
-      this.selectedModel.set(null);
-      this.variantQuantities.set({});
       this.channel.set(null);
       this.surchargeMode.set('none');
       this.surchargeFixedValue.set(0);

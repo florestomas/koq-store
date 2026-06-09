@@ -1,0 +1,73 @@
+<div class="flex flex-col min-w-0 md:min-w-[560px] max-h-[85vh]">
+  <h2 mat-dialog-title class="flex flex-row items-center gap-3 shrink-0">
+    @if (data.imageUrl) {
+      <img [src]="data.imageUrl" class="size-12 rounded-xl object-cover shrink-0" />
+    }
+    <span class="text-xl font-bold truncate">{{ data.modelName }}</span>
+  </h2>
+
+  <mat-dialog-content class="max-md:max-h-[60vh]">
+    @if (sortedRows().length > 0) {
+      <div class="overflow-auto border border-gray-200 rounded-2xl">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-gray-200 bg-gray-50">
+              <th class="text-left py-3 px-4 text-zinc-500 font-medium text-xs uppercase tracking-wider">Color</th>
+              @for (size of data.sizes; track size) {
+                <th class="text-center py-3 px-3 text-zinc-500 font-medium text-xs uppercase tracking-wider">T. {{ size }}</th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of sortedRows(); track row.colorName) {
+              <tr class="border-b border-gray-100 last:border-b-0">
+                <td class="py-2.5 px-4 font-medium text-sm">
+                  <span class="inline-block rounded-full size-3 shrink-0 mr-1.5 align-middle" [style.background]="getColorHex(row.colorName)"></span>
+                  {{ row.colorName }}
+                </td>
+                @for (cell of row.cells; track cell.productId ?? cell.size) {
+                  <td class="py-2.5 px-3 text-center">
+                    @if (cell.productId && (data.showStock === false || (cell.stock ?? 0) > 0)) {
+                      <div class="flex flex-col items-center gap-0.5">
+                        <input
+                          type="number"
+                          min="0"
+                          [max]="data.showStock === false ? undefined : (cell.stock ?? 0)"
+                          class="w-16 text-center border border-gray-300 rounded-lg px-2 py-1.5 text-sm outline-none focus:border-koq"
+                          [value]="getQty(cell.productId)"
+                          (input)="setQty(cell.productId, $any($event.target).value)"
+                          placeholder="0"
+                        />
+                        @if (data.showStock !== false) {
+                          <span class="text-[10px] text-zinc-400">{{ cell.stock }} disp.</span>
+                        }
+                      </div>
+                    } @else {
+                      <span class="text-gray-300 text-xs">&mdash;</span>
+                    }
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else {
+      <div class="flex flex-col items-center justify-center py-10 text-zinc-400">
+        <p class="text-sm">Este modelo no tiene variantes disponibles</p>
+      </div>
+    }
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end" class="shrink-0">
+    <button mat-button (click)="close()">Cancelar</button>
+    <button
+      mat-flat-button
+      color="primary"
+      (click)="confirm()"
+      [disabled]="totalSelected() === 0"
+    >
+      Agregar al resumen ({{ totalSelected() }})
+    </button>
+  </mat-dialog-actions>
+</div>
