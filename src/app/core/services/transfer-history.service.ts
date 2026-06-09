@@ -3,7 +3,7 @@ import { AuthService } from './auth.service';
 import { CatalogService } from './catalog.service';
 import { ReceptionService } from './reception.service';
 import { getSupabase } from './supabase.service';
-import { toCamelCase } from '../utils/supabase-utils';
+import { toCamelCase, fetchAll } from '../utils/supabase-utils';
 import { Transfer } from '../../interfaces/transfer';
 import { TransferDetail } from '../../interfaces/transfer-detail';
 
@@ -25,6 +25,7 @@ export interface TransferRow {
   confirmedAt?: string;
   itemCount: number;
   totalValue: number;
+  note?: string;
   details: TransferDetailRow[];
 }
 
@@ -122,6 +123,7 @@ export class TransferHistoryService {
         confirmedAt: t.confirmedAt,
         itemCount: details.length,
         totalValue,
+        note: t.note,
         details,
       };
     });
@@ -140,13 +142,12 @@ export class TransferHistoryService {
 
   private async loadTransfers(): Promise<void> {
     try {
-      const supabase = getSupabase();
-      const [{ data: transfers }, { data: details }] = await Promise.all([
-        supabase.from('transfers').select('*'),
-        supabase.from('transfer_details').select('*'),
+      const [transfers, details] = await Promise.all([
+        fetchAll('transfers'),
+        fetchAll('transfer_details'),
       ]);
-      if (transfers) this.transfersSig.set(transfers.map((r: Record<string, unknown>) => toCamelCase<Transfer>(r)));
-      if (details) this.transferDetailsSig.set(details.map((r: Record<string, unknown>) => toCamelCase<TransferDetail>(r)));
+      if (transfers.length) this.transfersSig.set(transfers.map((r: Record<string, unknown>) => toCamelCase<Transfer>(r)));
+      if (details.length) this.transferDetailsSig.set(details.map((r: Record<string, unknown>) => toCamelCase<TransferDetail>(r)));
     } catch (err) {
       console.error('Error loading transfers:', err);
     }

@@ -1,7 +1,7 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { deleteProductImage, getSupabase } from './supabase.service';
 import { AuthService } from './auth.service';
-import { toCamelCase } from '../utils/supabase-utils';
+import { toCamelCase, fetchAll } from '../utils/supabase-utils';
 import { CatalogItem, StockAlert, ProductRef, StockRef } from '../../interfaces/catalog-item';
 import { Category } from '../../interfaces/category';
 import { ClothingModel } from '../../interfaces/clothing-model';
@@ -229,7 +229,7 @@ export class CatalogService {
         supabase.from('users').select('*').limit(1000),
       ]);
 
-      const rawStocks = await this.fetchAll('stock_locations');
+      const rawStocks = await fetchAll('stock_locations');
 
       if (rawCategories) this.categoriesSig.set(rawCategories.map((r: Record<string, unknown>) => toCamelCase<Category>(r)));
       if (rawModels) this.modelsSig.set(rawModels.map((r: Record<string, unknown>) => toCamelCase<ClothingModel>(r)));
@@ -246,35 +246,6 @@ export class CatalogService {
     } finally {
       this.loaded.set(true);
     }
-  }
-
-  private async fetchAll(table: string): Promise<Record<string, unknown>[]> {
-    const supabase = getSupabase();
-    const pageSize = 1000;
-    const allRows: Record<string, unknown>[] = [];
-    let from = 0;
-
-    while (true) {
-      const { data, error } = await supabase
-        .from(table)
-        .select('*')
-        .range(from, from + pageSize - 1);
-
-      if (error) {
-        console.error(`Error fetching ${table}:`, error.message);
-        break;
-      }
-
-      if (!data || data.length === 0) break;
-
-      allRows.push(...data);
-
-      if (data.length < pageSize) break;
-
-      from += pageSize;
-    }
-
-    return allRows;
   }
 
   setSearchTerm(value: string): void {

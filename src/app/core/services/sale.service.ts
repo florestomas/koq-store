@@ -1,5 +1,6 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { CatalogService } from './catalog.service';
+import { SalesHistoryService } from './sales-history.service';
 import { getSupabase } from './supabase.service';
 
 export interface CartItem {
@@ -23,6 +24,7 @@ interface ConfirmSaleParams {
 @Injectable({ providedIn: 'root' })
 export class SaleService {
   private readonly catalogService = inject(CatalogService);
+  private readonly salesHistoryService = inject(SalesHistoryService);
 
   private lastSaleData = signal<{ items: CartItem[]; channel: 'local' | 'whatsapp' } | null>(null);
   readonly hasLastSale = computed(() => this.lastSaleData() !== null);
@@ -99,6 +101,7 @@ export class SaleService {
 
       this.saveLastSale(data);
       this.catalogService.triggerRefresh();
+      this.salesHistoryService.refresh();
       return true;
     } catch (err) {
       console.error('Sale error:', err);
@@ -134,6 +137,7 @@ export class SaleService {
 
       this.saveLastSale(data);
       this.catalogService.triggerRefresh();
+      this.salesHistoryService.refresh();
       return true;
     } catch (err) {
       console.error('Edit sale error:', err);

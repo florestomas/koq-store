@@ -3,6 +3,7 @@ import { AuthService } from './auth.service';
 import { CatalogService } from './catalog.service';
 import { StockMovementService } from './stock-movement.service';
 import { ReceptionService } from './reception.service';
+import { TransferHistoryService } from './transfer-history.service';
 import { getSupabase } from './supabase.service';
 import { toCamelCase } from '../utils/supabase-utils';
 import { Product } from '../../interfaces/product';
@@ -58,6 +59,7 @@ export class TransferService {
   private readonly catalogService = inject(CatalogService);
   private readonly stockMovementService = inject(StockMovementService);
   private readonly receptionService = inject(ReceptionService);
+  private readonly transferHistoryService = inject(TransferHistoryService);
 
   constructor() {
     this.restoreFromCache();
@@ -440,6 +442,7 @@ export class TransferService {
       this.editingTransferId.set(null);
       this.catalogService.triggerRefresh();
       this.receptionService.refresh();
+      this.transferHistoryService.refresh();
       return true;
     } catch (err) {
       console.error('Error in editTransfer:', err);
@@ -495,6 +498,7 @@ export class TransferService {
       this.destinationId.set('');
       this.catalogService.triggerRefresh();
       this.receptionService.refresh();
+      this.transferHistoryService.refresh();
       return true;
     } catch (err) {
       console.error('Error in confirmTransfer:', err);

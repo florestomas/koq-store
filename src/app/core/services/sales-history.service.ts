@@ -3,7 +3,7 @@ import { AuthService } from './auth.service';
 import { CatalogService } from './catalog.service';
 import { StockMovementService } from './stock-movement.service';
 import { getSupabase } from './supabase.service';
-import { toCamelCase } from '../utils/supabase-utils';
+import { toCamelCase, fetchAll } from '../utils/supabase-utils';
 import { Sale } from '../../interfaces/sale';
 import { SaleDetail } from '../../interfaces/sale-detail';
 
@@ -237,13 +237,12 @@ export class SalesHistoryService {
 
   private async loadSales(): Promise<void> {
     try {
-      const supabase = getSupabase();
-      const [{ data: sales }, { data: details }] = await Promise.all([
-        supabase.from('sales').select('*'),
-        supabase.from('sale_details').select('*'),
+      const [sales, details] = await Promise.all([
+        fetchAll('sales'),
+        fetchAll('sale_details'),
       ]);
-      if (sales) this.salesSig.set(sales.map((r: Record<string, unknown>) => toCamelCase<Sale>(r)));
-      if (details) this.saleDetailsSig.set(details.map((r: Record<string, unknown>) => toCamelCase<SaleDetail>(r)));
+      if (sales.length) this.salesSig.set(sales.map((r: Record<string, unknown>) => toCamelCase<Sale>(r)));
+      if (details.length) this.saleDetailsSig.set(details.map((r: Record<string, unknown>) => toCamelCase<SaleDetail>(r)));
     } catch (err) {
       console.error('Error loading sales:', err);
     }

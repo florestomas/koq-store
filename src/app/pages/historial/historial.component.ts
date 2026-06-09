@@ -183,8 +183,15 @@ export class HistorialComponent {
       transferenciasValue: transfers
         .filter((t) => t.status !== 'cancelled')
         .reduce((sum, t) => sum + t.totalValue, 0),
+      transferenciasItems: transfers
+        .filter((t) => t.status !== 'cancelled')
+        .reduce((sum, t) => sum + t.itemCount, 0),
+      transferenciasPrendas: transfers
+        .filter((t) => t.status !== 'cancelled')
+        .reduce((sum, t) => sum + t.details.reduce((s, d) => s + d.quantity, 0), 0),
       ingresosCount: ingresos.length,
       ingresosUnits: ingresos.reduce((sum, g) => sum + g.totalUnits, 0),
+      ingresosItems: ingresos.reduce((sum, g) => sum + g.itemCount, 0),
     };
   });
 
@@ -251,7 +258,7 @@ export class HistorialComponent {
           dateTime: ing.dateTime,
           type: 'ingreso',
           icon: 'add_shopping_cart',
-          summary: `Ingreso · ${ing.itemCount} SKU${ing.itemCount !== 1 ? 's' : ''}`,
+          summary: `Ingreso · ${ing.itemCount} ítem${ing.itemCount !== 1 ? 's' : ''}`,
           meta: ing.locationName,
           metaClass: 'text-zinc-500',
           amount: `+${ing.totalUnits}`,
