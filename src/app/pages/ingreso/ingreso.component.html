@@ -1,6 +1,6 @@
 <div class="flex flex-col md:flex-row w-full h-full gap-4 md:gap-6 p-4 md:p-8">
   <!-- Left column — Search / Create / Variants -->
-  <div class="flex-[2] flex flex-col gap-4 min-w-0">
+  <div class="flex-[2] flex flex-col gap-4 min-w-0 overflow-hidden">
     <!-- Header -->
     <div class="flex flex-row items-center gap-2 w-full justify-between shrink-0 flex-wrap">
       <div class="flex flex-row items-center gap-2">
@@ -131,7 +131,7 @@
     <!-- ===== VARIANTS MODE ===== -->
     @if (mode() === 'variants' && selectedModel(); as model) {
       <!-- Model info header -->
-      <div class="flex flex-row items-center gap-4 bg-white border border-gray-200 rounded-2xl p-4">
+      <div class="flex flex-row items-center gap-4 bg-white border border-gray-200 rounded-2xl p-4 shrink-0">
         <button (click)="clearModel()" class="shrink-0 text-zinc-400 hover:text-zinc-700 transition cursor-pointer">
           <mat-icon>arrow_back</mat-icon>
         </button>
@@ -145,7 +145,7 @@
 
       <!-- Variant grid -->
       @if (variantGrid().length > 0) {
-        <div class="overflow-x-auto border border-gray-200 rounded-2xl bg-white">
+        <div class="overflow-auto flex-1 min-h-0 border border-gray-200 rounded-2xl bg-white">
           <table class="w-full text-sm">
             <thead>
               <tr class="border-b border-gray-200 bg-gray-50">
@@ -191,7 +191,7 @@
       }
 
       <!-- Add to resumen button -->
-      <div class="flex flex-row items-center justify-end gap-3">
+      <div class="flex flex-row items-center justify-end gap-3 shrink-0">
         <button
           (click)="clearModel()"
           class="px-6 py-2.5 rounded-full text-sm font-semibold border border-gray-300 text-zinc-600 hover:bg-gray-50 transition cursor-pointer"
