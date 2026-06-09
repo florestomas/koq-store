@@ -40,3 +40,11 @@ const colorMap: Record<string, string> = {
 export function getColorHex(name: string): string {
   return colorMap[name.toUpperCase().trim()] ?? '#cccccc';
 }
+
+/** Returns 0 for BLANCO, 1 for NEGRO, 2 for everything else. Use for sorting. */
+export function colorPriority(name: string): number {
+  const n = name.toUpperCase().trim();
+  if (n === 'BLANCO') return 0;
+  if (n === 'NEGRO') return 1;
+  return 2;
+}

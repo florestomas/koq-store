@@ -6,7 +6,7 @@ import { StockBadgeComponent } from '../stock-badge.component/stock-badge.compon
 import { CatalogItem, ColorSizeRow } from '../../../../interfaces/catalog-item';
 import { CatalogService } from '../../../../core/services/catalog.service';
 import { AuthService } from '../../../../core/services/auth.service';
-import { getColorHex } from '../../../../core/utils/colors';
+import { getColorHex, colorPriority } from '../../../../core/utils/colors';
 import {
   ProductEditModalComponent,
   ProductEditModalData,
@@ -76,9 +76,13 @@ export class ProductCardComponent {
         return { colorName, sizes };
       })
       .sort((a, b) => {
+        const pa = colorPriority(a.colorName);
+        const pb = colorPriority(b.colorName);
+        if (pa !== pb) return pa - pb;
         const stockA = a.sizes.reduce((sum, s) => sum + s.stock, 0);
         const stockB = b.sizes.reduce((sum, s) => sum + s.stock, 0);
-        return stockB - stockA;
+        if (stockA !== stockB) return stockB - stockA;
+        return a.colorName.localeCompare(b.colorName);
       });
   });
 

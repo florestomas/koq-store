@@ -2,6 +2,7 @@ import { computed, inject, Injectable, signal } from '@angular/core';
 import { deleteProductImage, getSupabase } from './supabase.service';
 import { AuthService } from './auth.service';
 import { toCamelCase, fetchAll } from '../utils/supabase-utils';
+import { colorPriority } from '../utils/colors';
 import { CatalogItem, StockAlert, ProductRef, StockRef } from '../../interfaces/catalog-item';
 import { Category } from '../../interfaces/category';
 import { ClothingModel } from '../../interfaces/clothing-model';
@@ -123,9 +124,13 @@ export class CatalogService {
           return { colorName, sizes };
         })
         .sort((a, b) => {
+          const pa = colorPriority(a.colorName);
+          const pb = colorPriority(b.colorName);
+          if (pa !== pb) return pa - pb;
           const stockA = a.sizes.reduce((sum, s) => sum + s.stock, 0);
           const stockB = b.sizes.reduce((sum, s) => sum + s.stock, 0);
-          return stockB - stockA;
+          if (stockA !== stockB) return stockB - stockA;
+          return a.colorName.localeCompare(b.colorName);
         });
 
       const stockAlerts: StockAlert[] = locationStocks

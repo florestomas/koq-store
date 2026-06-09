@@ -9,7 +9,7 @@ import { Category } from '../../interfaces/category';
 import { Location } from '../../interfaces/location';
 import { CatalogService } from '../../core/services/catalog.service';
 import { getSupabase, uploadProductImage } from '../../core/services/supabase.service';
-import { getColorHex } from '../../core/utils/colors';
+import { getColorHex, colorPriority } from '../../core/utils/colors';
 
 type TabName = 'basic' | 'stock' | 'variants' | 'prices';
 
@@ -157,7 +157,15 @@ export class ProductEditModalComponent {
         id: cid,
         name: colors.find((c) => c.id === cid)?.name ?? cid,
       }))
-      .sort((a, b) => (stockMap.get(b.id) ?? 0) - (stockMap.get(a.id) ?? 0));
+      .sort((a, b) => {
+        const pa = colorPriority(a.name);
+        const pb = colorPriority(b.name);
+        if (pa !== pb) return pa - pb;
+        const sA = stockMap.get(a.id) ?? 0;
+        const sB = stockMap.get(b.id) ?? 0;
+        if (sA !== sB) return sB - sA;
+        return a.name.localeCompare(b.name);
+      });
   });
 
   private readonly usedColorIds = computed(() => {

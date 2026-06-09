@@ -8,7 +8,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { CatalogService } from '../../core/services/catalog.service';
 import { SaleService, CartItem } from '../../core/services/sale.service';
 import { getSupabase } from '../../core/services/supabase.service';
-import { getColorHex } from '../../core/utils/colors';
+import { getColorHex, colorPriority } from '../../core/utils/colors';
 import { ClothingModel } from '../../interfaces/clothing-model';
 import { Category } from '../../interfaces/category';
 
@@ -257,6 +257,11 @@ export class NewSaleComponent {
       });
 
       return { colorId, colorName, cells };
+    }).sort((a, b) => {
+      const pa = colorPriority(a.colorName);
+      const pb = colorPriority(b.colorName);
+      if (pa !== pb) return pa - pb;
+      return a.colorName.localeCompare(b.colorName);
     });
   });
 

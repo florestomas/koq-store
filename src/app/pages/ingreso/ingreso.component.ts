@@ -7,7 +7,7 @@ import { RouterLink } from '@angular/router';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { CatalogService } from '../../core/services/catalog.service';
 import { IngresoService, IngresoItem } from '../../core/services/ingreso.service';
-import { getColorHex } from '../../core/utils/colors';
+import { getColorHex, colorPriority } from '../../core/utils/colors';
 import { StockMovementService } from '../../core/services/stock-movement.service';
 import { ClothingModel } from '../../interfaces/clothing-model';
 import { Category } from '../../interfaces/category';
@@ -144,6 +144,11 @@ export class IngresoComponent {
         return { productId: product.id, size };
       });
       return { colorName, cells };
+    }).sort((a, b) => {
+      const pa = colorPriority(a.colorName);
+      const pb = colorPriority(b.colorName);
+      if (pa !== pb) return pa - pb;
+      return a.colorName.localeCompare(b.colorName);
     });
   });
 

@@ -6,6 +6,7 @@ import { ReceptionService } from './reception.service';
 import { TransferHistoryService } from './transfer-history.service';
 import { getSupabase } from './supabase.service';
 import { toCamelCase } from '../utils/supabase-utils';
+import { colorPriority } from '../utils/colors';
 import { Product } from '../../interfaces/product';
 import { ClothingModel } from '../../interfaces/clothing-model';
 import { Color } from '../../interfaces/color';
@@ -138,7 +139,12 @@ export class TransferService {
         const colors = colorIds.map((cid) => ({
           id: cid,
           name: allColors.find((c) => c.id === cid)?.name ?? cid,
-        }));
+        })).sort((a, b) => {
+          const pa = colorPriority(a.name);
+          const pb = colorPriority(b.name);
+          if (pa !== pb) return pa - pb;
+          return a.name.localeCompare(b.name);
+        });
 
         const sizes = [...new Set(modelProducts.map((p) => p.size))].sort(
           (a, b) => parseInt(a) - parseInt(b),
