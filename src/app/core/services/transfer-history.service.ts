@@ -6,6 +6,7 @@ import { getSupabase } from './supabase.service';
 import { toCamelCase, fetchAll } from '../utils/supabase-utils';
 import { Transfer } from '../../interfaces/transfer';
 import { TransferDetail } from '../../interfaces/transfer-detail';
+import { StockLocation } from '../../interfaces/stock-location';
 
 export interface TransferDetailRow {
   modelName: string;
@@ -174,10 +175,14 @@ export class TransferHistoryService {
           .eq('reference_type', 'transfer')
           .eq('reference_id', transferId);
 
-        const { data: stockRows } = await supabase
+        const { data: rawStockRows } = await supabase
           .from('stock_locations')
           .select('*')
           .in('id_product', productIds);
+
+        const stockRows: StockLocation[] = (rawStockRows ?? []).map(
+          (r: Record<string, unknown>) => toCamelCase<StockLocation>(r),
+        );
 
         const transferData = this.transfersSig().find((t) => t.id === transferId);
         const originId = transferData?.idOrigin;
@@ -185,20 +190,19 @@ export class TransferHistoryService {
         const isCancelled = transferData?.status === 'cancelled';
         const isConfirmed = transferData?.status === 'confirmed';
 
-        if (stockRows && originId) {
+        if (stockRows.length && originId) {
           for (const detail of details) {
             if (!isCancelled) {
               const stock = stockRows.find(
-                (s: Record<string, unknown>) =>
-                  s['id_product'] === detail.idProduct && s['id_location'] === originId,
+                (s) => s.idProduct === detail.idProduct && s.idLocation === originId,
               );
               if (stock) {
                 const { error: stockError } = await supabase
                   .from('stock_locations')
                   .update({
-                    current_stock: (stock as Record<string, number>)['current_stock'] + detail.quantity,
+                    current_stock: stock.currentStock + detail.quantity,
                   })
-                  .eq('id', (stock as Record<string, unknown>)['id']);
+                  .eq('id', stock.id);
                 if (stockError) {
                   console.error('Error restoring origin stock:', stockError);
                   stockRestoreFailed = true;
@@ -208,15 +212,14 @@ export class TransferHistoryService {
 
             if (isConfirmed && destId) {
               const destStock = stockRows.find(
-                (s: Record<string, unknown>) =>
-                  s['id_product'] === detail.idProduct && s['id_location'] === destId,
+                (s) => s.idProduct === detail.idProduct && s.idLocation === destId,
               );
               if (destStock) {
-                const newDestStock = Math.max(0, (destStock as Record<string, number>)['current_stock'] - detail.quantity);
+                const newDestStock = Math.max(0, destStock.currentStock - detail.quantity);
                 const { error: destError } = await supabase
                   .from('stock_locations')
                   .update({ current_stock: newDestStock })
-                  .eq('id', (destStock as Record<string, unknown>)['id']);
+                  .eq('id', destStock.id);
                 if (destError) {
                   console.error('Error deducting destination stock:', destError);
                   stockRestoreFailed = true;
@@ -234,8 +237,8 @@ export class TransferHistoryService {
 
       await supabase.from('transfer_details').delete().eq('id_transfer', transferId);
       await supabase.from('transfers').delete().eq('id', transferId);
-      this.refresh();
-      this.catalog.triggerRefresh();
+      await this.refresh();
+      await this.catalog.triggerRefresh();
       this.receptionService.refresh();
       return true;
     } catch (err) {

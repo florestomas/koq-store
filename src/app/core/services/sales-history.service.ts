@@ -258,8 +258,8 @@ export class SalesHistoryService {
         return false;
       }
 
-      this.refresh();
-      this.catalog.triggerRefresh();
+      await this.refresh();
+      await this.catalog.triggerRefresh();
       return true;
     } catch (err) {
       console.error('Error in cancelSale:', err);
@@ -317,8 +317,8 @@ export class SalesHistoryService {
       await supabase.from('sale_details').delete().eq('id_sale', saleId);
 
       await supabase.from('sales').delete().eq('id', saleId);
-      this.refresh();
-      this.catalog.triggerRefresh();
+      await this.refresh();
+      await this.catalog.triggerRefresh();
       return true;
     } catch (err) {
       console.error('Error deleting sale:', err);

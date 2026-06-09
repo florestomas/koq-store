@@ -347,14 +347,15 @@ export class CreateProductComponent {
       .single();
 
     if (existing) {
-      const { error } = await supabase
+      const { data: updated, error } = await supabase
         .from('stock_locations')
         .update({ current_stock: existing.current_stock + qty })
-        .eq('id', existing.id);
+        .eq('id', existing.id)
+        .select('id');
 
-      if (error) {
+      if (error || !updated || updated.length === 0) {
         this.errorMsg.set('Error al actualizar stock existente.');
-        console.error('Error updating stock:', error);
+        console.error('Error updating stock:', error ?? 'verify failed');
         return false;
       }
     } else {

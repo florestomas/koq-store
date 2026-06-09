@@ -217,13 +217,13 @@ export class CatalogService {
       await this.authService.waitForInit();
       const supabase = getSupabase();
       const [
-        { data: rawCategories },
-        { data: rawModels },
-        { data: rawProducts },
-        { data: rawColors },
-        { data: rawModelColors },
-        { data: rawLocations },
-        { data: rawUsers },
+        { data: rawCategories, error: catErr },
+        { data: rawModels, error: modErr },
+        { data: rawProducts, error: prodErr },
+        { data: rawColors, error: colErr },
+        { data: rawModelColors, error: mcErr },
+        { data: rawLocations, error: locErr },
+        { data: rawUsers, error: usrErr },
       ] = await Promise.all([
         supabase.from('categories').select('*').limit(1000),
         supabase.from('clothing_models').select('*').limit(1000),
@@ -233,6 +233,13 @@ export class CatalogService {
         supabase.from('locations').select('*').limit(1000),
         supabase.from('users').select('*').limit(1000),
       ]);
+      if (catErr) console.error('Error loading categories:', catErr.message);
+      if (modErr) console.error('Error loading models:', modErr.message);
+      if (prodErr) console.error('Error loading products:', prodErr.message);
+      if (colErr) console.error('Error loading colors:', colErr.message);
+      if (mcErr) console.error('Error loading model colors:', mcErr.message);
+      if (locErr) console.error('Error loading locations:', locErr.message);
+      if (usrErr) console.error('Error loading users:', usrErr.message);
 
       const rawStocks = await fetchAll('stock_locations');
 

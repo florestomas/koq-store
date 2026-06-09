@@ -58,8 +58,9 @@ export class ProductQuantityPickerDialogComponent {
     return this.quantities()[productId] ?? 0;
   }
 
-  setQty(productId: string, rawValue: string): void {
-    const value = Math.max(0, parseInt(rawValue) || 0);
+  setQty(productId: string, rawValue: string, max?: number): void {
+    let value = Math.max(0, parseInt(rawValue) || 0);
+    if (max !== undefined && value > max) value = max;
     this.quantities.update((q) => ({ ...q, [productId]: value }));
   }
 
