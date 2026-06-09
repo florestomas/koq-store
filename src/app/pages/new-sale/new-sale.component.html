@@ -5,12 +5,7 @@
     <div class="flex flex-row items-center gap-2 w-full justify-between shrink-0 flex-wrap">
       <div class="flex flex-row items-center gap-2">
         <mat-icon class="text-3xl md:text-4xl text-koq">point_of_sale</mat-icon>
-        <div class="flex flex-col min-w-0">
-          <h1 class="text-xl md:text-4xl text-black font-medium truncate">{{ (isEditing() ? 'Editando Venta' : 'Nueva Venta') | uppercase }}</h1>
-          @if (isEditing()) {
-            <button (click)="cancelEdit()" class="text-xs text-zinc-400 hover:text-red-500 transition text-left cursor-pointer">Cancelar edición</button>
-          }
-        </div>
+        <h1 class="text-xl md:text-4xl text-black font-medium truncate">{{ (isEditing() ? 'Editando Venta' : 'Nueva Venta') | uppercase }}</h1>
       </div>
     </div>
 
@@ -191,6 +186,7 @@
                               class="w-16 text-center border border-gray-300 rounded-lg px-2 py-1.5 text-sm outline-none focus:border-koq"
                               [value]="getVariantQty(cell.productId)"
                               (input)="setVariantQty(cell.productId, $any($event.target).value)"
+                              (keydown.enter)="addToCart()"
                               placeholder="0"
                             />
                             <span class="text-[10px] text-zinc-400">{{ cell.stock }} disp.</span>
@@ -249,6 +245,15 @@
         >
           <mat-icon class="text-sm">replay</mat-icon>
           Repetir última
+        </button>
+      }
+      @if (isEditing()) {
+        <button
+          (click)="cancelEdit()"
+          class="ml-auto flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition cursor-pointer"
+        >
+          <mat-icon class="text-sm">close</mat-icon>
+          CANCELAR
         </button>
       }
     </div>
