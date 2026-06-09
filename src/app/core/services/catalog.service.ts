@@ -129,9 +129,6 @@ export class CatalogService {
           const pa = colorPriority(a.colorName);
           const pb = colorPriority(b.colorName);
           if (pa !== pb) return pa - pb;
-          const stockA = a.sizes.reduce((sum, s) => sum + s.stock, 0);
-          const stockB = b.sizes.reduce((sum, s) => sum + s.stock, 0);
-          if (stockA !== stockB) return stockB - stockA;
           return a.colorName.localeCompare(b.colorName);
         });
 

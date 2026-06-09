@@ -127,9 +127,7 @@ export class ProductEditModalComponent {
     const _v = this.variantsVersion();
     const prods = this.allProducts();
     const colors = this.allColors();
-    const stocks = this.allStocks();
     const modelId = this.data.item.modelId;
-    const locations = this.data.locations;
 
     const colorIds = [
       ...new Set(
@@ -138,19 +136,6 @@ export class ProductEditModalComponent {
           .map((p) => p.idColor),
       ),
     ];
-
-    const stockMap = new Map<string, number>();
-    for (const cid of colorIds) {
-      const prodIds = prods
-        .filter((p) => p.idClothingModel === modelId && p.active && p.idColor === cid)
-        .map((p) => p.id);
-      const total = locations.reduce((sum, loc) => {
-        return sum + stocks
-          .filter((s) => s.idLocation === loc.id && prodIds.includes(s.idProduct))
-          .reduce((s, st) => s + st.currentStock, 0);
-      }, 0);
-      stockMap.set(cid, total);
-    }
 
     return colorIds
       .map((cid) => ({
@@ -161,9 +146,6 @@ export class ProductEditModalComponent {
         const pa = colorPriority(a.name);
         const pb = colorPriority(b.name);
         if (pa !== pb) return pa - pb;
-        const sA = stockMap.get(a.id) ?? 0;
-        const sB = stockMap.get(b.id) ?? 0;
-        if (sA !== sB) return sB - sA;
         return a.name.localeCompare(b.name);
       });
   });

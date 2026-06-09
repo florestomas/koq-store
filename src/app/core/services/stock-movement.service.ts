@@ -294,14 +294,14 @@ export class StockMovementService {
       }
 
       await supabase.from('stock_movements').delete().eq('reference_type', 'ingreso').eq('reference_id', referenceId);
-      await this.loadMovements();
-      this.catalog.triggerRefresh();
       return true;
     } catch (err) {
       console.error('Error deleting ingreso group:', err);
       return false;
     } finally {
       this.deleting.set(false);
+      this.loadMovements();
+      this.catalog.triggerRefresh();
     }
   }
 }

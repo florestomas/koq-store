@@ -237,15 +237,15 @@ export class TransferHistoryService {
 
       await supabase.from('transfer_details').delete().eq('id_transfer', transferId);
       await supabase.from('transfers').delete().eq('id', transferId);
-      await this.refresh();
-      await this.catalog.triggerRefresh();
-      this.receptionService.refresh();
       return true;
     } catch (err) {
       console.error('Error deleting transfer:', err);
       return false;
     } finally {
       this.deleting.set(false);
+      this.refresh();
+      this.catalog.triggerRefresh();
+      this.receptionService.refresh();
     }
   }
 }

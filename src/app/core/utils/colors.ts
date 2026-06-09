@@ -41,10 +41,21 @@ export function getColorHex(name: string): string {
   return colorMap[name.toUpperCase().trim()] ?? '#cccccc';
 }
 
-/** Returns 0 for BLANCO, 1 for NEGRO, 2 for everything else. Use for sorting. */
+/** Returns priority for sorting: 0=BLANCO, 1=NEGRO, then main colors, 99=rest (alphabetical). */
 export function colorPriority(name: string): number {
   const n = name.toUpperCase().trim();
-  if (n === 'BLANCO') return 0;
-  if (n === 'NEGRO') return 1;
-  return 2;
+  const index = [
+    'BLANCO',
+    'NEGRO',
+    'ROJO',
+    'AZUL',
+    'VERDE',
+    'ROSA',
+    'AMARILLO',
+    'NARANJA',
+    'VIOLETA',
+    'GRIS',
+    'MARRON',
+  ].indexOf(n);
+  return index === -1 ? 99 : index;
 }

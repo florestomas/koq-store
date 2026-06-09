@@ -258,14 +258,14 @@ export class SalesHistoryService {
         return false;
       }
 
-      await this.refresh();
-      await this.catalog.triggerRefresh();
       return true;
     } catch (err) {
       console.error('Error in cancelSale:', err);
       return false;
     } finally {
       this.deleting.set(false);
+      this.refresh();
+      this.catalog.triggerRefresh();
     }
   }
 
@@ -317,14 +317,14 @@ export class SalesHistoryService {
       await supabase.from('sale_details').delete().eq('id_sale', saleId);
 
       await supabase.from('sales').delete().eq('id', saleId);
-      await this.refresh();
-      await this.catalog.triggerRefresh();
       return true;
     } catch (err) {
       console.error('Error deleting sale:', err);
       return false;
     } finally {
       this.deleting.set(false);
+      this.refresh();
+      this.catalog.triggerRefresh();
     }
   }
 
