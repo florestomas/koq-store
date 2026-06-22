@@ -3,7 +3,7 @@ import { AuthService } from './auth.service';
 import { CatalogService } from './catalog.service';
 import { StockMovementService } from './stock-movement.service';
 import { getSupabase } from './supabase.service';
-import { toCamelCase } from '../utils/supabase-utils';
+import { toCamelCase, fetchAll } from '../utils/supabase-utils';
 import { Sale } from '../../interfaces/sale';
 import { SaleDetail } from '../../interfaces/sale-detail';
 
@@ -232,18 +232,17 @@ export class SalesHistoryService {
   });
 
   constructor() {
-    this.authService.waitForInit().then(() => this.loadSales());
+    this.authService.waitForInit().then(() => this.loadSales()).catch((err) => console.error('Failed to load sales:', err));
   }
 
   private async loadSales(): Promise<void> {
     try {
-      const supabase = getSupabase();
-      const [{ data: sales }, { data: details }] = await Promise.all([
-        supabase.from('sales').select('*'),
-        supabase.from('sale_details').select('*'),
+      const [sales, details] = await Promise.all([
+        fetchAll('sales'),
+        fetchAll('sale_details'),
       ]);
-      if (sales) this.salesSig.set(sales.map((r: Record<string, unknown>) => toCamelCase<Sale>(r)));
-      if (details) this.saleDetailsSig.set(details.map((r: Record<string, unknown>) => toCamelCase<SaleDetail>(r)));
+      if (sales.length) this.salesSig.set(sales.map((r: Record<string, unknown>) => toCamelCase<Sale>(r)));
+      if (details.length) this.saleDetailsSig.set(details.map((r: Record<string, unknown>) => toCamelCase<SaleDetail>(r)));
     } catch (err) {
       console.error('Error loading sales:', err);
     }
@@ -259,14 +258,14 @@ export class SalesHistoryService {
         return false;
       }
 
-      this.refresh();
-      this.catalog.triggerRefresh();
       return true;
     } catch (err) {
       console.error('Error in cancelSale:', err);
       return false;
     } finally {
       this.deleting.set(false);
+      this.refresh();
+      this.catalog.triggerRefresh();
     }
   }
 
@@ -318,19 +317,19 @@ export class SalesHistoryService {
       await supabase.from('sale_details').delete().eq('id_sale', saleId);
 
       await supabase.from('sales').delete().eq('id', saleId);
-      this.refresh();
-      this.catalog.triggerRefresh();
       return true;
     } catch (err) {
       console.error('Error deleting sale:', err);
       return false;
     } finally {
       this.deleting.set(false);
+      this.refresh();
+      this.catalog.triggerRefresh();
     }
   }
 
-  refresh(): void {
+  refresh(): Promise<void> {
     this.refreshCounter.update((c) => c + 1);
-    this.loadSales();
+    return this.loadSales();
   }
 }

@@ -2,7 +2,7 @@
   <!-- Mobile hamburger -->
   <button
     (click)="sidebarOpen.set(true)"
-    class="fixed top-4 left-4 z-30 md:hidden bg-white rounded-full size-10 flex items-center justify-center shadow-md border border-gray-200 hover:bg-gray-50 transition cursor-pointer"
+    class="fixed top-4 left-4 z-30 lg:hidden bg-white rounded-full size-10 flex items-center justify-center shadow-md border border-gray-200 hover:bg-gray-50 transition cursor-pointer"
   >
     <mat-icon class="text-zinc-600">menu</mat-icon>
   </button>
@@ -11,12 +11,12 @@
   @if (sidebarOpen()) {
     <div
       (click)="sidebarOpen.set(false)"
-      class="fixed inset-0 bg-black/40 z-40 md:hidden"
+      class="fixed inset-0 bg-black/40 z-40 lg:hidden"
     ></div>
   }
 
   <app-sidebar [open]="sidebarOpen()" (close)="sidebarOpen.set(false)"></app-sidebar>
-  <main class="flex-1 overflow-y-auto pt-16 md:pt-0">
+  <main class="flex-1 overflow-y-auto pt-16 lg:pt-0">
     <router-outlet></router-outlet>
   </main>
 </div>

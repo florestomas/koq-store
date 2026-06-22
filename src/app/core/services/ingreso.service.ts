@@ -57,65 +57,35 @@ export class IngresoService {
 
     const supabase = getSupabase();
     const refId = crypto.randomUUID();
-    const now = new Date().toISOString();
+    const noopOldRef = crypto.randomUUID();
 
-    for (const item of items) {
-      if (item.quantity <= 0) continue;
-
-      const { data: existing } = await supabase
-        .from('stock_locations')
-        .select('*')
-        .eq('id_product', item.productId)
-        .eq('id_location', idLocation)
-        .single();
-
-      if (existing) {
-        const { error: updError } = await supabase
-          .from('stock_locations')
-          .update({ current_stock: existing.current_stock + item.quantity })
-          .eq('id', existing.id);
-
-        if (updError) {
-          console.error('Error updating stock:', updError);
-          return false;
-        }
-      } else {
-        const { error: insError } = await supabase
-          .from('stock_locations')
-          .insert({
-            id: crypto.randomUUID(),
-            id_product: item.productId,
-            id_location: idLocation,
-            current_stock: item.quantity,
-            minimum_stock: 1,
-          });
-
-        if (insError) {
-          console.error('Error inserting stock:', insError);
-          return false;
-        }
-      }
-
-      const { error: movError } = await supabase
-        .from('stock_movements')
-        .insert({
-          id: crypto.randomUUID(),
-          date_time: now,
+    try {
+      const p_items = items
+        .filter((item) => item.quantity > 0)
+        .map((item) => ({
           id_product: item.productId,
-          id_location: idLocation,
-          type: 'in',
           quantity: item.quantity,
-          reference_type: 'ingreso',
-          reference_id: refId,
-        });
+        }));
 
-      if (movError) {
-        console.error('Error logging movement:', movError);
+      if (p_items.length === 0) return false;
+
+      const { error } = await supabase.rpc('editar_ingreso', {
+        p_old_reference_id: noopOldRef,
+        p_new_reference_id: refId,
+        p_id_location: idLocation,
+        p_items,
+      });
+
+      if (error) {
+        console.error('Ingreso RPC error:', error.message, error);
         return false;
       }
-    }
 
-    return true;
+      return true;
+    } catch (err) {
+      console.error('Error in confirmIngreso:', err);
+      return false;
+    }
   }
 
   async editIngreso(

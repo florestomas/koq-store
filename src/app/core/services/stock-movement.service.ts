@@ -2,7 +2,7 @@ import { computed, Injectable, signal, inject } from '@angular/core';
 import { AuthService } from './auth.service';
 import { CatalogService } from './catalog.service';
 import { getSupabase } from './supabase.service';
-import { toCamelCase } from '../utils/supabase-utils';
+import { toCamelCase, fetchAll } from '../utils/supabase-utils';
 import { StockMovement } from '../../interfaces/stock-movement';
 
 export interface MovementRow {
@@ -211,17 +211,17 @@ export class StockMovementService {
   );
 
   constructor() {
-    this.authService.waitForInit().then(() => this.loadMovements());
+    this.authService.waitForInit().then(() => this.loadMovements()).catch((err) => console.error('Failed to load movements:', err));
   }
 
-  refresh(): void {
-    this.loadMovements();
+  refresh(): Promise<void> {
+    return this.loadMovements();
   }
 
   private async loadMovements(): Promise<void> {
     try {
-      const { data } = await getSupabase().from('stock_movements').select('*');
-      if (data) this.movementsSig.set(data.map((r: Record<string, unknown>) => toCamelCase<StockMovement>(r)));
+      const data = await fetchAll('stock_movements');
+      if (data.length) this.movementsSig.set(data.map((r: Record<string, unknown>) => toCamelCase<StockMovement>(r)));
     } catch (err) {
       console.error('Error loading stock movements:', err);
     }
@@ -294,13 +294,14 @@ export class StockMovementService {
       }
 
       await supabase.from('stock_movements').delete().eq('reference_type', 'ingreso').eq('reference_id', referenceId);
-      await this.loadMovements();
       return true;
     } catch (err) {
       console.error('Error deleting ingreso group:', err);
       return false;
     } finally {
       this.deleting.set(false);
+      this.loadMovements();
+      this.catalog.triggerRefresh();
     }
   }
 }

@@ -3,8 +3,10 @@ import { AuthService } from './auth.service';
 import { CatalogService } from './catalog.service';
 import { StockMovementService } from './stock-movement.service';
 import { ReceptionService } from './reception.service';
+import { TransferHistoryService } from './transfer-history.service';
 import { getSupabase } from './supabase.service';
 import { toCamelCase } from '../utils/supabase-utils';
+import { colorPriority } from '../utils/colors';
 import { Product } from '../../interfaces/product';
 import { ClothingModel } from '../../interfaces/clothing-model';
 import { Color } from '../../interfaces/color';
@@ -58,6 +60,7 @@ export class TransferService {
   private readonly catalogService = inject(CatalogService);
   private readonly stockMovementService = inject(StockMovementService);
   private readonly receptionService = inject(ReceptionService);
+  private readonly transferHistoryService = inject(TransferHistoryService);
 
   constructor() {
     this.restoreFromCache();
@@ -136,7 +139,12 @@ export class TransferService {
         const colors = colorIds.map((cid) => ({
           id: cid,
           name: allColors.find((c) => c.id === cid)?.name ?? cid,
-        }));
+        })).sort((a, b) => {
+          const pa = colorPriority(a.name);
+          const pb = colorPriority(b.name);
+          if (pa !== pb) return pa - pb;
+          return a.name.localeCompare(b.name);
+        });
 
         const sizes = [...new Set(modelProducts.map((p) => p.size))].sort(
           (a, b) => parseInt(a) - parseInt(b),
@@ -440,6 +448,7 @@ export class TransferService {
       this.editingTransferId.set(null);
       this.catalogService.triggerRefresh();
       this.receptionService.refresh();
+      this.transferHistoryService.refresh();
       return true;
     } catch (err) {
       console.error('Error in editTransfer:', err);
@@ -495,6 +504,7 @@ export class TransferService {
       this.destinationId.set('');
       this.catalogService.triggerRefresh();
       this.receptionService.refresh();
+      this.transferHistoryService.refresh();
       return true;
     } catch (err) {
       console.error('Error in confirmTransfer:', err);
@@ -586,7 +596,9 @@ export class TransferService {
         const model = product ? models.find((m) => m.id === product.idClothingModel) : undefined;
         const color = product ? colors.find((c) => c.id === product.idColor) : undefined;
         const imageUrl = model
-          ? modelColors.find((mc) => mc.idClothingModel === model.id)?.imageUrl ?? ''
+          ? (modelColors.find((mc) => mc.idClothingModel === model.id && mc.imageUrl && !mc.imageUrl.includes('placehold.co'))?.imageUrl
+              ?? modelColors.find((mc) => mc.idClothingModel === model.id)?.imageUrl
+              ?? '')
           : '';
         const stockAtOrigin = stocks.find(
           (s) => s.idProduct === d['id_product'] && s.idLocation === this.originId(),

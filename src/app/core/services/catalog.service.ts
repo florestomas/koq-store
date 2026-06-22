@@ -1,7 +1,8 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { deleteProductImage, getSupabase } from './supabase.service';
 import { AuthService } from './auth.service';
-import { toCamelCase } from '../utils/supabase-utils';
+import { toCamelCase, fetchAll } from '../utils/supabase-utils';
+import { colorPriority } from '../utils/colors';
 import { CatalogItem, StockAlert, ProductRef, StockRef } from '../../interfaces/catalog-item';
 import { Category } from '../../interfaces/category';
 import { ClothingModel } from '../../interfaces/clothing-model';
@@ -89,7 +90,9 @@ export class CatalogService {
       const modelColors = allModelColors.filter(
         (mc) => mc.idClothingModel === model.id,
       );
-      const imageUrl = modelColors[0]?.imageUrl ?? '';
+      const imageUrl = modelColors.find((mc) => mc.imageUrl && !mc.imageUrl.includes('placehold.co'))?.imageUrl
+        ?? modelColors[0]?.imageUrl
+        ?? '';
 
       const locationStocks = locationIds.map((lid) => {
         const locStocks = stocks.filter((s) => s.idLocation === lid);
@@ -123,19 +126,20 @@ export class CatalogService {
           return { colorName, sizes };
         })
         .sort((a, b) => {
-          const stockA = a.sizes.reduce((sum, s) => sum + s.stock, 0);
-          const stockB = b.sizes.reduce((sum, s) => sum + s.stock, 0);
-          return stockB - stockA;
+          const pa = colorPriority(a.colorName);
+          const pb = colorPriority(b.colorName);
+          if (pa !== pb) return pa - pb;
+          return a.colorName.localeCompare(b.colorName);
         });
 
       const stockAlerts: StockAlert[] = locationStocks
         .filter((ls) => {
           const hasLow = stocks.some(
             (s) =>
-              s.idLocation === ls.locationId && s.currentStock > 0 && s.currentStock <= s.minimumStock,
+              s.idLocation === ls.locationId && s.currentStock > 0 && s.currentStock <= s.minimumStock && s.minimumStock > 0,
           );
           const hasOut = stocks.some(
-            (s) => s.idLocation === ls.locationId && s.currentStock === 0,
+            (s) => s.idLocation === ls.locationId && s.currentStock === 0 && s.minimumStock > 0,
           );
           return hasLow || hasOut;
         })
@@ -212,29 +216,38 @@ export class CatalogService {
       await this.authService.waitForInit();
       const supabase = getSupabase();
       const [
-        { data: rawCategories },
-        { data: rawModels },
-        { data: rawProducts },
-        { data: rawStocks },
-        { data: rawColors },
-        { data: rawModelColors },
-        { data: rawLocations },
-        { data: rawUsers },
+        { data: rawCategories, error: catErr },
+        { data: rawModels, error: modErr },
+        { data: rawProducts, error: prodErr },
+        { data: rawColors, error: colErr },
+        { data: rawModelColors, error: mcErr },
+        { data: rawLocations, error: locErr },
+        { data: rawUsers, error: usrErr },
       ] = await Promise.all([
-        supabase.from('categories').select('*').limit(100000),
-        supabase.from('clothing_models').select('*').limit(100000),
-        supabase.from('products').select('*').limit(100000),
-        supabase.from('stock_locations').select('*').limit(100000),
-        supabase.from('colors').select('*').limit(100000),
-        supabase.from('clothing_model_colors').select('*').limit(100000),
-        supabase.from('locations').select('*').limit(100000),
-        supabase.from('users').select('*').limit(100000),
+        supabase.from('categories').select('*').limit(1000),
+        supabase.from('clothing_models').select('*').limit(1000),
+        supabase.from('products').select('*').limit(1000),
+        supabase.from('colors').select('*').limit(1000),
+        supabase.from('clothing_model_colors').select('*').limit(1000),
+        supabase.from('locations').select('*').limit(1000),
+        supabase.from('users').select('*').limit(1000),
       ]);
+      if (catErr) console.error('Error loading categories:', catErr.message);
+      if (modErr) console.error('Error loading models:', modErr.message);
+      if (prodErr) console.error('Error loading products:', prodErr.message);
+      if (colErr) console.error('Error loading colors:', colErr.message);
+      if (mcErr) console.error('Error loading model colors:', mcErr.message);
+      if (locErr) console.error('Error loading locations:', locErr.message);
+      if (usrErr) console.error('Error loading users:', usrErr.message);
+
+      const rawStocks = await fetchAll('stock_locations');
 
       if (rawCategories) this.categoriesSig.set(rawCategories.map((r: Record<string, unknown>) => toCamelCase<Category>(r)));
       if (rawModels) this.modelsSig.set(rawModels.map((r: Record<string, unknown>) => toCamelCase<ClothingModel>(r)));
       if (rawProducts) this.productsSig.set(rawProducts.map((r: Record<string, unknown>) => toCamelCase<Product>(r)));
-      if (rawStocks) this.stocksSig.set(rawStocks.map((r: Record<string, unknown>) => toCamelCase<StockLocation>(r)));
+      if (rawStocks.length) {
+        this.stocksSig.set(rawStocks.map((r: Record<string, unknown>) => toCamelCase<StockLocation>(r)));
+      }
       if (rawColors) this.colorsSig.set(rawColors.map((r: Record<string, unknown>) => toCamelCase<Color>(r)));
       if (rawModelColors) this.modelColorsSig.set(rawModelColors.map((r: Record<string, unknown>) => toCamelCase<ClothingModelColor>(r)));
       if (rawLocations) this.locationsSig.set(rawLocations.map((r: Record<string, unknown>) => toCamelCase<Location>(r)));

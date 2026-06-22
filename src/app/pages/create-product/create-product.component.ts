@@ -3,9 +3,11 @@ import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, signa
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatIcon } from '@angular/material/icon';
+import { MatDialog } from '@angular/material/dialog';
 import { CatalogService } from '../../core/services/catalog.service';
 import { getSupabase, uploadProductImage } from '../../core/services/supabase.service';
 import { getColorHex } from '../../core/utils/colors';
+import { CategoriasComponent } from '../categorias/categorias.component';
 
 @Component({
   selector: 'app-create-product',
@@ -19,6 +21,7 @@ export class CreateProductComponent {
 
   private readonly router = inject(Router);
   private readonly catalogService = inject(CatalogService);
+  private readonly dialog = inject(MatDialog);
 
   readonly form = new FormGroup({
     name: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
@@ -167,7 +170,7 @@ export class CreateProductComponent {
   }
 
   getMinStock(colorId: string, size: string): number {
-    return this.minStockValues()[colorId]?.[size] ?? 1;
+    return this.minStockValues()[colorId]?.[size] ?? 0;
   }
 
   async addColor(): Promise<void> {
@@ -347,14 +350,15 @@ export class CreateProductComponent {
       .single();
 
     if (existing) {
-      const { error } = await supabase
+      const { data: updated, error } = await supabase
         .from('stock_locations')
         .update({ current_stock: existing.current_stock + qty })
-        .eq('id', existing.id);
+        .eq('id', existing.id)
+        .select('id');
 
-      if (error) {
+      if (error || !updated || updated.length === 0) {
         this.errorMsg.set('Error al actualizar stock existente.');
-        console.error('Error updating stock:', error);
+        console.error('Error updating stock:', error ?? 'verify failed');
         return false;
       }
     } else {
@@ -375,5 +379,9 @@ export class CreateProductComponent {
       }
     }
     return true;
+  }
+
+  openCategoryManager(): void {
+    this.dialog.open(CategoriasComponent, { maxWidth: '90vw' });
   }
 }

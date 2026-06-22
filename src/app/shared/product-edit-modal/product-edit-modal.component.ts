@@ -9,7 +9,7 @@ import { Category } from '../../interfaces/category';
 import { Location } from '../../interfaces/location';
 import { CatalogService } from '../../core/services/catalog.service';
 import { getSupabase, uploadProductImage } from '../../core/services/supabase.service';
-import { getColorHex } from '../../core/utils/colors';
+import { getColorHex, colorPriority } from '../../core/utils/colors';
 
 type TabName = 'basic' | 'stock' | 'variants' | 'prices';
 
@@ -127,9 +127,7 @@ export class ProductEditModalComponent {
     const _v = this.variantsVersion();
     const prods = this.allProducts();
     const colors = this.allColors();
-    const stocks = this.allStocks();
     const modelId = this.data.item.modelId;
-    const locations = this.data.locations;
 
     const colorIds = [
       ...new Set(
@@ -139,25 +137,17 @@ export class ProductEditModalComponent {
       ),
     ];
 
-    const stockMap = new Map<string, number>();
-    for (const cid of colorIds) {
-      const prodIds = prods
-        .filter((p) => p.idClothingModel === modelId && p.active && p.idColor === cid)
-        .map((p) => p.id);
-      const total = locations.reduce((sum, loc) => {
-        return sum + stocks
-          .filter((s) => s.idLocation === loc.id && prodIds.includes(s.idProduct))
-          .reduce((s, st) => s + st.currentStock, 0);
-      }, 0);
-      stockMap.set(cid, total);
-    }
-
     return colorIds
       .map((cid) => ({
         id: cid,
         name: colors.find((c) => c.id === cid)?.name ?? cid,
       }))
-      .sort((a, b) => (stockMap.get(b.id) ?? 0) - (stockMap.get(a.id) ?? 0));
+      .sort((a, b) => {
+        const pa = colorPriority(a.name);
+        const pb = colorPriority(b.name);
+        if (pa !== pb) return pa - pb;
+        return a.name.localeCompare(b.name);
+      });
   });
 
   private readonly usedColorIds = computed(() => {
@@ -354,7 +344,7 @@ export class ProductEditModalComponent {
           id_product: productIds[0],
           id_location: locationId,
           current_stock: newStock,
-          minimum_stock: 1,
+          minimum_stock: 0,
         });
         if (error) { console.error('Error inserting stock:', error); alert('Error al insertar stock: ' + error.message); }
       }
@@ -472,13 +462,17 @@ export class ProductEditModalComponent {
       const costPrice = existingProduct?.costPrice ?? 0;
       const salePrice = existingProduct?.salePrice ?? 0;
 
+      const existingImage = this.allModelColors().find(
+        (mc) => mc.idClothingModel === modelId && mc.imageUrl && !mc.imageUrl.includes('placehold.co'),
+      )?.imageUrl ?? '';
+
       const { error: mcError } = await supabase
         .from('clothing_model_colors')
         .insert({
           id: crypto.randomUUID(),
           id_clothing_model: modelId,
           id_color: colorId,
-          image_url: `https://placehold.co/400x400?text=${encodeURIComponent(name.toUpperCase())}`,
+          image_url: existingImage,
         });
       if (mcError) {
         console.error('Error linking color to model:', mcError);

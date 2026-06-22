@@ -48,7 +48,7 @@ export class AlertService {
     }
 
     const lowStock = stockLocations.filter(
-      (s) => s.currentStock <= s.minimumStock,
+      (s) => s.currentStock <= s.minimumStock && s.minimumStock > 0,
     );
 
     const result: AlertItem[] = [];

@@ -3,9 +3,10 @@ import { AuthService } from './auth.service';
 import { CatalogService } from './catalog.service';
 import { TransferHistoryService } from './transfer-history.service';
 import { getSupabase } from './supabase.service';
-import { toCamelCase } from '../utils/supabase-utils';
+import { toCamelCase, fetchAll } from '../utils/supabase-utils';
 import { Transfer } from '../../interfaces/transfer';
 import { TransferDetail } from '../../interfaces/transfer-detail';
+import { StockLocation } from '../../interfaces/stock-location';
 
 export interface DetailRow {
   detailId: string;
@@ -110,13 +111,15 @@ export class ReceptionService {
               s.idLocation === t.idDestination,
           );
           const currentStock = destStock?.currentStock ?? 0;
-          const minStock = destStock?.minimumStock ?? 1;
+          const minStock = destStock?.minimumStock ?? 0;
           const stockStatus: 'critical' | 'low' | 'ok' =
-            currentStock === 0
-              ? 'critical'
-              : currentStock <= minStock
-                ? 'low'
-                : 'ok';
+            minStock === 0
+              ? 'ok'
+              : currentStock === 0
+                ? 'critical'
+                : currentStock <= minStock
+                  ? 'low'
+                  : 'ok';
 
           return {
             detailId: d.id,
@@ -150,18 +153,17 @@ export class ReceptionService {
   readonly pendingCount = computed(() => this.pendingTransfers().length);
 
   constructor() {
-    this.authService.waitForInit().then(() => this.loadTransfers());
+    this.authService.waitForInit().then(() => this.loadTransfers()).catch((err) => console.error('Failed to load reception transfers:', err));
   }
 
   private async loadTransfers(): Promise<void> {
     try {
-      const supabase = getSupabase();
-      const [{ data: transfers }, { data: details }] = await Promise.all([
-        supabase.from('transfers').select('*'),
-        supabase.from('transfer_details').select('*'),
+      const [transfers, details] = await Promise.all([
+        fetchAll('transfers'),
+        fetchAll('transfer_details'),
       ]);
-      if (transfers) this.transfersSig.set(transfers.map((r: Record<string, unknown>) => toCamelCase<Transfer>(r)));
-      if (details) this.transferDetailsSig.set(details.map((r: Record<string, unknown>) => toCamelCase<TransferDetail>(r)));
+      if (transfers.length) this.transfersSig.set(transfers.map((r: Record<string, unknown>) => toCamelCase<Transfer>(r)));
+      if (details.length) this.transferDetailsSig.set(details.map((r: Record<string, unknown>) => toCamelCase<TransferDetail>(r)));
     } catch (err) {
       console.error('Error loading transfers:', err);
     }
@@ -203,7 +205,9 @@ export class ReceptionService {
           .eq('id', transferId);
       }
 
-      this.refresh();
+      await this.refresh();
+      this.transferHistoryService.refresh();
+      await this.catalog.triggerRefresh();
       return true;
     } catch (err) {
       console.error('Error confirming reception:', err);
@@ -211,9 +215,9 @@ export class ReceptionService {
     }
   }
 
-  refresh(): void {
+  refresh(): Promise<void> {
     this.refreshCounter.update((c) => c + 1);
-    this.loadTransfers();
+    return this.loadTransfers();
   }
 
   async hardDeleteTransfer(transferId: string): Promise<boolean> {
@@ -230,14 +234,18 @@ export class ReceptionService {
           .eq('reference_type', 'transfer')
           .eq('reference_id', transferId);
 
-        const { data: stockRows } = await supabase
+        const { data: rawStockRows } = await supabase
           .from('stock_locations')
           .select('*')
           .in('id_product', productIds);
 
+        const stockRows: StockLocation[] = (rawStockRows ?? []).map(
+          (r: Record<string, unknown>) => toCamelCase<StockLocation>(r),
+        );
+
         let stockRestoreFailed = false;
 
-        if (stockRows) {
+        if (stockRows.length) {
           const transferData = this.transfersSig().find((t) => t.id === transferId);
           const originId = transferData?.idOrigin;
           const destId = transferData?.idDestination;
@@ -247,13 +255,13 @@ export class ReceptionService {
           for (const detail of details) {
             if (!isCancelled && originId) {
               const stock = stockRows.find(
-                (s: Record<string, unknown>) => s['id_product'] === detail.idProduct && s['id_location'] === originId,
+                (s) => s.idProduct === detail.idProduct && s.idLocation === originId,
               );
               if (stock) {
                 const { error: stockError } = await supabase
                   .from('stock_locations')
-                  .update({ current_stock: (stock as Record<string, number>)['current_stock'] + detail.quantity })
-                  .eq('id', (stock as Record<string, unknown>)['id']);
+                  .update({ current_stock: stock.currentStock + detail.quantity })
+                  .eq('id', stock.id);
                 if (stockError) {
                   console.error('Error restoring origin stock:', stockError);
                   stockRestoreFailed = true;
@@ -263,14 +271,14 @@ export class ReceptionService {
 
             if (isConfirmed && destId) {
               const destStock = stockRows.find(
-                (s: Record<string, unknown>) => s['id_product'] === detail.idProduct && s['id_location'] === destId,
+                (s) => s.idProduct === detail.idProduct && s.idLocation === destId,
               );
               if (destStock) {
-                const newDestStock = Math.max(0, (destStock as Record<string, number>)['current_stock'] - detail.quantity);
+                const newDestStock = Math.max(0, destStock.currentStock - detail.quantity);
                 const { error: destError } = await supabase
                   .from('stock_locations')
                   .update({ current_stock: newDestStock })
-                  .eq('id', (destStock as Record<string, unknown>)['id']);
+                  .eq('id', destStock.id);
                 if (destError) {
                   console.error('Error deducting destination stock:', destError);
                   stockRestoreFailed = true;
@@ -287,8 +295,8 @@ export class ReceptionService {
       }
       await supabase.from('transfer_details').delete().eq('id_transfer', transferId);
       await supabase.from('transfers').delete().eq('id', transferId);
-      this.refresh();
-      this.catalog.triggerRefresh();
+      await this.refresh();
+      await this.catalog.triggerRefresh();
       this.transferHistoryService.refresh();
       return true;
     } catch (err) {
