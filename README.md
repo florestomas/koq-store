@@ -1,59 +1,108 @@
-# KoqStore
+<p align="center">
+  <img src="public/favicon.ico" alt="KoqStore" width="72">
+</p>
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.1.3.
+<h1 align="center">KoqStore</h1>
 
-## Development server
+<p align="center">
+  Sistema de gestión de stock, ventas y transferencias para indumentaria.
+  <br>
+  <a href="https://koq-store.vercel.app"><strong>koq-store.vercel.app »</strong></a>
+</p>
 
-To start a local development server, run:
+<p align="center">
+  <img src="https://img.shields.io/badge/Angular-21-DD0031?logo=angular&logoColor=white" alt="Angular 21">
+  <img src="https://img.shields.io/badge/Tailwind_CSS-v4-06B6D4?logo=tailwindcss&logoColor=white" alt="Tailwind CSS v4">
+  <img src="https://img.shields.io/badge/Supabase-2.x-3FCF8E?logo=supabase&logoColor=white" alt="Supabase">
+  <img src="https://img.shields.io/badge/Zoneless-✓-8A2BE2" alt="Zoneless">
+  <img src="https://img.shields.io/badge/Material_M3-✓-purple?logo=materialdesign&logoColor=white" alt="Material M3">
+  <img src="https://img.shields.io/badge/Vitest-4.x-6E9F18?logo=vitest&logoColor=white" alt="Vitest">
+  <img src="https://img.shields.io/badge/Vercel-✓-000000?logo=vercel&logoColor=white" alt="Vercel">
+</p>
+
+---
+
+## Funcionalidades
+
+- **Catálogo** — navegación y búsqueda de productos con filtros por categoría, color y talle
+- **Venta rápida** — registro de ventas con selección por variante (color + talle), canales local/WhatsApp, recargos
+- **Transferencias de stock** — movimiento de stock entre sucursales con confirmación en destino
+- **Ingreso de mercadería** — carga de nuevos lotes al sistema
+- **Alertas de stock** — productos por debajo del mínimo configurado
+- **Historial** — trazabilidad de movimientos y ventas
+- **Recepciones** — confirmación de transferencias entrantes
+- **Roles** — operadores (sucursal específica) y administradores (visión global)
+
+## Stack
+
+| | |
+|---|---|
+| **Framework** | Angular 21 (standalone, sin NgModules) |
+| **Lenguaje** | TypeScript 5.9 |
+| **UI** | Angular Material M3 · Tailwind CSS v4 |
+| **Estado** | Signals · ChangeDetectionStrategy.OnPush · Zoneless |
+| **Backend** | Supabase (PostgreSQL, Auth, Storage) |
+| **Testing** | Vitest v4 via `@angular/build:unit-test` |
+| **Deploy** | Vercel (SPA rewrites) |
+
+## Primeros pasos
 
 ```bash
-ng serve
+git clone <repo-url>
+cd koq-store
+npm install
+npm start
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+La aplicación se abre en `http://localhost:4200/`.
 
-## Code scaffolding
+> No requiere variables de entorno — las credenciales de Supabase están hardcodeadas en `src/app/core/services/supabase.service.ts`.
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Comandos
 
 ```bash
-ng generate component component-name
+npm start              # Servidor de desarrollo → localhost:4200
+npm test               # Tests unitarios (Vitest)
+npm test -- --include src/app/app.spec.ts  # Test individual
+npm run build          # Build producción → dist/koq-store/browser
+npm run deploy         # Deploy a Vercel (producción)
+npm run preview        # Preview local de build Vercel
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+## Tests
 
 ```bash
-ng generate --help
+npm test                            # Todos los tests
+npm test -- --include src/app/pages/new-sale/new-sale.spec.ts  # Test específico
 ```
 
-## Building
+Los tests son smoke tests que verifican creación de componentes sin mockear servicios ni guards. Usan `TestBed.configureTestingModule({ imports: [Component] })`.
 
-To build the project run:
+## Arquitectura
 
-```bash
-ng build
+```
+src/app/
+  core/           guards, servicios (11), utils
+  shared/         sidebar, search-bar, modals
+  layouts/        app-layout (shell + sidebar)
+  pages/          auth, catalog, transfer, create-product,
+                  ingreso, new-sale, alertas, historial, recepciones
+  interfaces/     14 interfaces TypeScript
+  mocks/          14 mocks (sin uso — todos los servicios llaman a Supabase directo)
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+## Despliegue
 
-## Running unit tests
+Automatizado con Vercel. El build de producción se configura en `vercel.json`:
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
+```json
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist/koq-store/browser",
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+}
 ```
 
-## Running end-to-end tests
+## Licencia
 
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+Uso interno — KoqStore.

@@ -3,15 +3,17 @@
 ## Commands
 
 ```bash
-npm start              # ng serve (--poll 2000 in config) → localhost:4200
+npm start              # ng serve → localhost:4200
 npm test               # Vitest via @angular/build:unit-test (not vitest CLI)
 npm test -- --include src/app/app.spec.ts   # single spec file
-npm run build          # production build → dist/koq-store
+npm run build          # production build → dist/koq-store/browser
 npm run deploy         # npx vercel --prod
 npm run preview        # npx vercel dev
 ```
 
-No `vitest.config` — Angular builder manages Vitest. Use `--include` for filtering (not vitest flags). No ESLint — only Prettier (`package.json` `"prettier"` key): 100w, single quotes, Angular HTML parser. npm@11.8.0 pinned.
+No vitest.config — Angular builder manages Vitest. Use `--include` for filtering (not vitest flags). No ESLint — only Prettier (`package.json` `"prettier"` key): 100w, single quotes, Angular HTML parser. npm@11.8.0 pinned.
+
+`angular.json` has `poll: 2000` inside `serve.configurations.options` (not `serve.options`), so it only applies with `ng serve --configuration options`, not by default. No e2e framework installed — `ng e2e` won't work.
 
 ## Stack
 
@@ -24,7 +26,7 @@ No `vitest.config` — Angular builder manages Vitest. Use `--include` for filte
 - **Material Icons Outlined** default (`MAT_ICON_DEFAULT_OPTIONS` in `app.config.ts`)
 - Brand color `--color-koq: #ad65af` (Tailwind `@theme` in `styles.css`)
 - `provideBrowserGlobalErrorListeners()` in `app.config.ts` — global error catcher
-- Vercel deploy with SPA rewrites, output `dist/koq-store` (`vercel.json`)
+- Vercel deploy with SPA rewrites, output `dist/koq-store/browser` (`vercel.json`)
 - **Supabase** JS client directly (no `provideHttpClient`). Hardcoded URL + anon key in `supabase.service.ts`. Storage bucket `product-images`.
 
 ## Architecture
@@ -88,11 +90,8 @@ Color names are uppercase (e.g. `NEGRO`, `VERDE PETROLEO`). The function normali
 - 5 spec files (`app`, `new-sale`, `alertas`, `historial`, `recepciones`) — smoke tests, no service mocking
 - Pattern: `TestBed.configureTestingModule({ imports: [Component] })`. Some provide `Router` mock if component injects it.
 - Auth/Router guards are NOT mocked — tests import the component standalone; rely on `fixture.detectChanges()` not triggering guard logic
+- `.vscode/launch.json` references Karma port `9876` in "ng test" config — ignored (Vitest doesn't use it)
 
 ## Codegen
 
 `ng g c foo` → `foo.component.ts` (schematic `"type": "component"` prefix in `angular.json`)
-
-## Stale
-
-- `.vscode/launch.json` references Karma port `9876` — Vitest doesn't use it
